@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScoutFlow Pro - Sistema Integrado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .dark-card { background-color: #1e293b; border: 1px solid #334155; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen">
+
+    <nav class="border-b border-slate-700 p-4 flex justify-between items-center bg-slate-800 sticky top-0 z-50">
+        <h1 class="text-xl font-bold text-blue-400 cursor-pointer" onclick="showView('dashboard')">SCOUTFLOW</h1>
+        <div class="flex gap-2">
+            <button onclick="showView('dashboard')" class="bg-slate-700 px-4 py-2 rounded text-sm hover:bg-slate-600 transition">Dashboard Atleta</button>
+            <button onclick="showView('report')" class="bg-blue-600 px-4 py-2 rounded text-sm hover:bg-blue-500 transition">Novo Relatório (Campo)</button>
+        </div>
+    </nav>
+
+    <main id="view-dashboard" class="p-6 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in">
+        <section class="lg:col-span-2 space-y-6">
+            <div class="dark-card p-6 rounded-xl flex gap-6 items-center">
+                <div class="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center text-3xl font-bold">JS</div>
+                <div>
+                    <h2 class="text-3xl font-bold">João Silva</h2>
+                    <p class="text-slate-400">Médio Centro | 19 Anos</p>
+                </div>
+            </div>
+
+            <div class="dark-card p-6 rounded-xl">
+                <h3 class="text-lg font-semibold mb-4 text-blue-400">Métricas de Performance</h3>
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between text-xs mb-1"><span>Passe Curto</span><span id="val-passe">85</span></div>
+                        <input type="range" oninput="updateVal('val-passe', this.value)" class="w-full accent-blue-500" value="85">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1"><span>Visão de Jogo</span><span id="val-visao">70</span></div>
+                        <input type="range" oninput="updateVal('val-visao', this.value)" class="w-full accent-blue-500" value="70">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <aside class="dark-card p-4 rounded-xl border-l-4 border-yellow-500 h-fit">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold">🕒 Histórico</h3>
+                <button onclick="undoLastAction()" class="bg-yellow-600 px-2 py-1 rounded text-xs font-bold hover:bg-yellow-500">UNDO</button>
+            </div>
+            <div id="history-log" class="text-xs space-y-3">
+                <p class="text-slate-500 italic">Nenhuma ação recente...</p>
+            </div>
+        </aside>
+    </main>
+
+    <main id="view-report" class="p-6 max-w-4xl mx-auto hidden">
+        <div class="flex justify-between items-center mb-6 bg-slate-800 p-4 rounded-lg">
+            <h2 class="font-bold">Em Observação: João Silva</h2>
+            <span class="font-mono text-xl text-green-400">24:15</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <button onclick="logAction('Passe Certo', 'green')" class="bg-green-700 p-8 rounded-2xl text-xl font-bold active:scale-95 transition">Passe ✅</button>
+            <button onclick="logAction('Passe Errado', 'red')" class="bg-red-700 p-8 rounded-2xl text-xl font-bold active:scale-95 transition">Passe ❌</button>
+            <button onclick="logAction('Drible Sucesso', 'blue')" class="bg-blue-700 p-8 rounded-2xl text-xl font-bold active:scale-95 transition">Drible ⚡</button>
+            <button onclick="logAction('Remate', 'yellow')" class="bg-yellow-700 p-8 rounded-2xl text-xl font-bold active:scale-95 transition">Remate 🎯</button>
+        </div>
+    </main>
+
+    <script>
+        // Lógica simples de navegação
+        function showView(view) {
+            document.getElementById('view-dashboard').classList.add('hidden');
+            document.getElementById('view-report').classList.add('hidden');
+            document.getElementById('view-' + view).classList.remove('hidden');
+        }
+
+        // Sistema de Histórico e Registro
+        let history = [];
+
+        function logAction(action, color) {
+            const log = document.getElementById('history-log');
+            if (history.length === 0) log.innerHTML = ''; // Limpa o "vazio"
+
+            const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const actionId = Date.now();
+            
+            history.push({ id: actionId, text: action, time: timestamp });
+
+            const item = document.createElement('div');
+            item.id = `action-${actionId}`;
+            item.className = `p-2 bg-slate-700 rounded border-l-2 border-${color}-500 flex justify-between items-center animate-fade-in`;
+            item.innerHTML = `
+                <span><strong>${action}</strong> <br> <small class="text-slate-400">${timestamp}</small></span>
+                <button onclick="removeAction(${actionId})" class="text-red-400 hover:text-red-200">✕</button>
+            `;
+            log.prepend(item);
+        }
+
+        function undoLastAction() {
+            if (history.length > 0) {
+                const last = history.pop();
+                document.getElementById(`action-${last.id}`).remove();
+                if (history.length === 0) document.getElementById('history-log').innerHTML = '<p class="text-slate-500 italic">Nenhuma ação recente...</p>';
+            }
+        }
+
+        function removeAction(id) {
+            history = history.filter(a => a.id !== id);
+            document.getElementById(`action-${id}`).remove();
+            if (history.length === 0) document.getElementById('history-log').innerHTML = '<p class="text-slate-500 italic">Nenhuma ação recente...</p>';
+        }
+
+        function updateVal(id, val) {
+            document.getElementById(id).innerText = val;
+        }
+    </script>
+</body>
+</html>
