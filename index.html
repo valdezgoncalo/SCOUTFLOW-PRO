@@ -3,120 +3,218 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ScoutFlow Pro - Sistema Integrado</title>
+    <title>ScoutFlow Pro - Elite Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         .dark-card { background-color: #1e293b; border: 1px solid #334155; }
         .hidden { display: none; }
+        .metric-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 font-sans min-h-screen">
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen">
 
-    <nav class="border-b border-slate-700 p-4 flex justify-between items-center bg-slate-800 sticky top-0 z-50">
-        <h1 class="text-xl font-bold text-blue-400 cursor-pointer" onclick="showView('dashboard')">SCOUTFLOW</h1>
-        <div class="flex gap-2">
-            <button onclick="showView('dashboard')" class="bg-slate-700 px-4 py-2 rounded text-sm hover:bg-slate-600 transition">Dashboard Atleta</button>
-            <button onclick="showView('report')" class="bg-blue-600 px-4 py-2 rounded text-sm hover:bg-blue-500 transition">Novo Relatório (Campo)</button>
-        </div>
-    </nav>
+    <div class="flex flex-col md:flex-row min-h-screen">
+        <aside class="w-full md:w-64 bg-slate-900 border-r border-slate-800 p-4 space-y-6">
+            <h1 class="text-2xl font-black text-blue-500 tracking-tighter">SCOUTFLOW</h1>
+            
+            <div class="space-y-2">
+                <p class="text-xs font-bold text-slate-500 uppercase px-2">Gestão</p>
+                <button onclick="showView('list')" class="w-full text-left px-3 py-2 rounded hover:bg-slate-800 transition">📋 Lista de Atletas</button>
+                <button onclick="createNewPlayer()" class="w-full text-left px-3 py-2 rounded bg-blue-600 hover:bg-blue-500 transition font-bold">+ Novo Atleta</button>
+            </div>
 
-    <main id="view-dashboard" class="p-6 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in">
-        <section class="lg:col-span-2 space-y-6">
-            <div class="dark-card p-6 rounded-xl flex gap-6 items-center">
-                <div class="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center text-3xl font-bold">JS</div>
-                <div>
-                    <h2 class="text-3xl font-bold">João Silva</h2>
-                    <p class="text-slate-400">Médio Centro | 19 Anos</p>
+            <div id="players-side-list" class="space-y-1 pt-4 border-t border-slate-800">
                 </div>
-            </div>
-
-            <div class="dark-card p-6 rounded-xl">
-                <h3 class="text-lg font-semibold mb-4 text-blue-400">Métricas de Performance</h3>
-                <div class="space-y-4">
-                    <div>
-                        <div class="flex justify-between text-xs mb-1"><span>Passe Curto</span><span id="val-passe">85</span></div>
-                        <input type="range" oninput="updateVal('val-passe', this.value)" class="w-full accent-blue-500" value="85">
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-xs mb-1"><span>Visão de Jogo</span><span id="val-visao">70</span></div>
-                        <input type="range" oninput="updateVal('val-visao', this.value)" class="w-full accent-blue-500" value="70">
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <aside class="dark-card p-4 rounded-xl border-l-4 border-yellow-500 h-fit">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold">🕒 Histórico</h3>
-                <button onclick="undoLastAction()" class="bg-yellow-600 px-2 py-1 rounded text-xs font-bold hover:bg-yellow-500">UNDO</button>
-            </div>
-            <div id="history-log" class="text-xs space-y-3">
-                <p class="text-slate-500 italic">Nenhuma ação recente...</p>
-            </div>
         </aside>
-    </main>
 
-    <main id="view-report" class="p-6 max-w-4xl mx-auto hidden">
-        <div class="flex justify-between items-center mb-6 bg-slate-800 p-4 rounded-lg">
-            <h2 class="font-bold">Em Observação: João Silva</h2>
-            <span class="font-mono text-xl text-green-400">24:15</span>
-        </div>
+        <main class="flex-1 flex flex-col">
+            <header class="p-4 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center sticky top-0 z-10 backdrop-blur-md">
+                <h2 id="current-player-name" class="text-xl font-bold italic text-slate-300 underline decoration-blue-500">Seleciona um atleta</h2>
+                <div class="flex gap-2">
+                    <button onclick="showView('report')" class="bg-emerald-600 px-4 py-2 rounded text-sm font-bold hover:bg-emerald-500">Live Match</button>
+                    <button onclick="exportToPDF()" class="bg-slate-700 px-4 py-2 rounded text-sm font-bold hover:bg-slate-600">Exportar PDF</button>
+                </div>
+            </header>
 
-        <div class="grid grid-cols-2 gap-4">
-            <button onclick="logAction('Passe Certo', 'green')" class="bg-green-700 p-8 rounded-2xl text-xl font-bold active:scale-95 transition">Passe ✅</button>
-            <button onclick="logAction('Passe Errado', 'red')" class="bg-red-700 p-8 rounded-2xl text-xl font-bold active:scale-95 transition">Passe ❌</button>
-            <button onclick="logAction('Drible Sucesso', 'blue')" class="bg-blue-700 p-8 rounded-2xl text-xl font-bold active:scale-95 transition">Drible ⚡</button>
-            <button onclick="logAction('Remate', 'yellow')" class="bg-yellow-700 p-8 rounded-2xl text-xl font-bold active:scale-95 transition">Remate 🎯</button>
-        </div>
-    </main>
+            <div id="content-area" class="p-6 overflow-y-auto">
+                <section id="view-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    </section>
+
+                <section id="view-dashboard" class="hidden space-y-8" id="pdf-export-content">
+                    
+                    <div id="metrics-container" class="space-y-10">
+                        </div>
+
+                    <div class="dark-card p-6 rounded-xl border-l-4 border-yellow-500">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-lg">🕒 Histórico de Observação</h3>
+                            <button onclick="undoLastAction()" class="bg-yellow-600 px-3 py-1 rounded text-xs font-bold hover:bg-yellow-500 shadow-lg">UNDO</button>
+                        </div>
+                        <div id="history-log" class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs"></div>
+                    </div>
+                </section>
+
+                <section id="view-report" class="hidden max-w-2xl mx-auto space-y-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        <button onclick="logAction('Passe OK', 'emerald')" class="h-24 bg-emerald-700 rounded-xl font-bold shadow-lg">Passe ✅</button>
+                        <button onclick="logAction('Passe Erro', 'red')" class="h-24 bg-red-700 rounded-xl font-bold shadow-lg">Passe ❌</button>
+                        <button onclick="logAction('Recup. Bola', 'blue')" class="h-24 bg-blue-700 rounded-xl font-bold shadow-lg">Recuperação 🛡️</button>
+                        <button onclick="logAction('Drible OK', 'indigo')" class="h-24 bg-indigo-700 rounded-xl font-bold shadow-lg">Drible ⚡</button>
+                    </div>
+                    <div class="dark-card p-4">
+                        <p class="text-center text-slate-400">Estás a registar ações em tempo real para o atleta selecionado.</p>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
 
     <script>
-        // Lógica simples de navegação
+        // --- BASE DE DADOS E ESTRUTURA ---
+        const metricCategories = [
+            { title: "Físicas / Condicionamento", color: "blue", fields: ["Velocidade Máxima", "Resistência Aeróbica", "Resistência Anaeróbica", "Força Inferior/Superior", "Explosão / Potência", "Flexibilidade", "Agilidade", "Recuperação"] },
+            { title: "Técnicas", color: "emerald", fields: ["Passe (C/M/L)", "Receção / Domínio", "Remate / Finalização", "Condução / Drible", "Cabeceamento", "Técnicas Defensivas", "Bolas Paradas"] },
+            { title: "Táticas / Inteligência", color: "purple", fields: ["Posicionamento", "Leitura de Jogo", "Tomada de Decisão", "Participação Coletiva", "Versatilidade", "Pressão / Recuperação"] },
+            { title: "Psicológicas / Mentais", color: "rose", fields: ["Resiliência", "Concentração", "Disciplina", "Motivação / Atitude", "Controlo Emocional"] }
+        ];
+
+        let players = JSON.parse(localStorage.getItem('scout_players')) || [
+            { id: 1, name: "João Silva", position: "Médio", metrics: {}, history: [] }
+        ];
+        let currentPlayerId = null;
+
+        // --- NAVEGAÇÃO ---
         function showView(view) {
-            document.getElementById('view-dashboard').classList.add('hidden');
-            document.getElementById('view-report').classList.add('hidden');
+            ['view-list', 'view-dashboard', 'view-report'].forEach(v => document.getElementById(v).classList.add('hidden'));
             document.getElementById('view-' + view).classList.remove('hidden');
         }
 
-        // Sistema de Histórico e Registro
-        let history = [];
+        // --- GESTÃO DE ATLETAS ---
+        function renderPlayerLists() {
+            const side = document.getElementById('players-side-list');
+            const mainList = document.getElementById('view-list');
+            side.innerHTML = ''; mainList.innerHTML = '';
 
+            players.forEach(p => {
+                side.innerHTML += `<button onclick="selectPlayer(${p.id})" class="w-full text-left text-sm px-3 py-1 text-slate-400 hover:text-white">${p.name}</button>`;
+                mainList.innerHTML += `
+                    <div class="dark-card p-6 rounded-xl hover:border-blue-500 transition cursor-pointer" onclick="selectPlayer(${p.id})">
+                        <div class="text-2xl mb-2">👤</div>
+                        <h3 class="font-bold text-lg">${p.name}</h3>
+                        <p class="text-slate-500 text-sm">${p.position}</p>
+                    </div>`;
+            });
+        }
+
+        function selectPlayer(id) {
+            currentPlayerId = id;
+            const p = players.find(x => x.id === id);
+            document.getElementById('current-player-name').innerText = p.name + " (" + p.position + ")";
+            renderMetrics(p);
+            renderHistory(p);
+            showView('dashboard');
+        }
+
+        function createNewPlayer() {
+            const name = prompt("Nome do Atleta:");
+            if (!name) return;
+            const newP = { id: Date.now(), name: name, position: "Por definir", metrics: {}, history: [] };
+            players.push(newP);
+            save();
+            renderPlayerLists();
+        }
+
+        // --- GESTÃO DE MÉTRICAS ---
+        function renderMetrics(player) {
+            const container = document.getElementById('metrics-container');
+            container.innerHTML = '';
+
+            metricCategories.forEach(cat => {
+                let html = `<div class="space-y-4">
+                    <h3 class="text-sm font-black uppercase tracking-widest text-${cat.color}-500 border-b border-${cat.color}-500/30 pb-2">${cat.title}</h3>
+                    <div class="metric-grid">`;
+                
+                cat.fields.forEach(f => {
+                    const val = player.metrics[f] || 50;
+                    html += `
+                        <div class="bg-slate-900/50 p-3 rounded-lg border border-slate-800 shadow-inner">
+                            <div class="flex justify-between text-[10px] mb-2 text-slate-400 font-bold uppercase">
+                                <span>${f}</span>
+                                <span class="text-${cat.color}-400" id="val-${f}">${val}</span>
+                            </div>
+                            <input type="range" value="${val}" class="w-full h-1.5 accent-${cat.color}-500" oninput="updateMetric('${f}', this.value)">
+                        </div>`;
+                });
+                html += `</div></div>`;
+                container.innerHTML += html;
+            });
+        }
+
+        function updateMetric(field, val) {
+            const p = players.find(x => x.id === currentPlayerId);
+            p.metrics[field] = val;
+            document.getElementById(`val-${field}`).innerText = val;
+            save();
+        }
+
+        // --- SISTEMA DE LOG / UNDO ---
         function logAction(action, color) {
-            const log = document.getElementById('history-log');
-            if (history.length === 0) log.innerHTML = ''; // Limpa o "vazio"
-
-            const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            const actionId = Date.now();
-            
-            history.push({ id: actionId, text: action, time: timestamp });
-
-            const item = document.createElement('div');
-            item.id = `action-${actionId}`;
-            item.className = `p-2 bg-slate-700 rounded border-l-2 border-${color}-500 flex justify-between items-center animate-fade-in`;
-            item.innerHTML = `
-                <span><strong>${action}</strong> <br> <small class="text-slate-400">${timestamp}</small></span>
-                <button onclick="removeAction(${actionId})" class="text-red-400 hover:text-red-200">✕</button>
-            `;
-            log.prepend(item);
+            if(!currentPlayerId) return alert("Seleciona um atleta primeiro!");
+            const p = players.find(x => x.id === currentPlayerId);
+            const entry = { id: Date.now(), text: action, color: color, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) };
+            p.history.push(entry);
+            save();
+            renderHistory(p);
         }
 
         function undoLastAction() {
-            if (history.length > 0) {
-                const last = history.pop();
-                document.getElementById(`action-${last.id}`).remove();
-                if (history.length === 0) document.getElementById('history-log').innerHTML = '<p class="text-slate-500 italic">Nenhuma ação recente...</p>';
-            }
+            const p = players.find(x => x.id === currentPlayerId);
+            p.history.pop();
+            save();
+            renderHistory(p);
         }
 
-        function removeAction(id) {
-            history = history.filter(a => a.id !== id);
-            document.getElementById(`action-${id}`).remove();
-            if (history.length === 0) document.getElementById('history-log').innerHTML = '<p class="text-slate-500 italic">Nenhuma ação recente...</p>';
+        function renderHistory(p) {
+            const log = document.getElementById('history-log');
+            log.innerHTML = p.history.slice().reverse().map(i => `
+                <div class="bg-slate-800 p-2 rounded border-l-2 border-${i.color}-500 flex justify-between">
+                    <span>${i.text}</span> <span class="text-slate-500">${i.time}</span>
+                </div>
+            `).join('');
         }
 
-        function updateVal(id, val) {
-            document.getElementById(id).innerText = val;
+        // --- EXPORTAÇÃO E PERSISTÊNCIA ---
+        function save() { localStorage.setItem('scout_players', JSON.stringify(players)); }
+
+        async function exportToPDF() {
+            if(!currentPlayerId) return;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const p = players.find(x => x.id === currentPlayerId);
+            
+            doc.setFontSize(22);
+            doc.text("Relatório de Scouting: " + p.name, 20, 20);
+            doc.setFontSize(12);
+            doc.text("Data: " + new Date().toLocaleDateString(), 20, 30);
+            
+            let y = 50;
+            doc.text("Métricas Principais:", 20, y);
+            y += 10;
+            
+            Object.keys(p.metrics).forEach(m => {
+                if (y > 270) { doc.addPage(); y = 20; }
+                doc.text(`${m}: ${p.metrics[m]}/100`, 30, y);
+                y += 8;
+            });
+
+            doc.save(`ScoutFlow_${p.name}.pdf`);
         }
+
+        renderPlayerLists();
     </script>
 </body>
 </html>
