@@ -1324,7 +1324,28 @@
       const supabaseUrl = 'https://ocfqofvctutmvoejtgtl.supabase.co'; 
       const supabaseKey = 'sb_publishable_lXRlEB09_NOBP24xeY38rw_7WXG_K_l'; 
       const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+// FUNÇÃO PARA GUARDAR ATLETA E ATUALIZAR O GRÁFICO
+      async function savePlayer() {
+          const nomeAtleta = document.querySelector('input[placeholder="SSSSSS"]')?.value || "Novo Atleta";
+          const notaAtleta = document.querySelector('.text-4xl.font-bold')?.innerText || "0";
 
+          console.log("A guardar atleta:", nomeAtleta, "com nota:", notaAtleta);
+
+          const { data, error } = await _supabase
+              .from('atletas')
+              .insert([{ 
+                  nome: nomeAtleta, 
+                  nota: parseFloat(notaAtleta),
+                  historico: { data_criacao: new Date().toISOString() } 
+              }]);
+
+          if (error) {
+              alert("Erro ao guardar: " + error.message);
+          } else {
+              alert("✅ Atleta guardado no Supabase!");
+              // Esta linha faz o gráfico atualizar-se sozinho!
+              carregarDadosDoScout(); 
+          }
       let meuGrafico;
 
       async function carregarDadosDoScout() {
