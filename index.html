@@ -1317,7 +1317,9 @@
         window.onload = () => {
             showView('home');
         };
-  </script> <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+ </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
@@ -1328,18 +1330,18 @@
       let meuGrafico;
 
       async function carregarDadosDoScout() {
-          console.log("A carregar dados...");
+          console.log("A procurar atletas no Supabase...");
           const { data: atletas, error } = await _supabase
               .from('atletas')
               .select('nome, nota');
 
           if (error) {
-              console.error('Erro:', error.message);
+              console.error('Erro de ligação:', error.message);
               return;
           }
 
-          const ctx = document.getElementById('graficoScout');
-          if (!ctx) return; // Segurança caso o canvas não exista
+          const ctx = document.getElementById('graficoScout'); // Garante que este ID existe no teu HTML
+          if (!ctx) return;
 
           if (meuGrafico) meuGrafico.destroy();
 
@@ -1348,22 +1350,20 @@
               data: {
                   labels: atletas.map(a => a.nome),
                   datasets: [{
-                      label: 'Avaliação Técnica',
+                      label: 'Pontuação Técnica',
                       data: atletas.map(a => a.nota),
                       backgroundColor: '#3b82f6'
                   }]
               },
               options: {
-                  indexAxis: 'y', 
+                  indexAxis: 'y', // Resolve o erro "horizontalBar"
                   responsive: true,
                   scales: { x: { beginAtZero: true, max: 10 } }
               }
           });
       }
-      
-      // Carrega os dados mal a página abre
+
       carregarDadosDoScout();
     </script>
-
 </body>
 </html>
