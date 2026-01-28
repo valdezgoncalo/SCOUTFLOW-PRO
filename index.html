@@ -1317,6 +1317,43 @@
         window.onload = () => {
             showView('home');
         };
-    </script>
+  // === INTEGRAÇÃO DE MEMÓRIA E UNDO (INÍCIO) ===
+
+// 1. Carregar dados guardados ao abrir a página
+let players = JSON.parse(localStorage.getItem('scoutflow_players')) || [];
+let historyStack = [];
+
+// 2. Função para salvar o estado antes de qualquer alteração
+function saveToHistory() {
+    historyStack.push(JSON.stringify(players));
+    if (historyStack.length > 20) historyStack.shift();
+}
+
+// 3. Função Desfazer (Undo)
+function undo() {
+    if (historyStack.length > 0) {
+        players = JSON.parse(historyStack.pop());
+        localStorage.setItem('scoutflow_players', JSON.stringify(players));
+        // Tenta chamar a tua função de atualizar a lista
+        if (typeof renderPlayerGrid === 'function') renderPlayerGrid();
+        alert("Ação desfeita!");
+    }
+}
+
+// 4. Atalho CTRL+Z
+window.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
+        undo();
+    }
+});
+
+// 5. Garante que a tua lista carrega do LocalStorage ao iniciar
+window.addEventListener('load', () => {
+    if (typeof renderPlayerGrid === 'function') renderPlayerGrid();
+});
+
+// === INTEGRAÇÃO DE MEMÓRIA E UNDO (FIM) ===
+    </script> 
 </body>
 </html>
