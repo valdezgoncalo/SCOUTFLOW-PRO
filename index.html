@@ -1399,6 +1399,38 @@ window.addEventListener('load', () => {
 });
 
 // === INTEGRAÇÃO DE MEMÓRIA E UNDO (FIM) ===
+   // ==========================================
+// MOTOR DO HISTÓRICO (UNDO/DESFAZER)
+// ==========================================
+let historyStack = [];
+
+function saveToHistory() {
+    if (typeof players !== 'undefined') {
+        historyStack.push(JSON.stringify(players));
+        if (historyStack.length > 20) historyStack.shift();
+    }
+}
+
+function undo() {
+    if (historyStack.length > 0) {
+        players = JSON.parse(historyStack.pop());
+        localStorage.setItem('scoutflow_players', JSON.stringify(players));
+        if (typeof renderPlayerGrid === 'function') renderPlayerGrid();
+        alert("Ação desfeita!");
+    } else {
+        console.log("Histórico vazio.");
+    }
+}
+
+// Ativar o CTRL+Z
+window.removeEventListener('keydown', handleUndoKey); // Previne duplicados
+function handleUndoKey(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
+        undo();
+    }
+}
+window.addEventListener('keydown', handleUndoKey);
     </script> 
 </body>
 </html>
