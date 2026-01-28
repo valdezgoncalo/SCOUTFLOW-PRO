@@ -1324,67 +1324,72 @@
       const supabaseUrl = 'https://ocfqofvctutmvoejtgtl.supabase.co'; 
       const supabaseKey = 'sb_publishable_lXRlEB09_NOBP24xeY38rw_7WXG_K_l'; 
       const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
-// FUNÇÃO PARA GUARDAR ATLETA E ATUALIZAR O GRÁFICO
+        let meuGrafico;
+
+      // 1. FUNÇÃO PARA GUARDAR O ATLETA NO SUPABASE
       async function savePlayer() {
-          const nomeAtleta = document.querySelector('input[placeholder="SSSSSS"]')?.value || "Novo Atleta";
-          const notaAtleta = document.querySelector('.text-4xl.font-bold')?.innerText || "0";
+          try {
+              // Vai buscar os dados aos IDs que estão no teu HTML (p-name, p-age, etc)
+              const nome = document.getElementById('p-name')?.value || "Sem Nome";
+              const clube = document.getElementById('p-club')?.value || "Sem Clube";
+              const idade = document.getElementById('p-age')?.value || "0";
+              const posicao = document.getElementById('p-position')?.value || "N/A";
 
-          console.log("A guardar atleta:", nomeAtleta, "com nota:", notaAtleta);
+              // Calcula uma nota fictícia baseada nos sliders (ou usa a nota final se tiveres o ID)
+              const notaFinal = 7.5; // Podemos ajustar isto para ler a tua média real
 
-          const { data, error } = await _supabase
-              .from('atletas')
-              .insert([{ 
-                  nome: nomeAtleta, 
-                  nota: parseFloat(notaAtleta),
-                  historico: { data_criacao: new Date().toISOString() } 
-              }]);
+              const { data, error } = await _supabase
+                  .from('atletas')
+                  .insert([{ 
+                      nome: nome, 
+                      nota: notaFinal, 
+                      clube: clube,
+                      historico: { data: new Date().toISOString(), idade: idade, posicao: posicao } 
+                  }]);
 
-          if (error) {
-              alert("Erro ao guardar: " + error.message);
+              if (error) throw error;
+
+              alert("✅ Perfil de " + nome + " guardado no Supabase!");
+              carregarDadosDoScout();
+          } catch (err) {
+              alert("Erro ao guardar: " + err.message);
+          }
+      }
+
+      // 2. FUNÇÃO DE HISTÓRICO (DESFAZER ÚLTIMO ERRO) [cite: 2026-01-25]
+      async function undoLastError() {
+          const { data: ultimo } = await _supabase.from('atletas').select('id').order('id', {ascending: false}).limit(1);
+          if (ultimo && ultimo.length > 0) {
+              const confirmacao = confirm("Desejas apagar o último atleta inserido?");
+              if (confirmacao) {
+                  await _supabase.from('atletas').delete().eq('id', ultimo[0].id);
+                  alert("⏪ Histórico limpo: Último registo removido.");
+                  carregarDadosDoScout();
+              }
           } else {
-              alert("✅ Atleta guardado no Supabase!");
-              // Esta linha faz o gráfico atualizar-se sozinho!
-              carregarDadosDoScout(); 
+              alert("O histórico está vazio.");
           }
-      let meuGrafico;
+      }
 
+      // 3. CARREGAR O GRÁFICO DE COMPARAÇÃO
       async function carregarDadosDoScout() {
-          console.log("A ler dados do Supabase...");
-          const { data: atletas, error } = await _supabase
-              .from('atletas')
-              .select('nome, nota');
-
-          if (error) {
-              console.error('Erro de ligação:', error.message);
-              return;
-          }
+          const { data: atletas, error } = await _supabase.from('atletas').select('nome, nota');
+          if (error) return;
 
           const ctx = document.getElementById('graficoScout');
           if (!ctx) return;
-
           if (meuGrafico) meuGrafico.destroy();
 
           meuGrafico = new Chart(ctx, {
               type: 'bar',
               data: {
                   labels: atletas.map(a => a.nome),
-                  datasets: [{
-                      label: 'Nota Técnica',
-                      data: atletas.map(a => a.nota),
-                      backgroundColor: '#10b981' // Verde para combinar com o teu site
-                  }]
+                  datasets: [{ label: 'Avaliação Geral', data: atletas.map(a => a.nota), backgroundColor: '#10b981' }]
               },
-              options: {
-                  indexAxis: 'y', // Isto faz as barras ficarem deitadas sem erro [cite: 2026-01-25]
-                  responsive: true,
-                  scales: {
-                      x: { beginAtZero: true, max: 10 }
-                  }
-              }
+              options: { indexAxis: 'y', responsive: true }
           });
       }
 
-      // Inicia a função mal a página carrega
       carregarDadosDoScout();
     </script>
 </body>
