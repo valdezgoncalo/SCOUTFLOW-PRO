@@ -920,66 +920,21 @@
             `).join('');
         }
 
-  // SAVE PLAYER
-     function savePlayer() {
-        // 1. Snapshot para o Undo (Ctrl+Z) - Guarda antes de alterar
-        saveToHistory(); 
-        
-        // 2. Recolha de Dados Básicos
-        const name = document.getElementById('p-name').value.trim();
-        const position = document.getElementById('p-position').value;
-        
-        if (!name) {
-            alert("⚠️ Insira o nome do atleta!");
-            return;
-        }
-        
-        if (!position) {
-            alert("⚠️ Selecione a posição!");
-            return;
-        }
-        
-        // 3. Recolha de Métricas (Teu código original)
-        const metrics = {};
-        document.querySelectorAll('[data-m]').forEach(i => metrics[i.dataset.m] = parseFloat(i.value));
-        
-        const existingPlayer = players.find(p => p.id === currentId);
-        const evaluationHistory = existingPlayer ? (existingPlayer.evaluationHistory || []) : [];
-        
-        // Adiciona avaliação ao histórico
-        evaluationHistory.push({
-            date: new Date().toISOString(),
-            metrics: metrics,
-            notes: document.getElementById('p-notes').value,
-            scoutName: 'Current Scout'
-        });
-
-        const playerData = {
-            id: currentId || Date.now(),
-            name: name,
-            position: position,
-            club: document.getElementById('p-club').value,
-            metrics: metrics,
-            evaluationHistory: evaluationHistory,
-            lastUpdate: new Date().toISOString()
-        };
-
-        // 4. Atualizar a lista de jogadores
-        if (currentId) {
-            const index = players.findIndex(p => p.id === currentId);
-            players[index] = playerData;
-        } else {
-            players.push(playerData);
-        }
-
-        // 5. GRAVAÇÃO DEFINITIVA (LocalStorage)
-        localStorage.setItem('scoutflow_players', JSON.stringify(players));
-
-        // 6. Feedback e Navegação
-        console.log("Dados guardados com sucesso!");
-        renderPlayerGrid(); // Atualiza a lista visualmente
-        showView('home');
-        }
+        // SAVE PLAYER
+        function savePlayer() {
+            const name = document.getElementById('p-name').value.trim();
+            const position = document.getElementById('p-position').value;
+            
+            if (!name) {
+                alert("⚠️ Insira o nome do atleta!");
+                return;
+            }
+            
+            if (!position) {
+                alert("⚠️ Selecione a posição do atleta!");
+                return;
+            }
+            
             const metrics = {};
             document.querySelectorAll('[data-m]').forEach(i => metrics[i.dataset.m] = parseFloat(i.value));
             
@@ -1362,75 +1317,6 @@
         window.onload = () => {
             showView('home');
         };
-  // === INTEGRAÇÃO DE MEMÓRIA E UNDO (INÍCIO) ===
-
-// 1. Carregar dados guardados ao abrir a página
-let players = JSON.parse(localStorage.getItem('scoutflow_players')) || [];
-let historyStack = [];
-
-// 2. Função para salvar o estado antes de qualquer alteração
-function saveToHistory() {
-    historyStack.push(JSON.stringify(players));
-    if (historyStack.length > 20) historyStack.shift();
-}
-
-// 3. Função Desfazer (Undo)
-function undo() {
-    if (historyStack.length > 0) {
-        players = JSON.parse(historyStack.pop());
-        localStorage.setItem('scoutflow_players', JSON.stringify(players));
-        // Tenta chamar a tua função de atualizar a lista
-        if (typeof renderPlayerGrid === 'function') renderPlayerGrid();
-        alert("Ação desfeita!");
-    }
-}
-
-// 4. Atalho CTRL+Z
-window.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-        e.preventDefault();
-        undo();
-    }
-});
-
-// 5. Garante que a tua lista carrega do LocalStorage ao iniciar
-window.addEventListener('load', () => {
-    if (typeof renderPlayerGrid === 'function') renderPlayerGrid();
-});
-
-// === INTEGRAÇÃO DE MEMÓRIA E UNDO (FIM) ===
-   // ==========================================
-// MOTOR DO HISTÓRICO (UNDO/DESFAZER)
-// ==========================================
-let historyStack = [];
-
-function saveToHistory() {
-    if (typeof players !== 'undefined') {
-        historyStack.push(JSON.stringify(players));
-        if (historyStack.length > 20) historyStack.shift();
-    }
-}
-
-function undo() {
-    if (historyStack.length > 0) {
-        players = JSON.parse(historyStack.pop());
-        localStorage.setItem('scoutflow_players', JSON.stringify(players));
-        if (typeof renderPlayerGrid === 'function') renderPlayerGrid();
-        alert("Ação desfeita!");
-    } else {
-        console.log("Histórico vazio.");
-    }
-}
-
-// Ativar o CTRL+Z
-window.removeEventListener('keydown', handleUndoKey); // Previne duplicados
-function handleUndoKey(e) {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-        e.preventDefault();
-        undo();
-    }
-}
-window.addEventListener('keydown', handleUndoKey);
-    </script> 
+    </script>
 </body>
 </html>
