@@ -1273,7 +1273,11 @@
             input.onchange = (e) => {
                 const file = e.target.files[0];
                 const reader = new FileReader();
-                reader.onload = (event) => {
+                reader.onload = (event) => { 
+                    <div style="background: white; padding: 20px; border-radius: 12px; margin: 20px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    <h3 style="color: #111827; font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">Comparação Geral de Atletas</h3>
+    <canvas id="graficoScout"></canvas>
+</div>
                     try {
                         const imported = JSON.parse(event.target.result);
                         if (confirm(`Importar ${imported.length} atletas? Isto irá substituir os dados atuais.`)) {
@@ -1313,12 +1317,6 @@
             }
         });
 
-        // INIT
-        window.onload = () => {
-            showView('home');
-        };
- </script>
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -1330,7 +1328,7 @@
       let meuGrafico;
 
       async function carregarDadosDoScout() {
-          console.log("A procurar atletas no Supabase...");
+          console.log("A ler dados do Supabase...");
           const { data: atletas, error } = await _supabase
               .from('atletas')
               .select('nome, nota');
@@ -1340,7 +1338,7 @@
               return;
           }
 
-          const ctx = document.getElementById('graficoScout'); // Garante que este ID existe no teu HTML
+          const ctx = document.getElementById('graficoScout');
           if (!ctx) return;
 
           if (meuGrafico) meuGrafico.destroy();
@@ -1350,19 +1348,22 @@
               data: {
                   labels: atletas.map(a => a.nome),
                   datasets: [{
-                      label: 'Pontuação Técnica',
+                      label: 'Nota Técnica',
                       data: atletas.map(a => a.nota),
-                      backgroundColor: '#3b82f6'
+                      backgroundColor: '#10b981' // Verde para combinar com o teu site
                   }]
               },
               options: {
-                  indexAxis: 'y', // Resolve o erro "horizontalBar"
+                  indexAxis: 'y', // Isto faz as barras ficarem deitadas sem erro [cite: 2026-01-25]
                   responsive: true,
-                  scales: { x: { beginAtZero: true, max: 10 } }
+                  scales: {
+                      x: { beginAtZero: true, max: 10 }
+                  }
               }
           });
       }
 
+      // Inicia a função mal a página carrega
       carregarDadosDoScout();
     </script>
 </body>
