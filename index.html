@@ -1317,9 +1317,53 @@
         window.onload = () => {
             showView('home');
         };
-    </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  </script> <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="script.js"></script>
+
+    <script>
+      const supabaseUrl = 'https://ocfqofvctutmvoejtgtl.supabase.co'; 
+      const supabaseKey = 'sb_publishable_lXRlEB09_NOBP24xeY38rw_7WXG_K_l'; 
+      const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+      let meuGrafico;
+
+      async function carregarDadosDoScout() {
+          console.log("A carregar dados...");
+          const { data: atletas, error } = await _supabase
+              .from('atletas')
+              .select('nome, nota');
+
+          if (error) {
+              console.error('Erro:', error.message);
+              return;
+          }
+
+          const ctx = document.getElementById('graficoScout');
+          if (!ctx) return; // Segurança caso o canvas não exista
+
+          if (meuGrafico) meuGrafico.destroy();
+
+          meuGrafico = new Chart(ctx, {
+              type: 'bar',
+              data: {
+                  labels: atletas.map(a => a.nome),
+                  datasets: [{
+                      label: 'Avaliação Técnica',
+                      data: atletas.map(a => a.nota),
+                      backgroundColor: '#3b82f6'
+                  }]
+              },
+              options: {
+                  indexAxis: 'y', 
+                  responsive: true,
+                  scales: { x: { beginAtZero: true, max: 10 } }
+              }
+          });
+      }
+      
+      // Carrega os dados mal a página abre
+      carregarDadosDoScout();
+    </script>
+
 </body>
 </html>
