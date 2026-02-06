@@ -321,6 +321,13 @@
                                 <div class="text-xs font-bold text-slate-400 uppercase">Nota Geral</div>
                             </div>
                         </div>
+                        <div class="flex flex-wrap items-center gap-3 mb-4">
+                            <input type="text" id="custom-metric-name" placeholder="Adicionar métrica personalizada (ex: Visão, Liderança)" class="input-style flex-1 min-w-[240px]">
+                            <button type="button" onclick="addCustomMetric()" class="btn-outline px-4 py-2 rounded-xl font-bold text-sm">
+                                + Adicionar Métrica
+                            </button>
+                            <span class="text-[11px] text-slate-400 font-bold uppercase">Personalize a avaliação conforme o perfil do atleta</span>
+                        </div>
                         <div id="metrics-editor" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
                     </div>
 
@@ -493,6 +500,7 @@
         let tempPhoto = "";
         let currentVideos = [];
         let radarChart = null;
+        let currentCustomMetrics = [];
 
         // POSITION-SPECIFIC METRICS
         const positionMetrics = {
@@ -522,6 +530,34 @@
             const values = Object.values(metrics).map(v => parseFloat(v) || 0);
             if (values.length === 0) return 0;
             return (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1);
+        }
+
+        function normalizeMetricName(name) {
+            return name.trim().replace(/\s+/g, ' ');
+        }
+
+        function hashMetricName(name) {
+            let hash = 0;
+            for (let i = 0; i < name.length; i++) {
+                hash = ((hash << 5) - hash) + name.charCodeAt(i);
+                hash |= 0;
+            }
+            return Math.abs(hash);
+        }
+
+        function formatMetricId(name) {
+            const cleaned = name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+            return cleaned || `metric-${hashMetricName(name)}`;
+        }
+
+        function getBaseMetrics(position) {
+            return position && positionMetrics[position] ? positionMetrics[position] : defaultMetrics;
+        }
+
+        function getCurrentMetricValues() {
+            const metrics = {};
+            document.querySelectorAll('[data-m]').forEach(i => metrics[i.dataset.m] = parseFloat(i.value));
+            return metrics;
         }
 
         function getYouTubeEmbedUrl(url) {
@@ -681,6 +717,7 @@
             currentId = generateId();
             tempPhoto = "";
             currentVideos = [];
+            currentCustomMetrics = [];
             document.querySelectorAll('input:not([type="file"]), textarea, select').forEach(i => i.value = "");
             document.getElementById('photo-preview').innerHTML = `
                 <div class="text-center">
@@ -732,6 +769,7 @@
                 document.getElementById('photo-preview').innerHTML = `<img src="${p.photo}" class="w-full h-full object-cover">`;
             }
             
+            currentCustomMetrics = Object.keys(p.metrics || {}).filter(m => !getBaseMetrics(p.position).includes(m));
             renderMetricsInputs(p.metrics || {}, p.position);
             renderVideoList();
             renderEvaluationHistory(p.evaluationHistory || []);
@@ -742,21 +780,28 @@
         function renderMetricsInputs(data, position) {
             const container = document.getElementById('metrics-editor');
             const selectedPosition = position || document.getElementById('p-position').value;
-            const metrics = selectedPosition && positionMetrics[selectedPosition] 
-                ? positionMetrics[selectedPosition] 
-                : defaultMetrics;
+            const baseMetrics = getBaseMetrics(selectedPosition);
+            const dataMetrics = Object.keys(data || {}).filter(m => !baseMetrics.includes(m));
+            const customMetrics = Array.from(new Set([...currentCustomMetrics, ...dataMetrics]));
+            currentCustomMetrics = customMetrics;
+            const metrics = [...baseMetrics, ...customMetrics];
             
             container.innerHTML = metrics.map(m => {
                 const value = data[m] || 5;
+                const metricId = formatMetricId(m);
+                const isCustom = customMetrics.includes(m);
                 return `
                     <div class="bg-gradient-to-br from-slate-50 to-white p-5 rounded-2xl border border-slate-100 hover:border-emerald-200 transition">
                         <div class="flex justify-between text-[11px] font-bold mb-2">
-                            <span class="text-slate-600 uppercase">${m}</span>
-                            <span class="text-emerald-600 font-black text-lg" id="v-${m.replace(/\s/g, '')}">${value}</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-slate-600 uppercase">${m}</span>
+                                ${isCustom ? `<button type="button" onclick="removeCustomMetric('${m}')" class="text-[10px] text-red-500 font-black uppercase hover:underline">Remover</button>` : ''}
+                            </div>
+                            <span class="text-emerald-600 font-black text-lg" id="v-${metricId}">${value}</span>
                         </div>
                         <input type="range" min="0" max="10" step="0.5" value="${value}" 
                             class="w-full h-2 accent-emerald-500 cursor-pointer" 
-                            oninput="updateMetricValue('${m.replace(/\s/g, '')}', this.value)" 
+                            oninput="updateMetricValue('${metricId}', this.value)" 
                             data-m="${m}">
                         <div class="flex justify-between text-[9px] text-slate-400 font-bold mt-1">
                             <span>0</span>
@@ -770,6 +815,32 @@
             updateOverallRating();
         }
 
+        function addCustomMetric() {
+            const input = document.getElementById('custom-metric-name');
+            if (!input) return;
+            const name = normalizeMetricName(input.value);
+            if (!name) return;
+            const baseMetrics = getBaseMetrics(document.getElementById('p-position').value);
+            const exists = [...baseMetrics, ...currentCustomMetrics].some(m => m.toLowerCase() === name.toLowerCase());
+            if (exists) {
+                alert('Essa métrica já existe. Escolha outro nome.');
+                return;
+            }
+            const currentValues = getCurrentMetricValues();
+            currentCustomMetrics.push(name);
+            input.value = "";
+            renderMetricsInputs(currentValues, document.getElementById('p-position').value);
+            updateRadarChart();
+        }
+
+        function removeCustomMetric(name) {
+            const currentValues = getCurrentMetricValues();
+            delete currentValues[name];
+            currentCustomMetrics = currentCustomMetrics.filter(m => m !== name);
+            renderMetricsInputs(currentValues, document.getElementById('p-position').value);
+            updateRadarChart();
+        }
+
         function updateMetricValue(metricId, value) {
             document.getElementById('v-' + metricId).innerText = value;
             updateOverallRating();
@@ -777,9 +848,7 @@
         }
 
         function updateOverallRating() {
-            const metrics = {};
-            document.querySelectorAll('[data-m]').forEach(i => metrics[i.dataset.m] = parseFloat(i.value));
-            const rating = calculateOverallRating(metrics);
+            const rating = calculateOverallRating(getCurrentMetricValues());
             document.getElementById('overall-rating').innerText = rating;
         }
 
@@ -788,10 +857,20 @@
             const posSelect = document.getElementById('p-position');
             if (posSelect) {
                 posSelect.addEventListener('change', function() {
-                    const currentMetrics = {};
-                    document.querySelectorAll('[data-m]').forEach(i => currentMetrics[i.dataset.m] = parseFloat(i.value));
+                    const currentMetrics = getCurrentMetricValues();
+                    currentCustomMetrics = Object.keys(currentMetrics).filter(m => !getBaseMetrics(this.value).includes(m));
                     renderMetricsInputs(currentMetrics, this.value);
                     updateRadarChart();
+                });
+            }
+
+            const customMetricInput = document.getElementById('custom-metric-name');
+            if (customMetricInput) {
+                customMetricInput.addEventListener('keydown', function(event) {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        addCustomMetric();
+                    }
                 });
             }
         });
