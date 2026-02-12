@@ -1371,8 +1371,396 @@
         }
 
         function exportPlayerPDF() {
-            // This is a placeholder - full PDF generation would require jsPDF setup
-            alert('Funcionalidade de exportação PDF em desenvolvimento. Use o atalho Ctrl+P para imprimir a página.');
+            const player = players.find(p => p.id === currentId);
+            if (!player) {
+                alert('Erro: Atleta não encontrado');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = 14;
+            const contentWidth = pageWidth - (margin * 2);
+
+            const palette = {
+                primary: [16, 185, 129],
+                dark: [15, 23, 42],
+                muted: [100, 116, 139],
+                light: [241, 245, 249],
+                border: [226, 232, 240],
+                white: [255, 255, 255]
+            };
+
+            const safeText = (value, fallback = '—') => {
+                if (value === undefined || value === null) return fallback;
+                const str = String(value).trim();
+                return str ? str : fallback;
+            };
+
+            const normalizeNumber = (value) => {
+                const num = Number(value);
+                return Number.isFinite(num) ? Math.max(0, Math.min(10, num)) : 0;
+            };
+
+            const drawSectionTitle = (title, y) => {
+                doc.setFillColor(...palette.light);
+                doc.roundedRect(margin, y - 5, contentWidth, 8, 2, 2, 'F');
+                doc.setTextColor(...palette.dark);
+                doc.setFontSize(11);
+                doc.setFont(undefined, 'bold');
+                doc.text(title, margin + 3, y);
+                return y + 8;
+            };
+
+            const ensureSpace = (currentY, minSpace) => {
+                if (currentY + minSpace > pageHeight - 18) {
+                    doc.addPage();
+                    return 18;
+                }
+                return currentY;
+            };
+
+            // Header
+            doc.setFillColor(...palette.dark);
+            doc.rect(0, 0, pageWidth, 36, 'F');
+
+            // Foto
+            if (player.photo) {
+                try {
+                    let format = 'JPEG';
+                    if (player.photo.startsWith('data:image/png')) format = 'PNG';
+                    if (player.photo.startsWith('data:image/webp')) format = 'WEBP';
+                    doc.addImage(player.photo, format, margin, 8, 24, 24, undefined, 'FAST');
+
+                    doc.setDrawColor(...palette.white);
+                    doc.setLineWidth(0.6);
+                    doc.rect(margin, 8, 24, 24);
+                } catch (err) {
+                    console.warn('Não foi possível adicionar foto ao PDF:', err);
+                }
+            }
+
+            doc.setTextColor(...palette.white);
+            doc.setFont(undefined, 'bold');
+            doc.setFontSize(18);
+            doc.text(safeText(player.name, 'Sem Nome'), margin + 30, 16);
+
+            doc.setFont(undefined, 'normal');
+            doc.setFontSize(10);
+            doc.text(safeText(player.club, 'Sem Clube'), margin + 30, 22);
+            doc.text(`${safeText(player.position, 'N/A')} • ${safeText(player.position2, 'Sem posição secundária')}`, margin + 30, 27);
+
+            const rating = calculateOverallRating(player.metrics || {});
+            doc.setFillColor(...palette.primary);
+            doc.roundedRect(pageWidth - 44, 9, 30, 18, 3, 3, 'F');
+            doc.setTextColor(...palette.white);
+            doc.setFont(undefined, 'bold');
+            doc.setFontSize(8);
+            doc.text('RATING GERAL', pageWidth - 29, 15, { align: 'center' });
+            doc.setFontSize(16);
+            doc.text(String(rating), pageWidth - 29, 23, { align: 'center' });
+
+            let y = 44;
+
+            // Helpers de layout para evitar sobreposição entre secções
+            const drawSimpleRowsSection = (title, rows) => {
+                const visibleRows = rows.filter(([, value]) => {
+                    const val = safeText(value, 'N/A');
+                    return val !== 'N/A' && val !== '—';
+                });
+                if (!visibleRows.length) return;
+
+                const lineHeight = 6;
+                const boxPadding = 4;
+                const boxHeight = (visibleRows.length * lineHeight) + (boxPadding * 2);
+
+                y = ensureSpace(y, boxHeight + 20);
+                y = drawSectionTitle(title, y);
+
+                doc.setDrawColor(...palette.border);
+                doc.setFillColor(...palette.white);
+                doc.roundedRect(margin, y - 2, contentWidth, boxHeight, 2, 2, 'FD');
+
+                let rowY = y + boxPadding;
+                visibleRows.forEach(([label, value]) => {
+                    doc.setFont(undefined, 'bold');
+                    doc.setTextColor(...palette.muted);
+                    doc.text(`${label}:`, margin + 4, rowY);
+
+                    doc.setFont(undefined, 'normal');
+                    doc.setTextColor(...palette.dark);
+                    doc.text(safeText(value, 'N/A'), margin + 42, rowY);
+                    rowY += lineHeight;
+                });
+
+                y += boxHeight + 4;
+            };
+
+            const drawTwoColumnSummary = () => {
+                y = ensureSpace(y, 72);
+                y = drawSectionTitle('RESUMO DO ATLETA', y);
+
+                const leftRows = [
+                    ['Idade', player.age ? `${player.age} anos` : 'N/A'],
+                    ['Altura', safeText(player.height, 'N/A')],
+                    ['Pé preferencial', safeText(player.foot, 'N/A')],
+                    ['Nacionalidade', safeText(player.nationality, 'N/A')]
+                ];
+
+                const rightRows = [
+                    ['Agente', safeText(player.agent, 'N/A')],
+                    ['Tag', safeText(player.tag, 'N/A')],
+                    ['Negociação', safeText(player.negotiation, 'N/A')],
+                    ['Atualizado', player.lastUpdated ? formatDate(player.lastUpdated) : new Date().toLocaleDateString('pt-PT')]
+                ];
+
+                const lineHeight = 7;
+                const boxPaddingY = 5;
+                const rowsCount = Math.max(leftRows.length, rightRows.length);
+                const boxHeight = (rowsCount * lineHeight) + (boxPaddingY * 2);
+
+                doc.setDrawColor(...palette.border);
+                doc.setFillColor(...palette.white);
+                doc.roundedRect(margin, y - 2, contentWidth, boxHeight, 2, 2, 'FD');
+
+                const leftX = margin + 4;
+                const rightX = margin + (contentWidth / 2) + 2;
+                let leftY = y + boxPaddingY;
+                let rightY = y + boxPaddingY;
+
+                leftRows.forEach(([label, value]) => {
+                    doc.setFont(undefined, 'bold');
+                    doc.setTextColor(...palette.muted);
+                    doc.text(`${label}:`, leftX, leftY);
+
+                    doc.setFont(undefined, 'normal');
+                    doc.setTextColor(...palette.dark);
+                    const text = doc.splitTextToSize(safeText(value, 'N/A'), (contentWidth / 2) - 30);
+                    doc.text(text, leftX + 26, leftY);
+                    leftY += lineHeight;
+                });
+
+                rightRows.forEach(([label, value]) => {
+                    doc.setFont(undefined, 'bold');
+                    doc.setTextColor(...palette.muted);
+                    doc.text(`${label}:`, rightX, rightY);
+
+                    doc.setFont(undefined, 'normal');
+                    doc.setTextColor(...palette.dark);
+                    const text = doc.splitTextToSize(safeText(value, 'N/A'), (contentWidth / 2) - 30);
+                    doc.text(text, rightX + 25, rightY);
+                    rightY += lineHeight;
+                });
+
+                y += boxHeight + 4;
+            };
+
+            const drawParagraphSection = (title, content) => {
+                if (!content || !String(content).trim()) return;
+
+                const lines = doc.splitTextToSize(String(content).trim(), contentWidth - 10);
+                const lineHeight = 5.8;
+                const boxPadding = 4;
+                const boxHeight = (lines.length * lineHeight) + (boxPadding * 2);
+
+                y = ensureSpace(y, boxHeight + 20);
+                y = drawSectionTitle(title, y);
+
+                doc.setDrawColor(...palette.border);
+                doc.setFillColor(...palette.white);
+                doc.roundedRect(margin, y - 2, contentWidth, boxHeight, 2, 2, 'FD');
+
+                let textY = y + boxPadding;
+                lines.forEach((line) => {
+                    doc.text(line, margin + 4, textY);
+                    textY += lineHeight;
+                });
+
+                y += boxHeight + 4;
+            };
+
+            const drawTacticalSection = () => {
+                const rows = [
+                    ['Estilo de jogo', safeText(player.playstyle, 'N/A')],
+                    ['Sistema ideal', safeText(player.system, 'N/A')],
+                    ['Pontos fortes', safeText(player.strengths, 'N/A')],
+                    ['Pontos a melhorar', safeText(player.weaknesses, 'N/A')]
+                ];
+
+                const processed = rows.map(([label, value]) => ({
+                    label,
+                    lines: doc.splitTextToSize(value, contentWidth - 44)
+                }));
+
+                const rowGap = 2.5;
+                const lineHeight = 5;
+                const boxPadding = 4;
+                const contentHeight = processed.reduce((acc, row) => acc + Math.max(1, row.lines.length) * lineHeight + rowGap, 0);
+                const boxHeight = contentHeight + (boxPadding * 2);
+
+                y = ensureSpace(y, boxHeight + 20);
+                y = drawSectionTitle('ANÁLISE TÁTICA', y);
+
+                doc.setDrawColor(...palette.border);
+                doc.setFillColor(...palette.white);
+                doc.roundedRect(margin, y - 2, contentWidth, boxHeight, 2, 2, 'FD');
+
+                let rowY = y + boxPadding;
+                processed.forEach((row) => {
+                    doc.setFont(undefined, 'bold');
+                    doc.setTextColor(...palette.muted);
+                    doc.text(`${row.label}:`, margin + 4, rowY);
+
+                    doc.setFont(undefined, 'normal');
+                    doc.setTextColor(...palette.dark);
+                    doc.text(row.lines, margin + 38, rowY);
+
+                    rowY += Math.max(1, row.lines.length) * lineHeight + rowGap;
+                });
+
+                y += boxHeight + 4;
+            };
+
+            const drawEvaluationHistorySection = () => {
+                if (!Array.isArray(player.evaluationHistory) || !player.evaluationHistory.length) return;
+
+                const last3 = player.evaluationHistory.slice(-3).reverse();
+                const lineHeight = 6;
+                const boxPadding = 4;
+                const boxHeight = (last3.length * lineHeight) + (boxPadding * 2);
+
+                y = ensureSpace(y, boxHeight + 20);
+                y = drawSectionTitle('HISTÓRICO DE AVALIAÇÕES', y);
+
+                doc.setDrawColor(...palette.border);
+                doc.setFillColor(...palette.white);
+                doc.roundedRect(margin, y - 2, contentWidth, boxHeight, 2, 2, 'FD');
+
+                doc.setFontSize(9);
+                doc.setTextColor(...palette.dark);
+                doc.setFont(undefined, 'normal');
+
+                let entryY = y + boxPadding;
+                last3.forEach((ev) => {
+                    const evRating = calculateOverallRating(ev.metrics || {});
+                    const line = `${formatDate(ev.date)} | ${safeText(ev.scoutName, 'Scout')} | Nota: ${evRating}`;
+                    doc.text(line, margin + 4, entryY);
+                    entryY += lineHeight;
+                });
+
+                y += boxHeight + 4;
+            };
+
+            // Resumo
+            drawTwoColumnSummary();
+
+            // Estatísticas
+            y = ensureSpace(y, 42);
+            y = drawSectionTitle('ESTATÍSTICAS DA ÉPOCA', y);
+            doc.setDrawColor(...palette.border);
+            doc.roundedRect(margin, y - 2, contentWidth, 24, 2, 2, 'S');
+
+            const stats = [
+                ['Jogos', player.games || 0],
+                ['Minutos', player.minutes || 0],
+                ['Golos', player.goals || 0],
+                ['Assistências', player.assists || 0]
+            ];
+
+            stats.forEach((item, idx) => {
+                const x = margin + 3 + (idx * 47);
+                doc.setFillColor(...palette.light);
+                doc.roundedRect(x, y + 2, 44, 16, 2, 2, 'F');
+                doc.setTextColor(...palette.muted);
+                doc.setFontSize(8);
+                doc.setFont(undefined, 'bold');
+                doc.text(item[0], x + 22, y + 8, { align: 'center' });
+                doc.setTextColor(...palette.dark);
+                doc.setFontSize(13);
+                doc.text(String(item[1]), x + 22, y + 15, { align: 'center' });
+            });
+            y += 26;
+
+            // Métricas
+            const metricsEntries = Object.entries(player.metrics || {});
+            if (metricsEntries.length) {
+                y = ensureSpace(y, 24);
+                y = drawSectionTitle('AVALIAÇÃO TÉCNICA (0-10)', y);
+
+                metricsEntries.forEach(([metric, value]) => {
+                    y = ensureSpace(y, 10);
+                    const score = normalizeNumber(value);
+
+                    doc.setFontSize(9);
+                    doc.setTextColor(...palette.dark);
+                    doc.setFont(undefined, 'bold');
+                    doc.text(metric, margin, y);
+                    doc.setFont(undefined, 'normal');
+                    doc.text(score.toFixed(1), pageWidth - margin, y, { align: 'right' });
+
+                    const barY = y + 1.5;
+                    doc.setFillColor(...palette.border);
+                    doc.roundedRect(margin, barY, contentWidth, 3.8, 1.8, 1.8, 'F');
+                    doc.setFillColor(...palette.primary);
+                    doc.roundedRect(margin, barY, (score / 10) * contentWidth, 3.8, 1.8, 1.8, 'F');
+                    y += 8;
+                });
+            }
+
+            // Contrato e mercado
+            drawSimpleRowsSection('INFORMAÇÃO CONTRATUAL', [
+                ['Fim de contrato', player.contractEnd ? formatDate(player.contractEnd) : 'N/A'],
+                ['Cláusula de rescisão', safeText(player.releaseClause, 'N/A')],
+                ['Valor de mercado', safeText(player.marketValue, 'N/A')]
+            ]);
+
+            // Análise + notas
+            drawTacticalSection();
+            drawParagraphSection('HISTÓRICO DE LESÕES', player.injuries);
+            drawParagraphSection('OBSERVAÇÕES DO SCOUT', player.notes);
+
+            if (Array.isArray(player.videos) && player.videos.length) {
+                y = ensureSpace(y, 18);
+                y = drawSectionTitle('VÍDEOS ASSOCIADOS', y);
+                doc.setFontSize(9);
+                doc.setTextColor(...palette.dark);
+                const videoText = `Total de vídeos: ${player.videos.length}`;
+                doc.text(videoText, margin + 3, y + 2);
+                y += 8;
+            }
+
+            drawEvaluationHistorySection();
+
+            // Rodapé
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setDrawColor(...palette.border);
+                doc.line(margin, pageHeight - 12, pageWidth - margin, pageHeight - 12);
+                doc.setFontSize(8);
+                doc.setTextColor(...palette.muted);
+                doc.text(`ScoutFlow Pro • ${new Date().toLocaleDateString('pt-PT')}`, margin, pageHeight - 7);
+                doc.text(`Página ${i} de ${pageCount}`, pageWidth - margin, pageHeight - 7, { align: 'right' });
+            }
+
+            // Salvar PDF
+            const cleanName = safeText(player.name, 'atleta').replace(/\s+/g, '_');
+            const fileName = `${cleanName}_${new Date().toISOString().split('T')[0]}.pdf`;
+            doc.save(fileName);
+
+            // Feedback visual
+            const btn = (typeof event !== 'undefined' && event?.target) ? event.target : null;
+            if (btn) {
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '✓ PDF Exportado!';
+                btn.classList.add('bg-emerald-600');
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.remove('bg-emerald-600');
+                }, 2000);
+            }
         }
 
         // KEYBOARD SHORTCUTS
