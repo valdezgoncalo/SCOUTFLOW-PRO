@@ -1370,9 +1370,286 @@
             input.click();
         }
 
-        function exportPlayerPDF() {
-            // This is a placeholder - full PDF generation would require jsPDF setup
-            alert('Funcionalidade de exportação PDF em desenvolvimento. Use o atalho Ctrl+P para imprimir a página.');
+        // EXPORT PLAYER TO PDF - Função completa e funcional
+function exportPlayerPDF() {
+    const player = players.find(p => p.id === currentId);
+    if (!player) {
+        alert('Erro: Atleta não encontrado');
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    let y = 20;
+    const lineHeight = 7;
+    const margin = 20;
+    
+    // Título
+    doc.setFontSize(20);
+    doc.setFont(undefined, 'bold');
+    doc.text(player.name || 'Sem Nome', margin, y);
+    y += 10;
+    
+    // Clube
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.text(player.club || 'Sem Clube', margin, y);
+    y += 10;
+    
+    // Linha separadora
+    doc.setDrawColor(16, 185, 129);
+    doc.setLineWidth(0.5);
+    doc.line(margin, y, 190, y);
+    y += 10;
+    
+    // Avaliação Geral
+    const rating = calculateOverallRating(player.metrics || {});
+    doc.setFontSize(16);
+    doc.setTextColor(16, 185, 129);
+    doc.setFont(undefined, 'bold');
+    doc.text(`Avaliação Geral: ${rating}`, margin, y);
+    y += 12;
+    
+    // Dados Biográficos
+    doc.setFontSize(14);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont(undefined, 'bold');
+    doc.text('DADOS BIOGRAFICOS', margin, y);
+    y += 8;
+    
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    if (player.age) {
+        doc.text(`Idade: ${player.age} anos`, margin, y);
+        y += lineHeight;
+    }
+    if (player.height) {
+        doc.text(`Altura: ${player.height} cm`, margin, y);
+        y += lineHeight;
+    }
+    if (player.position) {
+        doc.text(`Posicao: ${player.position}`, margin, y);
+        y += lineHeight;
+    }
+    if (player.position2) {
+        doc.text(`Posicao Secundaria: ${player.position2}`, margin, y);
+        y += lineHeight;
+    }
+    if (player.foot) {
+        doc.text(`Pe Preferencial: ${player.foot}`, margin, y);
+        y += lineHeight;
+    }
+    if (player.nationality) {
+        doc.text(`Nacionalidade: ${player.nationality}`, margin, y);
+        y += lineHeight;
+    }
+    if (player.agent) {
+        doc.text(`Agente: ${player.agent}`, margin, y);
+        y += lineHeight;
+    }
+    y += 5;
+    
+    // Estatísticas
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('ESTATISTICAS', margin, y);
+    y += 8;
+    
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Golos: ${player.goals || 0}`, margin, y);
+    doc.text(`Assistencias: ${player.assists || 0}`, 70, y);
+    y += lineHeight;
+    doc.text(`Minutos: ${player.minutes || 0}`, margin, y);
+    doc.text(`Jogos: ${player.games || 0}`, 70, y);
+    y += 10;
+    
+    // Métricas Técnicas
+    if (player.metrics && Object.keys(player.metrics).length > 0) {
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        doc.text('AVALIACAO TECNICA', margin, y);
+        y += 8;
+        
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        
+        Object.entries(player.metrics).forEach(([metric, value]) => {
+            if (y > 270) {
+                doc.addPage();
+                y = 20;
+            }
+            doc.text(`${metric}: ${value}/10`, margin, y);
+            
+            // Barra visual
+            const barWidth = 100;
+            const barHeight = 4;
+            const barX = margin + 60;
+            doc.setFillColor(226, 232, 240);
+            doc.rect(barX, y - 3, barWidth, barHeight, 'F');
+            doc.setFillColor(16, 185, 129);
+            doc.rect(barX, y - 3, (value / 10) * barWidth, barHeight, 'F');
+            
+            y += lineHeight + 2;
+        });
+        y += 5;
+    }
+    
+    // Informação Contratual
+    if (player.contractEnd || player.releaseClause || player.marketValue) {
+        if (y > 250) {
+            doc.addPage();
+            y = 20;
+        }
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        doc.text('INFORMACAO CONTRATUAL', margin, y);
+        y += 8;
+        
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        if (player.contractEnd) {
+            doc.text(`Fim de Contrato: ${formatDate(player.contractEnd)}`, margin, y);
+            y += lineHeight;
+        }
+        if (player.releaseClause) {
+            doc.text(`Clausula de Rescisao: ${player.releaseClause}`, margin, y);
+            y += lineHeight;
+        }
+        if (player.marketValue) {
+            doc.text(`Valor de Mercado: ${player.marketValue}`, margin, y);
+            y += lineHeight;
+        }
+        y += 5;
+    }
+    
+    // Análise Tática
+    if (player.playstyle || player.system || player.strengths || player.weaknesses) {
+        if (y > 250) {
+            doc.addPage();
+            y = 20;
+        }
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        doc.text('ANALISE TATICA', margin, y);
+        y += 8;
+        
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        if (player.playstyle) {
+            doc.text(`Estilo de Jogo: ${player.playstyle}`, margin, y);
+            y += lineHeight;
+        }
+        if (player.system) {
+            doc.text(`Sistema Ideal: ${player.system}`, margin, y);
+            y += lineHeight;
+        }
+        if (player.strengths) {
+            doc.text(`Pontos Fortes:`, margin, y);
+            y += lineHeight;
+            const strengthLines = doc.splitTextToSize(player.strengths, 170);
+            doc.text(strengthLines, margin + 5, y);
+            y += strengthLines.length * lineHeight;
+        }
+        if (player.weaknesses) {
+            doc.text(`Pontos a Melhorar:`, margin, y);
+            y += lineHeight;
+            const weaknessLines = doc.splitTextToSize(player.weaknesses, 170);
+            doc.text(weaknessLines, margin + 5, y);
+            y += weaknessLines.length * lineHeight;
+        }
+        y += 5;
+    }
+    
+    // Lesões
+    if (player.injuries) {
+        if (y > 230) {
+            doc.addPage();
+            y = 20;
+        }
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        doc.text('HISTORICO DE LESOES', margin, y);
+        y += 8;
+        
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        const injuryLines = doc.splitTextToSize(player.injuries, 170);
+        injuryLines.forEach(line => {
+            if (y > 280) {
+                doc.addPage();
+                y = 20;
+            }
+            doc.text(line, margin, y);
+            y += lineHeight;
+        });
+        y += 5;
+    }
+    
+    // Observações
+    if (player.notes) {
+        if (y > 230) {
+            doc.addPage();
+            y = 20;
+        }
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        doc.text('OBSERVACOES DE CAMPO', margin, y);
+        y += 8;
+        
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        const notesLines = doc.splitTextToSize(player.notes, 170);
+        notesLines.forEach(line => {
+            if (y > 280) {
+                doc.addPage();
+                y = 20;
+            }
+            doc.text(line, margin, y);
+            y += lineHeight;
+        });
+    }
+    
+    // Rodapé
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.text(`ScoutFlow Pro - ${new Date().toLocaleDateString('pt-PT')}`, margin, 285);
+        doc.text(`Pagina ${i} de ${pageCount}`, 170, 285);
+    }
+    
+    // Salvar PDF
+    const fileName = `${player.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+    doc.save(fileName);
+    
+    // Feedback visual
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '✓ PDF Exportado!';
+    btn.classList.add('bg-emerald-600');
+    setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.classList.remove('bg-emerald-600');
+    }, 2000);
+}
+
+// INSTRUÇÕES PARA IMPLEMENTAÇÃO:
+// 
+// Substitua a função exportPlayerPDF() existente no seu ficheiro HTML
+// (cerca da linha onde está o comentário "function exportPlayerPDF()")
+// pela função acima.
+//
+// A função já está completa e irá:
+// 1. Buscar os dados do atleta atual
+// 2. Criar um PDF profissional com todas as informações
+// 3. Incluir métricas com barras visuais
+// 4. Adicionar múltiplas páginas se necessário
+// 5. Fazer download automático do PDF
+// 6. Mostrar feedback visual de sucesso
         }
 
         // KEYBOARD SHORTCUTS
