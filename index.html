@@ -1,1836 +1,1912 @@
 <!DOCTYPE html>
 <html lang="pt-pt">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ScoutFlow Pro | Advanced Edition 2026</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <style>
-        :root { 
-            --primary-green: #10b981; 
-            --dark-green: #059669;
-            --light-green: #d1fae5;
-        }
-        body { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); font-family: 'Inter', -apple-system, sans-serif; color: #1e293b; min-height: 100vh; }
-        .glass-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border: 1px solid rgba(226,232,240,0.8); box-shadow: 0 8px 32px rgba(0,0,0,0.06); border-radius: 20px; }
-        .btn-green { background: var(--primary-green); color: white; transition: all 0.3s ease; }
-        .btn-green:hover { background: var(--dark-green); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(16,185,129,0.3); }
-        .btn-outline { border: 2px solid var(--primary-green); color: var(--primary-green); background: white; transition: all 0.3s; }
-        .btn-outline:hover { background: var(--primary-green); color: white; }
-        .input-style { border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 10px 14px; width: 100%; outline: none; transition: all 0.2s; background: white; }
-        .input-style:focus { border-color: var(--primary-green); box-shadow: 0 0 0 3px rgba(16,185,129,0.1); }
-        .hidden { display: none !important; }
-        .tag { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
-        .tag-promessa { background: #fef3c7; color: #92400e; }
-        .tag-urgente { background: #fee2e2; color: #991b1b; }
-        .tag-monitorar { background: #dbeafe; color: #1e40af; }
-        .tag-descartado { background: #f1f5f9; color: #475569; }
-        .tag-contactado { background: #d1fae5; color: #065f46; }
-        .badge { position: absolute; top: 12px; right: 12px; padding: 6px 12px; border-radius: 12px; font-size: 10px; font-weight: 900; text-transform: uppercase; backdrop-filter: blur(10px); }
-        .metric-bar { height: 8px; background: #e2e8f0; border-radius: 10px; overflow: hidden; position: relative; }
-        .metric-fill { height: 100%; background: linear-gradient(90deg, var(--primary-green), var(--dark-green)); transition: width 0.5s ease; }
-        .position-badge { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 8px 16px; border-radius: 12px; font-weight: 900; font-size: 12px; letter-spacing: 1px; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .fade-in { animation: fadeIn 0.4s ease; }
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 100; display: flex; align-items: center; justify-content: center; }
-        .modal-content { background: white; border-radius: 24px; max-width: 90vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px rgba(0,0,0,0.3); }
-        .stat-card { background: linear-gradient(135deg, #ffffff, #f8fafc); border-left: 4px solid var(--primary-green); }
-        .video-embed { aspect-ratio: 16/9; border-radius: 16px; overflow: hidden; }
-        select.input-style { cursor: pointer; }
-        .comparison-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .radar-container { position: relative; height: 300px; }
-        .filter-chip { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: white; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-        .filter-chip:hover { border-color: var(--primary-green); background: var(--light-green); }
-        .filter-chip.active { background: var(--primary-green); color: white; border-color: var(--primary-green); }
-        .timeline-item { position: relative; padding-left: 30px; padding-bottom: 20px; border-left: 2px solid #e2e8f0; }
-        .timeline-item:last-child { border-left: none; }
-        .timeline-dot { position: absolute; left: -6px; top: 0; width: 12px; height: 12px; background: var(--primary-green); border-radius: 50%; }
-        .progress-ring { transform: rotate(-90deg); }
-        .progress-ring-circle { transition: stroke-dashoffset 0.5s; }
-        .dark-mode body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #e2e8f0; }
-        .dark-mode .glass-card { background: rgba(30,41,59,0.95); border-color: rgba(71,85,105,0.3); }
-        .dark-mode .input-style { background: #1e293b; border-color: #334155; color: #e2e8f0; }
-        .quick-stat { text-align: center; padding: 20px; }
-        .quick-stat-value { font-size: 32px; font-weight: 900; color: var(--primary-green); }
-        .quick-stat-label { font-size: 12px; text-transform: uppercase; color: #64748b; font-weight: 700; margin-top: 4px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScoutFlow Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root {
+  --bg: #0a0e1a;
+  --bg2: #111827;
+  --bg3: #1a2235;
+  --surface: #1e2d45;
+  --surface2: #243352;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --accent: #00e5a0;
+  --accent2: #00b87a;
+  --accent-dim: rgba(0,229,160,0.12);
+  --accent-glow: 0 0 24px rgba(0,229,160,0.25);
+  --red: #ff4d6d;
+  --red-dim: rgba(255,77,109,0.12);
+  --amber: #ffbe0b;
+  --amber-dim: rgba(255,190,11,0.12);
+  --blue: #4d9fff;
+  --blue-dim: rgba(77,159,255,0.12);
+  --purple: #b084ff;
+  --text: #e8edf5;
+  --text2: #8896b0;
+  --text3: #4d607a;
+  --radius: 14px;
+  --radius-sm: 8px;
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0,229,160,0.08) 0%, transparent 60%),
+              radial-gradient(ellipse 60% 40% at 80% 80%, rgba(77,159,255,0.05) 0%, transparent 50%);
+  pointer-events: none; z-index: 0;
+}
+
+/* ── LAYOUT ── */
+.app { display: flex; flex-direction: column; min-height: 100vh; position: relative; z-index: 1; }
+
+/* ── NAV ── */
+nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px; height: 64px;
+  background: rgba(10,14,26,0.85);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  position: sticky; top: 0; z-index: 100;
+}
+
+.nav-brand {
+  display: flex; align-items: center; gap: 12px; cursor: pointer; text-decoration: none;
+}
+.nav-logo {
+  width: 38px; height: 38px; background: var(--accent); border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 900; color: var(--bg);
+  box-shadow: var(--accent-glow);
+  transition: transform 0.2s;
+}
+.nav-brand:hover .nav-logo { transform: rotate(-8deg) scale(1.05); }
+.nav-title { font-family: var(--font-display); font-size: 22px; letter-spacing: 2px; color: var(--text); }
+.nav-badge { font-size: 9px; font-weight: 600; color: var(--accent); font-family: var(--font-mono); letter-spacing: 1px; }
+
+.nav-links { display: flex; align-items: center; gap: 4px; }
+.nav-link {
+  padding: 8px 16px; border-radius: var(--radius-sm); font-weight: 500;
+  color: var(--text2); cursor: pointer; transition: all 0.2s; font-size: 13px;
+  border: none; background: none;
+}
+.nav-link:hover { color: var(--text); background: var(--border); }
+.nav-link.active { color: var(--accent); background: var(--accent-dim); }
+
+.btn-primary {
+  padding: 9px 20px; background: var(--accent); color: var(--bg);
+  border: none; border-radius: var(--radius-sm); font-weight: 700; font-size: 13px;
+  cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+  font-family: var(--font-body);
+}
+.btn-primary:hover { background: var(--accent2); transform: translateY(-1px); box-shadow: var(--accent-glow); }
+
+.btn-ghost {
+  padding: 9px 16px; background: transparent; color: var(--text2);
+  border: 1px solid var(--border2); border-radius: var(--radius-sm); font-weight: 500; font-size: 13px;
+  cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+  font-family: var(--font-body);
+}
+.btn-ghost:hover { color: var(--text); border-color: var(--border2); background: var(--border); }
+
+.btn-danger {
+  padding: 9px 16px; background: var(--red-dim); color: var(--red);
+  border: 1px solid rgba(255,77,109,0.2); border-radius: var(--radius-sm); font-weight: 500; font-size: 13px;
+  cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+  font-family: var(--font-body);
+}
+.btn-danger:hover { background: rgba(255,77,109,0.2); }
+
+/* ── MAIN CONTENT ── */
+main { flex: 1; padding: 28px; max-width: 1400px; margin: 0 auto; width: 100%; }
+
+/* ── VIEWS ── */
+.view { display: none; }
+.view.active { display: block; animation: fadeUp 0.3s ease; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── CARDS ── */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.card-inner { padding: 20px; }
+
+/* ── HOME ── */
+.page-header { margin-bottom: 28px; }
+.page-title { font-family: var(--font-display); font-size: 42px; letter-spacing: 2px; line-height: 1; }
+.page-title span { color: var(--accent); }
+.page-sub { color: var(--text2); font-size: 13px; margin-top: 6px; }
+
+.toolbar {
+  display: flex; gap: 12px; align-items: center;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px 20px; margin-bottom: 20px; flex-wrap: wrap;
+}
+
+.search-wrap { position: relative; flex: 1; min-width: 260px; }
+.search-wrap svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text3); width: 16px; height: 16px; }
+.search-wrap input { padding-left: 36px; }
+
+input, select, textarea {
+  background: var(--bg3); border: 1px solid var(--border2); color: var(--text);
+  border-radius: var(--radius-sm); padding: 9px 12px; font-size: 13px;
+  font-family: var(--font-body); width: 100%; outline: none; transition: all 0.2s;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,229,160,0.1);
+}
+input::placeholder, textarea::placeholder { color: var(--text3); }
+select { cursor: pointer; }
+select option { background: var(--bg2); }
+textarea { resize: vertical; line-height: 1.6; }
+
+.filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
+.chip {
+  padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  border: 1px solid var(--border2); color: var(--text2); cursor: pointer;
+  transition: all 0.2s; background: transparent; font-family: var(--font-body);
+}
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+.chip.on { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+/* ── PLAYER GRID ── */
+.grid-4 { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+
+.player-card {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+  cursor: pointer; transition: all 0.25s; overflow: hidden; position: relative;
+}
+.player-card:hover { border-color: var(--border2); transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
+.player-card:hover .pc-img img { transform: scale(1.07); }
+
+.pc-img {
+  height: 190px; background: var(--bg3); overflow: hidden; position: relative;
+  display: flex; align-items: center; justify-content: center;
+}
+.pc-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+.pc-img svg { color: var(--text3); width: 60px; height: 60px; }
+
+.pc-pos {
+  position: absolute; top: 10px; left: 10px;
+  background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
+  color: var(--accent); font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+  padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(0,229,160,0.2);
+}
+.pc-rating {
+  position: absolute; top: 10px; right: 10px;
+  background: var(--accent); color: var(--bg);
+  font-family: var(--font-display); font-size: 20px;
+  padding: 4px 10px; border-radius: 8px; line-height: 1.2;
+}
+.pc-rating.med { background: var(--amber); }
+.pc-rating.low { background: var(--text3); }
+
+.pc-body { padding: 14px 16px; }
+.pc-club { font-size: 10px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
+.pc-name { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pc-meta { display: flex; gap: 10px; font-size: 11px; color: var(--text2); margin-bottom: 10px; }
+.pc-tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+}
+.tag-promessa { background: rgba(255,190,11,0.15); color: var(--amber); }
+.tag-urgente { background: var(--red-dim); color: var(--red); }
+.tag-monitorar { background: var(--blue-dim); color: var(--blue); }
+.tag-contactado { background: var(--accent-dim); color: var(--accent); }
+.tag-descartado { background: rgba(77,96,122,0.2); color: var(--text3); }
+
+.empty-state {
+  grid-column: 1/-1; text-align: center; padding: 80px 20px;
+  color: var(--text2);
+}
+.empty-state svg { width: 60px; height: 60px; color: var(--text3); margin: 0 auto 16px; display: block; }
+.empty-state h3 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+.empty-state p { font-size: 13px; color: var(--text3); }
+
+/* ── EDITOR ── */
+.editor-layout { display: grid; grid-template-columns: 300px 1fr; gap: 20px; }
+.editor-sidebar { display: flex; flex-direction: column; gap: 16px; }
+.editor-main { display: flex; flex-direction: column; gap: 16px; }
+
+.section-title {
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;
+  color: var(--text3); padding: 0 0 12px; display: flex; align-items: center; gap: 8px;
+}
+.section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* Photo upload */
+.photo-zone {
+  aspect-ratio: 3/4; background: var(--bg3); border: 2px dashed var(--border2);
+  border-radius: var(--radius); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.2s; overflow: hidden; position: relative;
+}
+.photo-zone:hover { border-color: var(--accent); background: var(--accent-dim); }
+.photo-zone img { width: 100%; height: 100%; object-fit: cover; }
+.photo-placeholder { text-align: center; color: var(--text3); }
+.photo-placeholder svg { width: 40px; height: 40px; margin-bottom: 8px; }
+.photo-placeholder span { font-size: 12px; font-weight: 600; display: block; }
+
+/* Metric sliders */
+.metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.metric-item { background: var(--bg3); border-radius: var(--radius-sm); padding: 12px 14px; border: 1px solid var(--border); transition: border-color 0.2s; }
+.metric-item:hover { border-color: var(--border2); }
+.metric-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.metric-label { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+.metric-val { font-family: var(--font-mono); font-size: 15px; font-weight: 500; color: var(--accent); }
+input[type="range"] {
+  -webkit-appearance: none; width: 100%; height: 4px; border-radius: 2px; padding: 0;
+  background: linear-gradient(to right, var(--accent) 0%, var(--accent) var(--pct, 50%), var(--surface2) var(--pct, 50%), var(--surface2) 100%);
+  border: none; cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
+  background: var(--accent); border: 2px solid var(--bg); box-shadow: 0 0 6px rgba(0,229,160,0.5);
+}
+input[type="range"]:focus { box-shadow: none; border: none; }
+
+/* Rating display */
+.overall-ring {
+  width: 90px; height: 90px; position: relative; margin: 0 auto;
+}
+.ring-svg { width: 90px; height: 90px; }
+.ring-track { fill: none; stroke: var(--surface2); stroke-width: 7; }
+.ring-fill { fill: none; stroke: var(--accent); stroke-width: 7; stroke-linecap: round; transition: stroke-dashoffset 0.5s; }
+.ring-label { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.ring-val { font-family: var(--font-display); font-size: 24px; color: var(--accent); line-height: 1; }
+.ring-sub { font-size: 9px; color: var(--text3); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
+
+/* ── PITCH MAP ── */
+.pitch-wrap {
+  position: relative; background: var(--bg3); border-radius: var(--radius);
+  border: 1px solid var(--border); overflow: hidden;
+}
+.pitch-svg { width: 100%; display: block; }
+.pitch-instructions { text-align: center; font-size: 12px; color: var(--text3); padding: 8px 0; }
+
+.hotspot {
+  cursor: pointer; transition: all 0.2s;
+}
+.hotspot circle { transition: all 0.2s; }
+.hotspot:hover circle { opacity: 0.9; transform: scale(1.2); transform-origin: center; }
+.hotspot.on circle { fill: var(--accent) !important; filter: drop-shadow(0 0 6px rgba(0,229,160,0.8)); }
+.hotspot.on text { fill: var(--bg) !important; }
+
+/* ── REPORT ── */
+.report-form { display: flex; flex-direction: column; gap: 16px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.field label { display: block; font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+
+.report-list { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+.report-item {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 14px 16px; cursor: pointer; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center;
+}
+.report-item:hover { border-color: var(--border2); background: var(--surface); }
+.ri-left h4 { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+.ri-meta { font-size: 11px; color: var(--text2); display: flex; gap: 10px; }
+.ri-rating { font-family: var(--font-display); font-size: 28px; color: var(--accent); }
+
+/* ── ANALYTICS ── */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+.stat-box {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 18px 20px;
+}
+.stat-val { font-family: var(--font-display); font-size: 36px; line-height: 1; }
+.stat-val.green { color: var(--accent); }
+.stat-val.blue { color: var(--blue); }
+.stat-val.amber { color: var(--amber); }
+.stat-val.red { color: var(--red); }
+.stat-lbl { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+.chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.chart-box { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+.chart-box h3 { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 16px; }
+.chart-box canvas { max-height: 220px; }
+
+/* ── COMPARE ── */
+.compare-selects { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+.compare-cards { display: grid; gap: 16px; margin-bottom: 20px; }
+.compare-player-header { text-align: center; padding: 20px; }
+.compare-player-header img { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent); margin: 0 auto 8px; display: block; }
+.compare-metric-row { margin-bottom: 12px; }
+.compare-metric-row .cmr-label { font-size: 11px; font-weight: 600; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.compare-bars { display: flex; gap: 4px; }
+.cbar { flex: 1; }
+.cbar-track { height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; margin-bottom: 3px; }
+.cbar-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+.cbar-name { font-size: 10px; color: var(--text3); text-align: center; }
+
+/* ── TABS ── */
+.tabs { display: flex; gap: 4px; background: var(--bg3); padding: 4px; border-radius: var(--radius-sm); width: fit-content; margin-bottom: 16px; }
+.tab { padding: 7px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--text2); transition: all 0.2s; border: none; background: none; font-family: var(--font-body); }
+.tab.active { background: var(--surface2); color: var(--text); }
+
+/* ── TOASTS ── */
+.toast {
+  position: fixed; bottom: 28px; right: 28px; z-index: 9999;
+  background: var(--accent); color: var(--bg); font-weight: 700; font-size: 13px;
+  padding: 12px 20px; border-radius: var(--radius-sm); box-shadow: var(--accent-glow);
+  animation: toastIn 0.3s ease;
+  display: flex; align-items: center; gap: 8px;
+}
+.toast.error { background: var(--red); color: #fff; }
+@keyframes toastIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ── DIVIDER ── */
+hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
+
+/* ── STAR RATING ── */
+.stars { display: flex; gap: 4px; }
+.star { font-size: 20px; cursor: pointer; color: var(--text3); transition: color 0.15s; }
+.star.on, .star:hover ~ .star { color: var(--amber); }
+.stars:hover .star { color: var(--amber); }
+.stars .star:hover ~ .star { color: var(--text3); }
+
+/* ── VIDEO LIST ── */
+.video-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--bg3); border-radius: var(--radius-sm); border: 1px solid var(--border); }
+.video-item a { color: var(--blue); font-size: 13px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.video-item span { font-size: 11px; color: var(--text3); }
+.video-item button { background: none; border: none; color: var(--text3); cursor: pointer; padding: 2px; }
+.video-item button:hover { color: var(--red); }
+
+/* ── MODAL ── */
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.modal { background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--radius); max-width: 560px; width: 100%; max-height: 80vh; overflow-y: auto; padding: 28px; }
+.modal h2 { font-family: var(--font-display); font-size: 26px; letter-spacing: 1px; margin-bottom: 20px; }
+
+.actions-bar { display: flex; gap: 10px; align-items: center; margin-bottom: 24px; flex-wrap: wrap; }
+
+/* responsive */
+@media (max-width: 900px) {
+  .editor-layout { grid-template-columns: 1fr; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .chart-grid { grid-template-columns: 1fr; }
+  .compare-selects { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  main { padding: 16px; }
+  nav { padding: 0 16px; }
+  .nav-title { display: none; }
+  .form-row, .form-row-3 { grid-template-columns: 1fr; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .metric-grid { grid-template-columns: 1fr; }
+}
+</style>
 </head>
 <body>
+<div class="app">
 
-    <!-- NAVIGATION -->
-    <nav class="bg-white/95 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 shadow-sm">
-        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-3 cursor-pointer group" onclick="showView('home')">
-                <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center text-white font-black group-hover:rotate-12 transition-transform shadow-lg">
-                    <span class="text-xl">⚽</span>
-                </div>
-                <div>
-                    <h1 class="text-xl font-black text-slate-800 tracking-tight">SCOUTFLOW PRO</h1>
-                    <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Advanced Edition</p>
-                </div>
+<!-- NAV -->
+<nav>
+  <a class="nav-brand" onclick="goHome()">
+    <div class="nav-logo">⚽</div>
+    <div>
+      <div class="nav-title">SCOUTFLOW</div>
+      <div class="nav-badge">PRO EDITION</div>
+    </div>
+  </a>
+  <div class="nav-links">
+    <button class="nav-link active" id="nl-home" onclick="showView('home')">Atletas</button>
+    <button class="nav-link" id="nl-analytics" onclick="showView('analytics')">Analytics</button>
+    <button class="nav-link" id="nl-compare" onclick="showView('compare')">Comparar</button>
+    <button class="btn-primary" onclick="newPlayer()" style="margin-left:8px">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      Novo Atleta
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ═══════════════ HOME ═══════════════ -->
+<div class="view active" id="view-home">
+  <div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-end;">
+    <div>
+      <div class="page-title">BASE DE <span>DADOS</span></div>
+      <div class="page-sub">Sistema de scouting profissional · <span id="total-count">0</span> atletas</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn-ghost" onclick="exportAll()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        Exportar
+      </button>
+      <button class="btn-ghost" onclick="importData()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+        Importar
+      </button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="text" id="search" placeholder="Pesquisar atleta, clube, agente..." oninput="renderGrid()">
+    </div>
+    <select id="f-pos" onchange="renderGrid()" style="width:160px">
+      <option value="">Todas as Posições</option>
+      <option value="GR">GR · Guarda-Redes</option>
+      <option value="DC">DC · Defesa Central</option>
+      <option value="LD">LD · Lateral Direito</option>
+      <option value="LE">LE · Lateral Esquerdo</option>
+      <option value="MC">MC · Médio Centro</option>
+      <option value="MD">MD · Médio Defensivo</option>
+      <option value="MO">MO · Médio Ofensivo</option>
+      <option value="EXT">EXT · Extremo</option>
+      <option value="PL">PL · Ponta de Lança</option>
+    </select>
+    <select id="f-tag" onchange="renderGrid()" style="width:150px">
+      <option value="">Todos os Status</option>
+      <option value="promessa">🌟 Promessa</option>
+      <option value="urgente">🔥 Urgente</option>
+      <option value="monitorar">👁 Monitorar</option>
+      <option value="contactado">✅ Contactado</option>
+      <option value="descartado">❌ Descartado</option>
+    </select>
+    <select id="f-sort" onchange="renderGrid()" style="width:140px">
+      <option value="recent">Mais Recentes</option>
+      <option value="rating">Melhor Nota</option>
+      <option value="name">Nome A→Z</option>
+      <option value="age">Idade ↑</option>
+    </select>
+    <div class="filter-row" style="margin-top:0; gap:6px;">
+      <button class="chip" id="chip-sub21" onclick="toggleChip('sub21')">Sub-21</button>
+      <button class="chip" id="chip-high" onclick="toggleChip('high')">Nota ≥ 7.5</button>
+      <button class="chip" id="chip-free" onclick="toggleChip('free')">Agente Livre</button>
+    </div>
+  </div>
+
+  <div class="grid-4" id="player-grid"></div>
+</div>
+
+<!-- ═══════════════ EDITOR ═══════════════ -->
+<div class="view" id="view-editor">
+  <div class="actions-bar">
+    <button class="btn-ghost" onclick="showView('home')">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Voltar
+    </button>
+    <button class="btn-ghost" id="btn-report" onclick="newReport()">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
+      + Relatório de Jogo
+    </button>
+    <div style="flex:1"></div>
+    <button class="btn-ghost" onclick="exportPDF()">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      Exportar PDF
+    </button>
+    <button class="btn-danger" onclick="deletePlayer()">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+      Eliminar
+    </button>
+    <button class="btn-primary" onclick="savePlayer()">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+      Guardar
+    </button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('perfil')">Perfil</button>
+    <button class="tab" onclick="switchTab('tecnico')">Avaliação Técnica</button>
+    <button class="tab" onclick="switchTab('pitch')">Mapa Tático</button>
+    <button class="tab" onclick="switchTab('relatorios')">Relatórios de Jogo</button>
+  </div>
+
+  <!-- TAB: PERFIL -->
+  <div id="tab-perfil" class="editor-layout">
+    <div class="editor-sidebar">
+      <div class="card">
+        <div class="card-inner">
+          <div class="photo-zone" onclick="document.getElementById('photo-in').click()" id="photo-zone">
+            <div class="photo-placeholder">
+              <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              <span>Clique para adicionar foto</span>
             </div>
-            <div class="flex items-center gap-4">
-                <button onclick="showView('home')" class="text-slate-600 font-bold hover:text-emerald-600 transition px-3">
-                    <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-                    Diretório
-                </button>
-                <button onclick="showView('analytics')" class="text-slate-600 font-bold hover:text-emerald-600 transition px-3">
-                    <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                    Analytics
-                </button>
-                <button onclick="showView('comparison')" class="text-slate-600 font-bold hover:text-emerald-600 transition px-3">
-                    <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                    Comparar
-                </button>
-                <button onclick="prepareNewPlayer()" class="btn-green px-6 py-2.5 rounded-full font-bold text-sm shadow-lg hover:shadow-xl">
-                    <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                    Novo Atleta
-                </button>
-            </div>
+          </div>
+          <input type="file" id="photo-in" accept="image/*" style="display:none" onchange="handlePhoto(this)">
         </div>
-    </nav>
+      </div>
 
-    <main class="max-w-7xl mx-auto p-6">
+      <div class="card card-inner">
+        <div class="section-title">Status</div>
+        <div class="field" style="margin-bottom:10px">
+          <label>Tag</label>
+          <select id="p-tag">
+            <option value="">Sem Tag</option>
+            <option value="promessa">🌟 Promessa</option>
+            <option value="urgente">🔥 Urgente</option>
+            <option value="monitorar">👁 Monitorar</option>
+            <option value="contactado">✅ Contactado</option>
+            <option value="descartado">❌ Descartado</option>
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:10px">
+          <label>Estado Negociação</label>
+          <select id="p-neg">
+            <option value="">—</option>
+            <option value="inicial">Contacto Inicial</option>
+            <option value="negociacao">Em Negociação</option>
+            <option value="proposta">Proposta Enviada</option>
+            <option value="fechado">Fechado ✓</option>
+            <option value="rejeitado">Rejeitado</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Prioridade Scout</label>
+          <div class="stars" id="priority-stars">
+            <span class="star" data-v="1">★</span>
+            <span class="star" data-v="2">★</span>
+            <span class="star" data-v="3">★</span>
+            <span class="star" data-v="4">★</span>
+            <span class="star" data-v="5">★</span>
+          </div>
+        </div>
+      </div>
 
-        <!-- HOME VIEW -->
-        <section id="view-home">
-            <div class="py-8">
-                <div class="flex justify-between items-end mb-8">
-                    <div>
-                        <h2 class="text-4xl font-black text-slate-900">Base de Dados</h2>
-                        <p class="text-slate-500 mt-1">Sistema inteligente de scouting profissional</p>
-                    </div>
-                    <div class="flex gap-3">
-                        <button onclick="exportAllData()" class="btn-outline px-5 py-2 rounded-xl font-bold text-sm">
-                            <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                            Exportar Dados
-                        </button>
-                        <button onclick="importData()" class="btn-outline px-5 py-2 rounded-xl font-bold text-sm">
-                            <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                            Importar
-                        </button>
-                    </div>
-                </div>
+      <div class="card card-inner">
+        <div class="section-title">Contrato & Mercado</div>
+        <div class="field" style="margin-bottom:10px">
+          <label>Fim de Contrato</label>
+          <input type="date" id="p-contract">
+        </div>
+        <div class="field" style="margin-bottom:10px">
+          <label>Cláusula de Rescisão</label>
+          <input type="text" id="p-clause" placeholder="Ex: 500.000€">
+        </div>
+        <div class="field">
+          <label>Valor de Mercado Est.</label>
+          <input type="text" id="p-market" placeholder="Ex: 200.000€">
+        </div>
+      </div>
+    </div>
 
-                <!-- FILTERS -->
-                <div class="glass-card p-6 mb-8">
-                    <div class="flex flex-wrap gap-3 mb-4">
-                        <input type="text" id="search-input" placeholder="🔍 Pesquisar atleta, clube ou agente..." class="input-style flex-1 min-w-[300px]" oninput="applyFilters()">
-                        <select id="filter-position" class="input-style w-48" onchange="applyFilters()">
-                            <option value="">Todas as Posições</option>
-                            <option value="GR">Guarda-Redes</option>
-                            <option value="DC">Defesa Central</option>
-                            <option value="LD">Lateral Direito</option>
-                            <option value="LE">Lateral Esquerdo</option>
-                            <option value="MC">Médio Centro</option>
-                            <option value="MD">Médio Defensivo</option>
-                            <option value="MO">Médio Ofensivo</option>
-                            <option value="EXT">Extremo</option>
-                            <option value="PL">Ponta de Lança</option>
-                        </select>
-                        <select id="filter-tag" class="input-style w-48" onchange="applyFilters()">
-                            <option value="">Todas as Tags</option>
-                            <option value="promessa">🌟 Promessa</option>
-                            <option value="urgente">🔥 Urgente</option>
-                            <option value="monitorar">👁️ Monitorar</option>
-                            <option value="contactado">✅ Contactado</option>
-                            <option value="descartado">❌ Descartado</option>
-                        </select>
-                        <select id="sort-by" class="input-style w-48" onchange="applyFilters()">
-                            <option value="recent">Mais Recentes</option>
-                            <option value="name">Nome (A-Z)</option>
-                            <option value="rating">Melhor Avaliação</option>
-                            <option value="age">Idade</option>
-                        </select>
-                    </div>
-                    <div class="flex gap-2">
-                        <span class="text-xs font-bold text-slate-400 uppercase">Filtros Rápidos:</span>
-                        <button class="filter-chip" onclick="quickFilter('age', 'sub21')">Sub-21</button>
-                        <button class="filter-chip" onclick="quickFilter('rating', 'high')">Nota ≥ 7.5</button>
-                        <button class="filter-chip" onclick="quickFilter('contract', 'expiring')">Contrato a Expirar</button>
-                        <button class="filter-chip" onclick="resetFilters()">Limpar Filtros</button>
-                    </div>
-                </div>
+    <div class="editor-main">
+      <div class="card card-inner">
+        <div class="section-title">Dados Biográficos</div>
+        <div class="form-row" style="margin-bottom:12px">
+          <div class="field"><label>Nome Completo *</label><input type="text" id="p-name" placeholder="Nome do atleta"></div>
+          <div class="field"><label>Clube Atual</label><input type="text" id="p-club" placeholder="Clube / Agente Livre"></div>
+        </div>
+        <div class="form-row-3" style="margin-bottom:12px">
+          <div class="field"><label>Idade</label><input type="number" id="p-age" placeholder="Ex: 19"></div>
+          <div class="field"><label>Altura (cm)</label><input type="number" id="p-height" placeholder="Ex: 180"></div>
+          <div class="field"><label>Peso (kg)</label><input type="number" id="p-weight" placeholder="Ex: 75"></div>
+        </div>
+        <div class="form-row" style="margin-bottom:12px">
+          <div class="field">
+            <label>Posição Principal *</label>
+            <select id="p-pos" onchange="onPositionChange()">
+              <option value="">Selecionar posição</option>
+              <option value="GR">🧤 Guarda-Redes (GR)</option>
+              <option value="DC">🛡 Defesa Central (DC)</option>
+              <option value="LD">→ Lateral Direito (LD)</option>
+              <option value="LE">← Lateral Esquerdo (LE)</option>
+              <option value="MC">⚙ Médio Centro (MC)</option>
+              <option value="MD">🔰 Médio Defensivo (MD)</option>
+              <option value="MO">✨ Médio Ofensivo (MO)</option>
+              <option value="EXT">⚡ Extremo (EXT)</option>
+              <option value="PL">🎯 Ponta de Lança (PL)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Posição Secundária</label>
+            <select id="p-pos2">
+              <option value="">—</option>
+              <option value="GR">GR</option><option value="DC">DC</option>
+              <option value="LD">LD</option><option value="LE">LE</option>
+              <option value="MC">MC</option><option value="MD">MD</option>
+              <option value="MO">MO</option><option value="EXT">EXT</option>
+              <option value="PL">PL</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Pé Preferencial</label>
+            <select id="p-foot">
+              <option value="">—</option>
+              <option value="Direito">Direito</option>
+              <option value="Esquerdo">Esquerdo</option>
+              <option value="Ambidestro">Ambidestro</option>
+            </select>
+          </div>
+          <div class="field"><label>Nacionalidade</label><input type="text" id="p-nation" placeholder="Ex: Portuguesa"></div>
+        </div>
+      </div>
 
-                <!-- PLAYER GRID -->
-                <div id="player-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+      <div class="card card-inner">
+        <div class="section-title">Estatísticas da Época</div>
+        <div class="form-row-3" style="margin-bottom:12px">
+          <div class="field"><label>Jogos</label><input type="number" id="p-games" placeholder="0"></div>
+          <div class="field"><label>Minutos</label><input type="number" id="p-mins" placeholder="0"></div>
+          <div class="field"><label>Golos</label><input type="number" id="p-goals" placeholder="0"></div>
+        </div>
+        <div class="form-row-3">
+          <div class="field"><label>Assistências</label><input type="number" id="p-assists" placeholder="0"></div>
+          <div class="field"><label>Cartões Amarelos</label><input type="number" id="p-yellow" placeholder="0"></div>
+          <div class="field"><label>Cartões Vermelhos</label><input type="number" id="p-red" placeholder="0"></div>
+        </div>
+      </div>
+
+      <div class="card card-inner">
+        <div class="section-title">Análise Tática</div>
+        <div class="form-row" style="margin-bottom:12px">
+          <div class="field">
+            <label>Estilo de Jogo</label>
+            <select id="p-style">
+              <option value="">—</option>
+              <option value="técnico">Técnico / Habilidoso</option>
+              <option value="físico">Físico / Potente</option>
+              <option value="rápido">Rápido / Explosivo</option>
+              <option value="inteligente">Inteligente / Posicional</option>
+              <option value="versátil">Versátil / Completo</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Sistema Ideal</label>
+            <select id="p-system">
+              <option value="">—</option>
+              <option value="4-3-3">4-3-3</option>
+              <option value="4-4-2">4-4-2</option>
+              <option value="3-5-2">3-5-2</option>
+              <option value="4-2-3-1">4-2-3-1</option>
+              <option value="3-4-3">3-4-3</option>
+              <option value="5-3-2">5-3-2</option>
+            </select>
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:10px"><label>Pontos Fortes</label><input type="text" id="p-strengths" placeholder="Ex: Remate de longe, Velocidade, Jogo aéreo..."></div>
+        <div class="field" style="margin-bottom:10px"><label>Pontos a Melhorar</label><input type="text" id="p-weak" placeholder="Ex: Pé não dominante, Decisão defensiva..."></div>
+        <div class="field"><label>Histórico de Lesões</label><textarea id="p-injuries" placeholder="Descrição de lesões anteriores, tempo de recuperação..." style="height:70px"></textarea></div>
+      </div>
+
+      <div class="card card-inner">
+        <div class="section-title">Agente & Contacto</div>
+        <div class="form-row">
+          <div class="field"><label>Agente / Empresa</label><input type="text" id="p-agent" placeholder="Nome do agente"></div>
+          <div class="field"><label>Contacto</label><input type="text" id="p-contact" placeholder="Email ou telefone"></div>
+        </div>
+      </div>
+
+      <div class="card card-inner">
+        <div class="section-title">Vídeos & Links</div>
+        <div style="display:flex; gap:8px; margin-bottom:10px">
+          <input type="url" id="vid-url" placeholder="URL YouTube / Vimeo..." style="flex:2">
+          <input type="text" id="vid-desc" placeholder="Descrição" style="flex:1">
+          <button class="btn-ghost" onclick="addVideo()">Adicionar</button>
+        </div>
+        <div id="vid-list"></div>
+      </div>
+
+      <div class="card card-inner">
+        <div class="section-title">Notas do Scout</div>
+        <textarea id="p-notes" placeholder="Observações detalhadas: comportamento em campo, mentalidade, posicionamento, potencial de crescimento..." style="height:120px"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: TÉCNICO -->
+  <div id="tab-tecnico" style="display:none">
+    <div style="display:grid; grid-template-columns: 1fr 340px; gap:20px;">
+      <div>
+        <div class="card card-inner" style="margin-bottom:16px">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <div>
+              <div class="section-title" style="margin-bottom:0; padding-bottom:0">Métricas de Avaliação</div>
+              <p style="font-size:12px; color:var(--text3); margin-top:4px">Adaptadas à posição selecionada</p>
             </div>
-        </section>
-
-        <!-- EDITOR VIEW -->
-        <section id="view-editor" class="hidden space-y-6 fade-in">
-            <div class="flex justify-between items-center">
-                <button onclick="showView('home')" class="flex items-center gap-2 text-slate-500 hover:text-emerald-600 font-bold transition">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                    Voltar ao Diretório
-                </button>
-                <div class="flex gap-3">
-                    <button onclick="deletePlayer()" class="btn-outline px-5 py-2 rounded-xl font-bold text-sm border-red-500 text-red-500 hover:bg-red-500 hover:text-white">
-                        <svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                        Eliminar
-                    </button>
-                    <button onclick="exportPlayerPDF()" class="btn-outline px-5 py-2 rounded-xl font-bold text-sm">
-                        <svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                        Exportar PDF
-                    </button>
-                    <button onclick="savePlayer()" class="btn-green px-8 py-2.5 rounded-xl font-bold shadow-lg">
-                        <svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        Guardar Perfil
-                    </button>
-                </div>
+            <div class="overall-ring">
+              <svg class="ring-svg" viewBox="0 0 90 90">
+                <circle class="ring-track" cx="45" cy="45" r="38"/>
+                <circle class="ring-fill" id="ring-circle" cx="45" cy="45" r="38" stroke-dasharray="239" stroke-dashoffset="239"/>
+              </svg>
+              <div class="ring-label">
+                <div class="ring-val" id="ring-val">—</div>
+                <div class="ring-sub">NOTA</div>
+              </div>
             </div>
+          </div>
+          <div class="metric-grid" id="metrics-editor"></div>
+          <div style="margin-top:12px; display:flex; gap:8px; align-items:center;">
+            <input type="text" id="custom-m" placeholder="Adicionar métrica personalizada..." style="flex:1">
+            <button class="btn-ghost" onclick="addCustomMetric()">+ Adicionar</button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card card-inner">
+          <div class="section-title">Perfil Radar</div>
+          <canvas id="radarChart" style="max-height:300px"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                <!-- LEFT SIDEBAR -->
-                <div class="space-y-6">
-                    <!-- PHOTO -->
-                    <div class="glass-card p-6 text-center">
-                        <div id="photo-preview" class="w-full aspect-square bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl mb-4 border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden cursor-pointer hover:border-emerald-500 transition" onclick="document.getElementById('photo-input').click()">
-                            <div class="text-center">
-                                <svg class="w-16 h-16 mx-auto text-slate-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">Carregar Foto</span>
-                            </div>
-                        </div>
-                        <input type="file" id="photo-input" class="hidden" accept="image/*" onchange="handlePhoto(this)">
-                        <button onclick="document.getElementById('photo-input').click()" class="text-emerald-600 font-bold text-xs uppercase hover:underline">Alterar Imagem</button>
-                    </div>
+  <!-- TAB: PITCH -->
+  <div id="tab-pitch" style="display:none">
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+      <div class="card card-inner">
+        <div class="section-title">Zonas de Ação no Campo</div>
+        <p style="font-size:12px; color:var(--text3); margin-bottom:12px;">Clique nas zonas onde o atleta atua / é mais eficaz</p>
+        <div class="pitch-wrap">
+          <svg id="pitch-svg" class="pitch-svg" viewBox="0 0 340 510" xmlns="http://www.w3.org/2000/svg">
+            <!-- Relva -->
+            <defs>
+              <pattern id="grass" x="0" y="0" width="340" height="51" patternUnits="userSpaceOnUse">
+                <rect width="340" height="51" fill="#1a2e1a"/>
+                <rect width="340" height="51" fill="#1f351f" y="51"/>
+              </pattern>
+            </defs>
+            <rect width="340" height="510" fill="url(#grass)" rx="4"/>
+            <!-- Linhas do campo -->
+            <g stroke="#4a7c59" stroke-width="1.5" fill="none" opacity="0.7">
+              <!-- Linha de meio campo -->
+              <line x1="20" y1="255" x2="320" y2="255"/>
+              <!-- Círculo central -->
+              <circle cx="170" cy="255" r="45"/>
+              <circle cx="170" cy="255" r="2" fill="#4a7c59"/>
+              <!-- Área de baliza (ataque - topo) -->
+              <rect x="105" y="20" width="130" height="55"/>
+              <rect x="130" y="20" width="80" height="25"/>
+              <!-- Área de baliza (defesa - fundo) -->
+              <rect x="105" y="435" width="130" height="55"/>
+              <rect x="130" y="465" width="80" height="25"/>
+              <!-- Linhas de fundo e laterais -->
+              <rect x="20" y="20" width="300" height="470"/>
+              <!-- Ponto de penalty topo -->
+              <circle cx="170" cy="95" r="2" fill="#4a7c59"/>
+              <!-- Arco penalty topo -->
+              <path d="M 125 75 A 45 45 0 0 1 215 75" fill="none"/>
+              <!-- Ponto de penalty baixo -->
+              <circle cx="170" cy="415" r="2" fill="#4a7c59"/>
+              <!-- Arco penalty baixo -->
+              <path d="M 125 435 A 45 45 0 0 0 215 435" fill="none"/>
+            </g>
+            <!-- Hotspots - Grid 5x6 -->
+            <!-- Row 1 (attack) -->
+            <g id="hotspots"></g>
+          </svg>
+        </div>
+        <div class="pitch-instructions">Zonas selecionadas: <strong id="zones-count" style="color:var(--accent)">0</strong></div>
+      </div>
+      <div class="card card-inner">
+        <div class="section-title">Posição no Sistema</div>
+        <div style="margin-bottom:12px">
+          <label style="font-size:11px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px">Sistema Tático Preferencial</label>
+          <select id="pitch-system" onchange="renderFormation()" style="margin-bottom:10px">
+            <option value="">Selecionar formação</option>
+            <option value="433">4-3-3</option>
+            <option value="442">4-4-2</option>
+            <option value="352">3-5-2</option>
+            <option value="4231">4-2-3-1</option>
+            <option value="343">3-4-3</option>
+            <option value="532">5-3-2</option>
+          </select>
+        </div>
+        <div class="pitch-wrap">
+          <svg id="formation-svg" viewBox="0 0 300 420" xmlns="http://www.w3.org/2000/svg" style="width:100%">
+            <rect width="300" height="420" fill="#1a2e1a" rx="4"/>
+            <g stroke="#4a7c59" stroke-width="1.2" fill="none" opacity="0.6">
+              <rect x="15" y="15" width="270" height="390"/>
+              <line x1="15" y1="210" x2="285" y2="210"/>
+              <circle cx="150" cy="210" r="38"/>
+              <rect x="90" y="15" width="120" height="50"/>
+              <rect x="90" y="355" width="120" height="50"/>
+            </g>
+            <g id="formation-dots"></g>
+          </svg>
+        </div>
+        <div class="field" style="margin-top:14px">
+          <label style="font-size:11px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px">Notas Táticas</label>
+          <textarea id="p-tactical-notes" placeholder="Observações sobre posicionamento, movimentos preferidos, pressing, transições..." style="height:90px"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
 
-                    <!-- BIO INFO -->
-                    <div class="glass-card p-6 space-y-4">
-                        <h3 class="text-xs font-black text-slate-400 uppercase mb-3 flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                            Dados Biográficos
-                        </h3>
-                        <input type="text" id="p-name" placeholder="Nome Completo *" class="input-style font-bold">
-                        <input type="text" id="p-club" placeholder="Clube Atual" class="input-style">
-                        
-                        <div class="grid grid-cols-2 gap-3">
-                            <input type="number" id="p-age" placeholder="Idade" class="input-style">
-                            <input type="text" id="p-height" placeholder="Altura (cm)" class="input-style">
-                        </div>
+  <!-- TAB: RELATÓRIOS -->
+  <div id="tab-relatorios" style="display:none">
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;" id="reports-layout">
+      <div>
+        <div class="card card-inner">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px">
+            <div class="section-title" style="margin-bottom:0; padding-bottom:0">Relatórios de Observação</div>
+            <button class="btn-primary" onclick="newReport()" style="font-size:12px; padding:7px 14px">+ Novo Relatório</button>
+          </div>
+          <div id="reports-list"><p style="color:var(--text3); font-size:13px; text-align:center; padding:30px 0">Nenhum relatório de jogo ainda.<br>Adicione o primeiro relatório de observação.</p></div>
+        </div>
+      </div>
+      <div id="report-detail-panel">
+        <div class="card card-inner" style="text-align:center; padding:40px 20px; color:var(--text3)">
+          <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin:0 auto 12px; display:block"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
+          <p>Selecione ou crie um relatório</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-                        <select id="p-position" class="input-style font-bold">
-                            <option value="">Posição Principal *</option>
-                            <option value="GR">🧤 Guarda-Redes</option>
-                            <option value="DC">🛡️ Defesa Central</option>
-                            <option value="LD">➡️ Lateral Direito</option>
-                            <option value="LE">⬅️ Lateral Esquerdo</option>
-                            <option value="MC">⚙️ Médio Centro</option>
-                            <option value="MD">🔰 Médio Defensivo</option>
-                            <option value="MO">✨ Médio Ofensivo</option>
-                            <option value="EXT">⚡ Extremo</option>
-                            <option value="PL">🎯 Ponta de Lança</option>
-                        </select>
+<!-- ═══════════════ ANALYTICS ═══════════════ -->
+<div class="view" id="view-analytics">
+  <div class="page-header">
+    <div class="page-title">ANALYTICS <span>DASHBOARD</span></div>
+    <div class="page-sub">Estatísticas e insights da base de dados</div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-box"><div class="stat-val green" id="a-total">0</div><div class="stat-lbl">Total Atletas</div></div>
+    <div class="stat-box"><div class="stat-val blue" id="a-avg-age">0</div><div class="stat-lbl">Idade Média</div></div>
+    <div class="stat-box"><div class="stat-val amber" id="a-avg-rat">—</div><div class="stat-lbl">Nota Média</div></div>
+    <div class="stat-box"><div class="stat-val red" id="a-promises">0</div><div class="stat-lbl">Promessas</div></div>
+  </div>
+  <div class="chart-grid">
+    <div class="chart-box"><h3>Distribuição por Posição</h3><canvas id="chart-pos"></canvas></div>
+    <div class="chart-box"><h3>Distribuição por Idade</h3><canvas id="chart-age"></canvas></div>
+    <div class="chart-box"><h3>Top Atletas por Nota</h3><canvas id="chart-top"></canvas></div>
+    <div class="chart-box"><h3>Status / Tags</h3><canvas id="chart-tags"></canvas></div>
+  </div>
+</div>
 
-                        <select id="p-position2" class="input-style">
-                            <option value="">Posição Secundária</option>
-                            <option value="GR">🧤 Guarda-Redes</option>
-                            <option value="DC">🛡️ Defesa Central</option>
-                            <option value="LD">➡️ Lateral Direito</option>
-                            <option value="LE">⬅️ Lateral Esquerdo</option>
-                            <option value="MC">⚙️ Médio Centro</option>
-                            <option value="MD">🔰 Médio Defensivo</option>
-                            <option value="MO">✨ Médio Ofensivo</option>
-                            <option value="EXT">⚡ Extremo</option>
-                            <option value="PL">🎯 Ponta de Lança</option>
-                        </select>
+<!-- ═══════════════ COMPARE ═══════════════ -->
+<div class="view" id="view-compare">
+  <div class="page-header">
+    <div class="page-title">COMPARAR <span>ATLETAS</span></div>
+    <div class="page-sub">Selecione até 3 atletas para comparação detalhada</div>
+  </div>
+  <div class="compare-selects card card-inner" style="margin-bottom:20px">
+    <div class="field"><label>Atleta 1</label><select id="cmp1" onchange="renderCompare()"><option value="">—</option></select></div>
+    <div class="field"><label>Atleta 2</label><select id="cmp2" onchange="renderCompare()"><option value="">—</option></select></div>
+    <div class="field"><label>Atleta 3</label><select id="cmp3" onchange="renderCompare()"><option value="">—</option></select></div>
+  </div>
+  <div id="compare-out"></div>
+</div>
 
-                        <select id="p-foot" class="input-style">
-                            <option value="">Pé Preferencial</option>
-                            <option value="Direito">Direito</option>
-                            <option value="Esquerdo">Esquerdo</option>
-                            <option value="Ambidestro">Ambidestro</option>
-                        </select>
+</main>
+</div>
 
-                        <input type="text" id="p-nationality" placeholder="Nacionalidade" class="input-style">
-                        <input type="text" id="p-agent" placeholder="Agente / Empresa" class="input-style">
-                    </div>
+<!-- REPORT MODAL -->
+<div id="report-modal" style="display:none" class="modal-bg" onclick="if(event.target===this)closeReportModal()">
+  <div class="modal">
+    <h2>📋 Relatório de Jogo</h2>
+    <div class="report-form">
+      <div class="form-row">
+        <div class="field"><label>Data do Jogo *</label><input type="date" id="rm-date"></div>
+        <div class="field"><label>Competição</label><input type="text" id="rm-comp" placeholder="Ex: Liga Revelação, Distrital..."></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Equipa Casa</label><input type="text" id="rm-home" placeholder="Equipa da casa"></div>
+        <div class="field"><label>Equipa Fora</label><input type="text" id="rm-away" placeholder="Equipa visitante"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Resultado</label><input type="text" id="rm-score" placeholder="Ex: 2-1"></div>
+        <div class="field"><label>Minutos Jogados</label><input type="number" id="rm-mins" placeholder="90"></div>
+      </div>
+      <hr>
+      <p style="font-size:12px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:1px">Avaliação do Desempenho</p>
+      <div class="form-row-3">
+        <div class="field"><label>Nota Geral (0-10)</label><input type="number" id="rm-rating" min="0" max="10" step="0.5" placeholder="7.5" oninput="updateReportRating()"></div>
+        <div class="field"><label>Golos</label><input type="number" id="rm-goals" placeholder="0"></div>
+        <div class="field"><label>Assistências</label><input type="number" id="rm-assists" placeholder="0"></div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Desempenho Físico</label>
+          <select id="rm-physical">
+            <option value="">—</option>
+            <option value="Excelente">Excelente</option>
+            <option value="Bom">Bom</option>
+            <option value="Médio">Médio</option>
+            <option value="Fraco">Fraco</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Desempenho Mental</label>
+          <select id="rm-mental">
+            <option value="">—</option>
+            <option value="Excelente">Excelente</option>
+            <option value="Bom">Bom</option>
+            <option value="Médio">Médio</option>
+            <option value="Fraco">Fraco</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label>Pontos Fortes Observados</label><textarea id="rm-strengths" placeholder="O que fez bem neste jogo..." style="height:70px"></textarea></div>
+      <div class="field"><label>Pontos a Melhorar</label><textarea id="rm-weak" placeholder="O que pode melhorar..." style="height:70px"></textarea></div>
+      <div class="field"><label>Observações Gerais</label><textarea id="rm-notes" placeholder="Notas livres do scout: comportamento, atitude, interações com colegas..." style="height:80px"></textarea></div>
+      <div style="display:flex; gap:10px; justify-content:flex-end; padding-top:8px">
+        <button class="btn-ghost" onclick="closeReportModal()">Cancelar</button>
+        <button class="btn-primary" onclick="saveReport()">Guardar Relatório</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-                    <!-- CONTRACT INFO -->
-                    <div class="glass-card p-6 space-y-4">
-                        <h3 class="text-xs font-black text-slate-400 uppercase mb-3 flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                            Informação Contratual
-                        </h3>
-                        <input type="date" id="p-contract-end" placeholder="Fim de Contrato" class="input-style text-sm">
-                        <input type="text" id="p-release-clause" placeholder="Cláusula Rescisão (€)" class="input-style">
-                        <input type="text" id="p-market-value" placeholder="Valor de Mercado Estimado (€)" class="input-style">
-                    </div>
+<script>
+// ═══════════════════════════════════════════════
+// DATA & STATE
+// ═══════════════════════════════════════════════
+const DB_KEY = 'scoutflow_v2';
+let players = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
+let currentId = null;
+let tempPhoto = '';
+let tempVideos = [];
+let tempPriority = 0;
+let tempZones = [];
+let tempReports = [];
+let editingReportIdx = -1;
+let radarChartInst = null;
+let customMetrics = [];
+let activeChips = new Set();
+let analyticsCharts = {};
 
-                    <!-- TAGS & STATUS -->
-                    <div class="glass-card p-6">
-                        <h3 class="text-xs font-black text-slate-400 uppercase mb-3">Status & Tags</h3>
-                        <div class="space-y-3">
-                            <select id="p-tag" class="input-style font-bold">
-                                <option value="">Sem Tag</option>
-                                <option value="promessa">🌟 Promessa</option>
-                                <option value="urgente">🔥 Urgente</option>
-                                <option value="monitorar">👁️ Monitorar</option>
-                                <option value="contactado">✅ Contactado</option>
-                                <option value="descartado">❌ Descartado</option>
-                            </select>
-                            <select id="p-negotiation" class="input-style">
-                                <option value="">Estado Negociação</option>
-                                <option value="inicial">Contacto Inicial</option>
-                                <option value="negociacao">Em Negociação</option>
-                                <option value="proposta">Proposta Enviada</option>
-                                <option value="fechado">Fechado</option>
-                                <option value="rejeitado">Rejeitado</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
+// ═══════════════════════════════════════════════
+// POSITION METRICS
+// ═══════════════════════════════════════════════
+const POS_METRICS = {
+  GR: [
+    {name:'Reflexos', desc:'Rapidez de reação'},
+    {name:'Posicionamento', desc:'Leitura do jogo'},
+    {name:'Saídas', desc:'Domínio da área'},
+    {name:'Jogo com os Pés', desc:'Distribuição curta e longa'},
+    {name:'Passe Longo', desc:'Distribuição com qualidade'},
+    {name:'Comunicação', desc:'Liderança defensiva'},
+    {name:'1v1', desc:'Eficácia em duelos'},
+    {name:'Concentração', desc:'Atenção constante'},
+  ],
+  DC: [
+    {name:'Marcação', desc:'Capacidade defensiva'},
+    {name:'Interceção', desc:'Leitura antecipada'},
+    {name:'Jogo Aéreo', desc:'Domínio no ar'},
+    {name:'Força Física', desc:'Potência corporal'},
+    {name:'Passe Curto', desc:'Saída a jogar'},
+    {name:'Passe Longo', desc:'Distribuição longa'},
+    {name:'Posicionamento', desc:'Organização defensiva'},
+    {name:'Liderança', desc:'Comunicação da linha'},
+  ],
+  LD: [
+    {name:'Velocidade', desc:'Rapidez em sprint'},
+    {name:'Cruzamento', desc:'Qualidade do cruzamento'},
+    {name:'Marcação', desc:'Eficácia defensiva'},
+    {name:'Resistência', desc:'Capacidade aeróbia'},
+    {name:'Passe', desc:'Qualidade de passe'},
+    {name:'1v1 Ofensivo', desc:'Capacidade de driblar'},
+    {name:'Posicionamento', desc:'Cobertura e largura'},
+    {name:'Cabeceamento', desc:'Jogo aéreo defensivo'},
+  ],
+  LE: [
+    {name:'Velocidade', desc:'Rapidez em sprint'},
+    {name:'Cruzamento', desc:'Qualidade do cruzamento'},
+    {name:'Marcação', desc:'Eficácia defensiva'},
+    {name:'Resistência', desc:'Capacidade aeróbia'},
+    {name:'Passe', desc:'Qualidade de passe'},
+    {name:'1v1 Ofensivo', desc:'Capacidade de driblar'},
+    {name:'Posicionamento', desc:'Cobertura e largura'},
+    {name:'Finalização', desc:'Remate quando solicitado'},
+  ],
+  MC: [
+    {name:'Passe Curto', desc:'Circulação de bola'},
+    {name:'Passe Longo', desc:'Distribuição diagonal'},
+    {name:'Visão de Jogo', desc:'Leitura tática'},
+    {name:'Controlo de Bola', desc:'Receção e proteção'},
+    {name:'Resistência', desc:'Motor do jogo'},
+    {name:'Recuperação', desc:'Pressão sem bola'},
+    {name:'Finalização', desc:'Remate à baliza'},
+    {name:'Decisão', desc:'Escolha certa sob pressão'},
+  ],
+  MD: [
+    {name:'Recuperação', desc:'Desarme e interceção'},
+    {name:'Interceção', desc:'Leitura antecipada'},
+    {name:'Marcação', desc:'Cobertura de espaços'},
+    {name:'Passe', desc:'Saída simples e segura'},
+    {name:'Força Física', desc:'Duelos terrestres'},
+    {name:'Posicionamento', desc:'Organização média'},
+    {name:'Liderança', desc:'Comando do bloco'},
+    {name:'Resistência', desc:'Cobertura total'},
+  ],
+  MO: [
+    {name:'Criatividade', desc:'Surgir com soluções'},
+    {name:'Passe Chave', desc:'Passe de rutura'},
+    {name:'Finalização', desc:'Remate e golo'},
+    {name:'Drible', desc:'Capacidade de progressão'},
+    {name:'Visão de Jogo', desc:'Leitura ofensiva'},
+    {name:'Decisão', desc:'Escolha certa no 3º terço'},
+    {name:'Movimentação', desc:'Ocupação de espaços'},
+    {name:'Pressing', desc:'Pressão alta'},
+  ],
+  EXT: [
+    {name:'Velocidade', desc:'Explosividade'},
+    {name:'Drible', desc:'1v1 ofensivo'},
+    {name:'Cruzamento', desc:'Qualidade do cruzamento'},
+    {name:'Finalização', desc:'Remate de pé'},
+    {name:'Decisão', desc:'Escolha final'},
+    {name:'1v1', desc:'Superação de adversário'},
+    {name:'Resistência', desc:'Dinâmica em sprint'},
+    {name:'Pressing', desc:'Pressão alta'},
+  ],
+  PL: [
+    {name:'Finalização', desc:'Técnica de remate'},
+    {name:'Posicionamento', desc:'Ocupação da área'},
+    {name:'Jogo Aéreo', desc:'Cabeceamento'},
+    {name:'Força Física', desc:'Proteção de bola'},
+    {name:'Movimentação', desc:'Desmarcação'},
+    {name:'Ligação', desc:'Apoio ao coletivo'},
+    {name:'Velocidade', desc:'Profundidade'},
+    {name:'Decisão', desc:'Frieza na finalização'},
+  ],
+};
 
-                <!-- MAIN CONTENT -->
-                <div class="lg:col-span-3 space-y-6">
-                    
-                    <!-- STATS QUICK VIEW -->
-                    <div class="glass-card p-6">
-                        <div class="grid grid-cols-4 gap-4">
-                            <div class="stat-card p-4 rounded-xl">
-                                <div class="text-xs font-bold text-slate-400 uppercase mb-1">Golos</div>
-                                <input type="number" id="p-goals" placeholder="0" class="input-style text-center font-black text-2xl">
-                            </div>
-                            <div class="stat-card p-4 rounded-xl">
-                                <div class="text-xs font-bold text-slate-400 uppercase mb-1">Assistências</div>
-                                <input type="number" id="p-assists" placeholder="0" class="input-style text-center font-black text-2xl">
-                            </div>
-                            <div class="stat-card p-4 rounded-xl">
-                                <div class="text-xs font-bold text-slate-400 uppercase mb-1">Minutos</div>
-                                <input type="number" id="p-minutes" placeholder="0" class="input-style text-center font-black text-2xl">
-                            </div>
-                            <div class="stat-card p-4 rounded-xl">
-                                <div class="text-xs font-bold text-slate-400 uppercase mb-1">Jogos</div>
-                                <input type="number" id="p-games" placeholder="0" class="input-style text-center font-black text-2xl">
-                            </div>
-                        </div>
-                    </div>
+const DEFAULT_METRICS = [
+  {name:'Técnica', desc:'Habilidade com bola'},
+  {name:'Físico', desc:'Capacidade física'},
+  {name:'Mental', desc:'Força psicológica'},
+  {name:'Tático', desc:'Leitura do jogo'},
+  {name:'Velocidade', desc:'Rapidez'},
+  {name:'Finalização', desc:'Eficácia no remate'},
+];
 
-                    <!-- METRICS EVALUATION -->
-                    <div class="glass-card p-6">
-                        <div class="flex justify-between items-center mb-6">
-                            <div>
-                                <h3 class="text-lg font-black text-slate-800">Avaliação Técnica</h3>
-                                <p class="text-xs text-slate-400">Métricas adaptadas à posição selecionada</p>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-3xl font-black text-emerald-600" id="overall-rating">-</div>
-                                <div class="text-xs font-bold text-slate-400 uppercase">Nota Geral</div>
-                            </div>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-3 mb-4">
-                            <input type="text" id="custom-metric-name" placeholder="Adicionar métrica personalizada (ex: Visão, Liderança)" class="input-style flex-1 min-w-[240px]">
-                            <button type="button" onclick="addCustomMetric()" class="btn-outline px-4 py-2 rounded-xl font-bold text-sm">
-                                + Adicionar Métrica
-                            </button>
-                            <span class="text-[11px] text-slate-400 font-bold uppercase">Personalize a avaliação conforme o perfil do atleta</span>
-                        </div>
-                        <div id="metrics-editor" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-                    </div>
+// PITCH ZONE CONFIG (5 cols x 6 rows = 30 zones)
+const PITCH_ZONES = [];
+for(let row=0; row<6; row++){
+  for(let col=0; col<5; col++){
+    PITCH_ZONES.push({
+      id: `z${row}_${col}`,
+      x: 42 + col * 52,
+      y: 42 + row * 72,
+      label: ''
+    });
+  }
+}
 
-                    <!-- RADAR CHART -->
-                    <div class="glass-card p-6">
-                        <h3 class="text-xs font-black text-slate-400 uppercase mb-4">Perfil Técnico (Radar)</h3>
-                        <div class="radar-container">
-                            <canvas id="radarChart"></canvas>
-                        </div>
-                    </div>
+// FORMATIONS
+const FORMATIONS = {
+  '433':  [{x:150,y:390,l:'GR'},{x:60,y:310,l:'LD'},{x:110,y:300,l:'DC'},{x:190,y:300,l:'DC'},{x:240,y:310,l:'LE'},{x:80,y:220,l:'MC'},{x:150,y:200,l:'MC'},{x:220,y:220,l:'MC'},{x:60,y:110,l:'EXT'},{x:150,y:90,l:'PL'},{x:240,y:110,l:'EXT'}],
+  '442':  [{x:150,y:390,l:'GR'},{x:60,y:310,l:'LD'},{x:110,y:300,l:'DC'},{x:190,y:300,l:'DC'},{x:240,y:310,l:'LE'},{x:60,y:210,l:'MC'},{x:120,y:200,l:'MC'},{x:180,y:200,l:'MC'},{x:240,y:210,l:'MC'},{x:100,y:90,l:'PL'},{x:200,y:90,l:'PL'}],
+  '352':  [{x:150,y:390,l:'GR'},{x:80,y:290,l:'DC'},{x:150,y:280,l:'DC'},{x:220,y:290,l:'DC'},{x:40,y:210,l:'ML'},{x:100,y:200,l:'MC'},{x:150,y:190,l:'MC'},{x:200,y:200,l:'MC'},{x:260,y:210,l:'MR'},{x:100,y:90,l:'PL'},{x:200,y:90,l:'PL'}],
+  '4231': [{x:150,y:390,l:'GR'},{x:60,y:310,l:'LD'},{x:110,y:300,l:'DC'},{x:190,y:300,l:'DC'},{x:240,y:310,l:'LE'},{x:105,y:225,l:'MD'},{x:195,y:225,l:'MD'},{x:60,y:140,l:'MO'},{x:150,y:130,l:'MO'},{x:240,y:140,l:'MO'},{x:150,y:65,l:'PL'}],
+  '343':  [{x:150,y:390,l:'GR'},{x:80,y:290,l:'DC'},{x:150,y:280,l:'DC'},{x:220,y:290,l:'DC'},{x:50,y:200,l:'ML'},{x:115,y:200,l:'MC'},{x:185,y:200,l:'MC'},{x:250,y:200,l:'MR'},{x:60,y:90,l:'EXT'},{x:150,y:75,l:'PL'},{x:240,y:90,l:'EXT'}],
+  '532':  [{x:150,y:390,l:'GR'},{x:40,y:300,l:'LD'},{x:90,y:295,l:'DC'},{x:150,y:285,l:'DC'},{x:210,y:295,l:'DC'},{x:260,y:300,l:'LE'},{x:80,y:200,l:'MC'},{x:150,y:190,l:'MC'},{x:220,y:200,l:'MC'},{x:100,y:90,l:'PL'},{x:200,y:90,l:'PL'}],
+};
 
-                    <!-- TACTICAL INFO -->
-                    <div class="glass-card p-6">
-                        <h3 class="text-xs font-black text-slate-400 uppercase mb-4 flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                            Análise Tática
-                        </h3>
-                        <div class="grid grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label class="text-xs font-bold text-slate-600 mb-2 block">Estilo de Jogo</label>
-                                <select id="p-playstyle" class="input-style">
-                                    <option value="">Selecionar...</option>
-                                    <option value="tecnico">Técnico / Habilidoso</option>
-                                    <option value="fisico">Físico / Potente</option>
-                                    <option value="rapido">Rápido / Explosivo</option>
-                                    <option value="inteligente">Inteligente / Posicional</option>
-                                    <option value="versatil">Versátil / Completo</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="text-xs font-bold text-slate-600 mb-2 block">Sistema Ideal</label>
-                                <select id="p-system" class="input-style">
-                                    <option value="">Selecionar...</option>
-                                    <option value="433">4-3-3</option>
-                                    <option value="442">4-4-2</option>
-                                    <option value="352">3-5-2</option>
-                                    <option value="4231">4-2-3-1</option>
-                                    <option value="343">3-4-3</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="text-xs font-bold text-slate-600 mb-2 block">Pontos Fortes</label>
-                            <input type="text" id="p-strengths" placeholder="Ex: Remate de longe, Jogo aéreo, Velocidade..." class="input-style">
-                        </div>
-                        <div class="mt-3">
-                            <label class="text-xs font-bold text-slate-600 mb-2 block">Pontos a Melhorar</label>
-                            <input type="text" id="p-weaknesses" placeholder="Ex: Pé esquerdo, Decisão defensiva..." class="input-style">
-                        </div>
-                    </div>
+// ═══════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════
+const genId = () => `${Date.now()}${Math.random().toString(36).slice(2,7)}`;
+const save = () => localStorage.setItem(DB_KEY, JSON.stringify(players));
+const fmt = d => d ? new Date(d).toLocaleDateString('pt-PT') : '—';
+const round1 = n => Math.round(n*10)/10;
 
-                    <!-- VIDEOS -->
-                    <div class="glass-card p-6">
-                        <h3 class="text-xs font-black text-slate-400 uppercase mb-4 flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                            Vídeos & Recursos
-                        </h3>
-                        <div id="video-links" class="space-y-3">
-                            <div class="flex gap-2">
-                                <input type="url" placeholder="URL do vídeo (YouTube, Vimeo...)" class="input-style flex-1 video-url">
-                                <input type="text" placeholder="Descrição (opcional)" class="input-style flex-1 video-desc">
-                                <button onclick="addVideoLink()" class="btn-green px-4 py-2 rounded-xl font-bold">+</button>
-                            </div>
-                        </div>
-                        <div id="video-list" class="mt-4 space-y-2"></div>
-                    </div>
+function calcRating(metrics){
+  const vals = Object.values(metrics||{}).map(Number).filter(v=>!isNaN(v));
+  if(!vals.length) return 0;
+  return round1(vals.reduce((a,b)=>a+b,0)/vals.length);
+}
 
-                    <!-- INJURY HISTORY -->
-                    <div class="glass-card p-6">
-                        <h3 class="text-xs font-black text-slate-400 uppercase mb-3">Histórico de Lesões</h3>
-                        <textarea id="p-injuries" placeholder="Descrever lesões anteriores, tempo de recuperação, etc..." class="input-style h-24 resize-none"></textarea>
-                    </div>
+function toast(msg, type='ok'){
+  const el = document.createElement('div');
+  el.className = 'toast' + (type==='error'?' error':'');
+  el.innerHTML = (type==='ok'?'✓ ':'✕ ') + msg;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 2600);
+}
 
-                    <!-- OBSERVATION NOTES -->
-                    <div class="glass-card p-6">
-                        <h3 class="text-xs font-black text-slate-400 uppercase mb-3">Observações de Campo</h3>
-                        <textarea id="p-notes" placeholder="Análise detalhada do comportamento em jogo, mentalidade, posicionamento tático..." class="input-style h-40 resize-none"></textarea>
-                    </div>
+// ═══════════════════════════════════════════════
+// VIEW MANAGEMENT
+// ═══════════════════════════════════════════════
+function showView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  const nl = document.getElementById('nl-'+name);
+  if(nl) nl.classList.add('active');
+  if(name==='home') renderGrid();
+  if(name==='analytics') renderAnalytics();
+  if(name==='compare') initCompare();
+}
 
-                    <!-- EVALUATION HISTORY -->
-                    <div class="glass-card p-6" id="evaluation-history-section" style="display: none;">
-                        <h3 class="text-xs font-black text-slate-400 uppercase mb-4 flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            Histórico de Avaliações
-                        </h3>
-                        <div id="evaluation-timeline" class="space-y-4"></div>
-                    </div>
-                </div>
-            </div>
-        </section>
+function goHome(){ showView('home'); }
 
-        <!-- ANALYTICS VIEW -->
-        <section id="view-analytics" class="hidden fade-in">
-            <div class="py-8">
-                <h2 class="text-4xl font-black text-slate-900 mb-2">Analytics Dashboard</h2>
-                <p class="text-slate-500 mb-8">Estatísticas e insights da base de dados</p>
+// ═══════════════════════════════════════════════
+// PLAYER GRID
+// ═══════════════════════════════════════════════
+function getFiltered(){
+  let list = [...players];
+  const q = document.getElementById('search')?.value.toLowerCase()||'';
+  const pos = document.getElementById('f-pos')?.value||'';
+  const tag = document.getElementById('f-tag')?.value||'';
+  const sort = document.getElementById('f-sort')?.value||'recent';
+  if(q) list = list.filter(p=>(p.name||'').toLowerCase().includes(q)||(p.club||'').toLowerCase().includes(q)||(p.agent||'').toLowerCase().includes(q));
+  if(pos) list = list.filter(p=>p.position===pos||p.position2===pos);
+  if(tag) list = list.filter(p=>p.tag===tag);
+  if(activeChips.has('sub21')) list = list.filter(p=>p.age && p.age<21);
+  if(activeChips.has('high')) list = list.filter(p=>calcRating(p.metrics||{})>=7.5);
+  if(activeChips.has('free')) list = list.filter(p=>!p.club||p.club.trim()==='');
+  if(sort==='rating') list.sort((a,b)=>calcRating(b.metrics||{})-calcRating(a.metrics||{}));
+  else if(sort==='name') list.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  else if(sort==='age') list.sort((a,b)=>(a.age||99)-(b.age||99));
+  else list.sort((a,b)=>b._ts-a._ts);
+  return list;
+}
 
-                <!-- QUICK STATS -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                    <div class="glass-card quick-stat">
-                        <div class="quick-stat-value" id="stat-total">0</div>
-                        <div class="quick-stat-label">Total Atletas</div>
-                    </div>
-                    <div class="glass-card quick-stat">
-                        <div class="quick-stat-value text-blue-500" id="stat-avg-age">0</div>
-                        <div class="quick-stat-label">Idade Média</div>
-                    </div>
-                    <div class="glass-card quick-stat">
-                        <div class="quick-stat-value text-purple-500" id="stat-avg-rating">0</div>
-                        <div class="quick-stat-label">Avaliação Média</div>
-                    </div>
-                    <div class="glass-card quick-stat">
-                        <div class="quick-stat-value text-orange-500" id="stat-promises">0</div>
-                        <div class="quick-stat-label">Promessas</div>
-                    </div>
-                </div>
+function renderGrid(){
+  const grid = document.getElementById('player-grid');
+  const list = getFiltered();
+  document.getElementById('total-count').textContent = players.length;
+  if(!list.length){
+    grid.innerHTML = `<div class="empty-state"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg><h3>Nenhum atleta encontrado</h3><p>Ajuste os filtros ou adicione um novo atleta</p></div>`;
+    return;
+  }
+  const TAG_LABELS = {promessa:'🌟 Promessa',urgente:'🔥 Urgente',monitorar:'👁 Monitorar',contactado:'✅ Contactado',descartado:'❌ Descartado'};
+  grid.innerHTML = list.map(p=>{
+    const r = calcRating(p.metrics||{});
+    const rCls = r>=7.5?'':'med'+(r<5?' low':'');
+    return `<div class="player-card" onclick="editPlayer('${p.id}')">
+      <div class="pc-img">
+        ${p.photo?`<img src="${p.photo}" alt="${p.name}">`:`<svg fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`}
+        ${p.position?`<div class="pc-pos">${p.position}</div>`:''}
+        ${r>0?`<div class="pc-rating ${rCls}">${r}</div>`:''}
+      </div>
+      <div class="pc-body">
+        <div class="pc-club">${p.club||'Agente Livre'}</div>
+        <div class="pc-name">${p.name}</div>
+        <div class="pc-meta">
+          ${p.age?`<span>${p.age}a</span>`:''}
+          ${p.height?`<span>${p.height}cm</span>`:''}
+          ${p.foot?`<span>🦶 ${p.foot}</span>`:''}
+        </div>
+        ${p.tag?`<div class="pc-tag tag-${p.tag}">${TAG_LABELS[p.tag]}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
 
-                <!-- CHARTS -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="glass-card p-6">
-                        <h3 class="font-bold text-slate-800 mb-4">Distribuição por Posição</h3>
-                        <canvas id="positionChart" height="250"></canvas>
-                    </div>
-                    <div class="glass-card p-6">
-                        <h3 class="font-bold text-slate-800 mb-4">Distribuição por Idade</h3>
-                        <canvas id="ageChart" height="250"></canvas>
-                    </div>
-                    <div class="glass-card p-6">
-                        <h3 class="font-bold text-slate-800 mb-4">Top 10 Atletas (Avaliação)</h3>
-                        <canvas id="topPlayersChart" height="250"></canvas>
-                    </div>
-                    <div class="glass-card p-6">
-                        <h3 class="font-bold text-slate-800 mb-4">Tags de Status</h3>
-                        <canvas id="tagsChart" height="250"></canvas>
-                    </div>
-                </div>
-            </div>
-        </section>
+function toggleChip(id){
+  const el = document.getElementById('chip-'+id);
+  if(activeChips.has(id)){ activeChips.delete(id); el.classList.remove('on'); }
+  else { activeChips.add(id); el.classList.add('on'); }
+  renderGrid();
+}
 
-        <!-- COMPARISON VIEW -->
-        <section id="view-comparison" class="hidden fade-in">
-            <div class="py-8">
-                <h2 class="text-4xl font-black text-slate-900 mb-2">Comparação de Atletas</h2>
-                <p class="text-slate-500 mb-8">Selecione até 3 atletas para comparar</p>
+// ═══════════════════════════════════════════════
+// EDITOR
+// ═══════════════════════════════════════════════
+function switchTab(name){
+  const tabs = ['perfil','tecnico','pitch','relatorios'];
+  tabs.forEach(t=>{
+    document.getElementById('tab-'+t).style.display = t===name?'block':'none';
+  });
+  document.querySelectorAll('.tab').forEach((el,i)=>{
+    el.classList.toggle('active', ['perfil','tecnico','pitch','relatorios'][i]===name);
+  });
+  if(name==='tecnico') setTimeout(renderRadar,50);
+  if(name==='pitch') setTimeout(renderPitch,50);
+  if(name==='relatorios') renderReportsList();
+}
 
-                <div class="glass-card p-6 mb-6">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <select id="compare-player-1" class="input-style" onchange="updateComparison()">
-                            <option value="">Selecionar Atleta 1</option>
-                        </select>
-                        <select id="compare-player-2" class="input-style" onchange="updateComparison()">
-                            <option value="">Selecionar Atleta 2</option>
-                        </select>
-                        <select id="compare-player-3" class="input-style" onchange="updateComparison()">
-                            <option value="">Selecionar Atleta 3</option>
-                        </select>
-                    </div>
-                </div>
+function newPlayer(){
+  currentId = genId();
+  tempPhoto=''; tempVideos=[]; tempPriority=0; tempZones=[]; tempReports=[];
+  customMetrics=[];
+  clearForm();
+  showView('editor');
+  switchTab('perfil');
+}
 
-                <div id="comparison-content" class="space-y-6"></div>
-            </div>
-        </section>
+function clearForm(){
+  ['p-name','p-club','p-age','p-height','p-weight','p-pos','p-pos2','p-foot','p-nation',
+   'p-tag','p-neg','p-contract','p-clause','p-market','p-games','p-mins','p-goals',
+   'p-assists','p-yellow','p-red','p-style','p-system','p-strengths','p-weak',
+   'p-injuries','p-agent','p-contact','p-notes','p-tactical-notes'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.value='';
+  });
+  document.getElementById('photo-zone').innerHTML=`<div class="photo-placeholder"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><span>Clique para adicionar foto</span></div>`;
+  renderMetrics({});
+  setPriority(0);
+  renderVideoList();
+}
 
-    </main>
+function editPlayer(id){
+  const p = players.find(x=>x.id===id);
+  if(!p) return;
+  currentId = id;
+  tempPhoto = p.photo||'';
+  tempVideos = [...(p.videos||[])];
+  tempPriority = p.priority||0;
+  tempZones = [...(p.zones||[])];
+  tempReports = [...(p.reports||[])];
+  customMetrics = [...(p.customMetrics||[])];
+  const set = (id,val)=>{ const el=document.getElementById(id); if(el) el.value=val||''; };
+  set('p-name',p.name); set('p-club',p.club); set('p-age',p.age); set('p-height',p.height);
+  set('p-weight',p.weight); set('p-pos',p.position); set('p-pos2',p.position2);
+  set('p-foot',p.foot); set('p-nation',p.nationality);
+  set('p-tag',p.tag); set('p-neg',p.negotiation);
+  set('p-contract',p.contractEnd); set('p-clause',p.releaseClause); set('p-market',p.marketValue);
+  set('p-games',p.games); set('p-mins',p.minutes); set('p-goals',p.goals);
+  set('p-assists',p.assists); set('p-yellow',p.yellowCards); set('p-red',p.redCards);
+  set('p-style',p.playstyle); set('p-system',p.system);
+  set('p-strengths',p.strengths); set('p-weak',p.weaknesses);
+  set('p-injuries',p.injuries); set('p-agent',p.agent); set('p-contact',p.contact);
+  set('p-notes',p.notes); set('p-tactical-notes',p.tacticalNotes);
+  if(tempPhoto){
+    document.getElementById('photo-zone').innerHTML=`<img src="${tempPhoto}" alt="">`;
+  } else {
+    document.getElementById('photo-zone').innerHTML=`<div class="photo-placeholder"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><span>Clique para adicionar foto</span></div>`;
+  }
+  renderMetrics(p.metrics||{}, p.position);
+  setPriority(p.priority||0);
+  renderVideoList();
+  showView('editor');
+  switchTab('perfil');
+}
 
-    <script>
-        // DATA STRUCTURES
-        let players = JSON.parse(localStorage.getItem('scoutflow_advanced_v1')) || [];
-        let currentId = null;
-        let tempPhoto = "";
-        let currentVideos = [];
-        let radarChart = null;
-        let currentCustomMetrics = [];
+function savePlayer(){
+  const name = document.getElementById('p-name').value.trim();
+  const pos = document.getElementById('p-pos').value;
+  if(!name){ toast('Nome do atleta obrigatório!','error'); return; }
+  if(!pos){ toast('Selecione a posição do atleta!','error'); return; }
+  const metrics={};
+  document.querySelectorAll('[data-metric]').forEach(el=>{
+    metrics[el.dataset.metric]=parseFloat(el.value)||5;
+  });
+  const data={
+    id:currentId, _ts:Date.now(),
+    name, photo:tempPhoto, videos:tempVideos, priority:tempPriority,
+    zones:tempZones, reports:tempReports, customMetrics,
+    club:document.getElementById('p-club').value,
+    age:parseInt(document.getElementById('p-age').value)||null,
+    height:parseInt(document.getElementById('p-height').value)||null,
+    weight:parseInt(document.getElementById('p-weight').value)||null,
+    position:pos, position2:document.getElementById('p-pos2').value,
+    foot:document.getElementById('p-foot').value,
+    nationality:document.getElementById('p-nation').value,
+    tag:document.getElementById('p-tag').value,
+    negotiation:document.getElementById('p-neg').value,
+    contractEnd:document.getElementById('p-contract').value,
+    releaseClause:document.getElementById('p-clause').value,
+    marketValue:document.getElementById('p-market').value,
+    games:parseInt(document.getElementById('p-games').value)||0,
+    minutes:parseInt(document.getElementById('p-mins').value)||0,
+    goals:parseInt(document.getElementById('p-goals').value)||0,
+    assists:parseInt(document.getElementById('p-assists').value)||0,
+    yellowCards:parseInt(document.getElementById('p-yellow').value)||0,
+    redCards:parseInt(document.getElementById('p-red').value)||0,
+    playstyle:document.getElementById('p-style').value,
+    system:document.getElementById('p-system').value,
+    strengths:document.getElementById('p-strengths').value,
+    weaknesses:document.getElementById('p-weak').value,
+    injuries:document.getElementById('p-injuries').value,
+    agent:document.getElementById('p-agent').value,
+    contact:document.getElementById('p-contact').value,
+    notes:document.getElementById('p-notes').value,
+    tacticalNotes:document.getElementById('p-tactical-notes').value,
+    metrics,
+  };
+  const idx = players.findIndex(p=>p.id===currentId);
+  if(idx>-1) players[idx]=data; else players.push(data);
+  save();
+  toast('Perfil guardado com sucesso!');
+  showView('home');
+}
 
-        // POSITION-SPECIFIC METRICS
-        const positionMetrics = {
-            'GR': ["Reflexos", "Posicionamento", "Saída", "Passe Longo", "Jogo de Pés", "Liderança"],
-            'DC': ["Marcação", "Interceção", "Jogo Aéreo", "Força", "Passe", "Posicionamento"],
-            'LD': ["Velocidade", "Cruzamento", "Marcação", "Resistência", "Passe", "1v1 Ofensivo"],
-            'LE': ["Velocidade", "Cruzamento", "Marcação", "Resistência", "Passe", "1v1 Ofensivo"],
-            'MC': ["Passe", "Visão de Jogo", "Controlo", "Resistência", "Posicionamento", "Finalização"],
-            'MD': ["Recuperação", "Interceção", "Marcação", "Passe", "Força", "Posicionamento"],
-            'MO': ["Criatividade", "Passe", "Finalização", "Drible", "Visão de Jogo", "Decisão"],
-            'EXT': ["Velocidade", "Drible", "Cruzamento", "Finalização", "1v1", "Decisão"],
-            'PL': ["Finalização", "Posicionamento", "Jogo Aéreo", "Força", "Movimentação", "1v1"]
-        };
+function deletePlayer(){
+  if(!confirm('Eliminar este atleta? Esta ação não pode ser revertida.')) return;
+  players=players.filter(p=>p.id!==currentId);
+  save(); showView('home'); toast('Atleta eliminado');
+}
 
-        const defaultMetrics = ["Técnica", "Físico", "Mental", "Tático", "Velocidade", "Finalização"];
+// ─── PHOTO ───
+function handlePhoto(input){
+  if(!input.files||!input.files[0]) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    tempPhoto=e.target.result;
+    document.getElementById('photo-zone').innerHTML=`<img src="${tempPhoto}" alt="">`;
+  };
+  reader.readAsDataURL(input.files[0]);
+}
 
-        // UTILITY FUNCTIONS
-        function generateId() {
-            return Date.now() + Math.random().toString(36).substr(2, 9);
+// ─── PRIORITY STARS ───
+function setPriority(val){
+  tempPriority=val;
+  document.querySelectorAll('.star').forEach(s=>{
+    s.classList.toggle('on',parseInt(s.dataset.v)<=val);
+  });
+}
+document.getElementById('priority-stars').addEventListener('click',e=>{
+  const s=e.target.closest('.star');
+  if(s) setPriority(parseInt(s.dataset.v));
+});
+
+// ─── POSITION CHANGE ───
+function onPositionChange(){
+  const pos=document.getElementById('p-pos').value;
+  const current={};
+  document.querySelectorAll('[data-metric]').forEach(el=>{ current[el.dataset.metric]=parseFloat(el.value)||5; });
+  renderMetrics(current,pos);
+}
+
+// ─── METRICS ───
+function getMetrics(pos){
+  const base = (pos && POS_METRICS[pos]) ? POS_METRICS[pos] : DEFAULT_METRICS;
+  const custom = customMetrics.map(n=>({name:n,desc:'Métrica personalizada'}));
+  return [...base,...custom];
+}
+
+function renderMetrics(data={},pos){
+  pos=pos||document.getElementById('p-pos')?.value||'';
+  const metrics=getMetrics(pos);
+  const container=document.getElementById('metrics-editor');
+  if(!container) return;
+  container.innerHTML=metrics.map(m=>{
+    const val=data[m.name]!==undefined?data[m.name]:5;
+    const pct=(val/10*100).toFixed(0);
+    const isCustom=customMetrics.includes(m.name);
+    return `<div class="metric-item">
+      <div class="metric-header">
+        <div>
+          <div class="metric-label">${m.name}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${isCustom?`<button onclick="removeCustomMetric('${m.name}')" style="font-size:10px;color:var(--red);background:none;border:none;cursor:pointer;font-family:var(--font-body)">✕</button>`:''}
+          <span class="metric-val" id="mv-${m.name.replace(/\s/g,'-')}">${parseFloat(val).toFixed(1)}</span>
+        </div>
+      </div>
+      <input type="range" min="0" max="10" step="0.5" value="${val}" data-metric="${m.name}"
+        style="--pct:${pct}%"
+        oninput="onMetricChange(this,'${m.name.replace(/\s/g,'-')}')">
+    </div>`;
+  }).join('');
+  updateOverall();
+}
+
+function onMetricChange(el,nameId){
+  const v=parseFloat(el.value);
+  const pct=(v/10*100).toFixed(0);
+  el.style.setProperty('--pct',pct+'%');
+  const lbl=document.getElementById('mv-'+nameId);
+  if(lbl) lbl.textContent=v.toFixed(1);
+  updateOverall();
+  renderRadar();
+}
+
+function updateOverall(){
+  const vals=[]; document.querySelectorAll('[data-metric]').forEach(el=>vals.push(parseFloat(el.value)||0));
+  const avg = vals.length ? round1(vals.reduce((a,b)=>a+b,0)/vals.length) : 0;
+  const el=document.getElementById('ring-val');
+  const ring=document.getElementById('ring-circle');
+  if(el) el.textContent=avg;
+  if(ring){ const circ=239; ring.style.strokeDashoffset=circ-(avg/10*circ); }
+}
+
+function addCustomMetric(){
+  const inp=document.getElementById('custom-m');
+  const name=inp.value.trim();
+  if(!name) return;
+  if(customMetrics.includes(name)||getMetrics(document.getElementById('p-pos').value).some(m=>m.name===name)){
+    toast('Essa métrica já existe!','error'); return;
+  }
+  customMetrics.push(name);
+  const current={};
+  document.querySelectorAll('[data-metric]').forEach(el=>{ current[el.dataset.metric]=parseFloat(el.value)||5; });
+  inp.value='';
+  renderMetrics(current,document.getElementById('p-pos').value);
+}
+
+function removeCustomMetric(name){
+  customMetrics=customMetrics.filter(m=>m!==name);
+  const current={};
+  document.querySelectorAll('[data-metric]').forEach(el=>{ current[el.dataset.metric]=parseFloat(el.value)||5; });
+  renderMetrics(current,document.getElementById('p-pos').value);
+}
+
+// ─── RADAR ───
+function renderRadar(){
+  const labels=[]; const data=[];
+  document.querySelectorAll('[data-metric]').forEach(el=>{ labels.push(el.dataset.metric); data.push(parseFloat(el.value)||0); });
+  const canvas=document.getElementById('radarChart'); if(!canvas) return;
+  if(radarChartInst){ radarChartInst.data.labels=labels; radarChartInst.data.datasets[0].data=data; radarChartInst.update(); return; }
+  radarChartInst=new Chart(canvas,{
+    type:'radar',
+    data:{
+      labels,
+      datasets:[{label:'Avaliação',data,backgroundColor:'rgba(0,229,160,0.15)',borderColor:'#00e5a0',pointBackgroundColor:'#00e5a0',borderWidth:2,pointRadius:4}]
+    },
+    options:{
+      scales:{r:{beginAtZero:true,max:10,ticks:{stepSize:2,color:'#4d607a',font:{size:10}},grid:{color:'rgba(255,255,255,0.06)'},angleLines:{color:'rgba(255,255,255,0.06)'},pointLabels:{color:'#8896b0',font:{size:11}}}},
+      plugins:{legend:{display:false}},
+      animation:{duration:300}
+    }
+  });
+}
+
+// ─── PITCH ───
+function renderPitch(){
+  const svg=document.getElementById('hotspots'); if(!svg) return;
+  svg.innerHTML=PITCH_ZONES.map(z=>{
+    const on=tempZones.includes(z.id);
+    return `<g class="hotspot${on?' on':''}" data-id="${z.id}" onclick="toggleZone('${z.id}',this)">
+      <circle cx="${z.x}" cy="${z.y}" r="18" fill="${on?'var(--accent)':'rgba(255,255,255,0.07)'}" stroke="${on?'var(--accent)':'rgba(255,255,255,0.2)'}" stroke-width="1"/>
+    </g>`;
+  }).join('');
+  updateZoneCount();
+}
+
+function toggleZone(id, el){
+  if(tempZones.includes(id)){ tempZones=tempZones.filter(z=>z!==id); el.classList.remove('on'); }
+  else { tempZones.push(id); el.classList.add('on'); }
+  // update fill
+  const circle=el.querySelector('circle');
+  const on=tempZones.includes(id);
+  circle.setAttribute('fill', on?'var(--accent)':'rgba(255,255,255,0.07)');
+  circle.setAttribute('stroke', on?'var(--accent)':'rgba(255,255,255,0.2)');
+  updateZoneCount();
+}
+
+function updateZoneCount(){ const c=document.getElementById('zones-count'); if(c) c.textContent=tempZones.length; }
+
+function renderFormation(){
+  const sys=document.getElementById('pitch-system')?.value;
+  const dots=document.getElementById('formation-dots'); if(!dots) return;
+  if(!sys||!FORMATIONS[sys]){ dots.innerHTML=''; return; }
+  const playerPos=document.getElementById('p-pos')?.value||'';
+  dots.innerHTML=FORMATIONS[sys].map((p,i)=>{
+    const isMe = p.l===playerPos && i>0;
+    return `<g>
+      <circle cx="${p.x}" cy="${p.y}" r="${isMe?16:13}" fill="${isMe?'var(--accent)':'rgba(255,255,255,0.15)'}" stroke="${isMe?'var(--accent)':'rgba(255,255,255,0.3)'}" stroke-width="1.5"/>
+      <text x="${p.x}" y="${p.y+1}" text-anchor="middle" dominant-baseline="middle" fill="${isMe?'var(--bg)':'#8896b0'}" font-size="${isMe?9:8}" font-weight="700" font-family="DM Mono,monospace">${p.l}</text>
+    </g>`;
+  }).join('');
+  // sync with main system select
+  const mainSys=document.getElementById('p-system');
+  if(mainSys && sys) { const map={'433':'4-3-3','442':'4-4-2','352':'3-5-2','4231':'4-2-3-1','343':'3-4-3','532':'5-3-2'}; mainSys.value=map[sys]||''; }
+}
+
+// ─── VIDEOS ───
+function addVideo(){
+  const url=document.getElementById('vid-url').value.trim();
+  const desc=document.getElementById('vid-desc').value.trim();
+  if(!url) return;
+  tempVideos.push({url,desc:desc||'Vídeo',added:new Date().toISOString()});
+  document.getElementById('vid-url').value='';
+  document.getElementById('vid-desc').value='';
+  renderVideoList();
+}
+function removeVideo(i){ tempVideos.splice(i,1); renderVideoList(); }
+function renderVideoList(){
+  const c=document.getElementById('vid-list'); if(!c) return;
+  if(!tempVideos.length){ c.innerHTML='<p style="color:var(--text3);font-size:12px">Nenhum vídeo adicionado</p>'; return; }
+  c.innerHTML=tempVideos.map((v,i)=>`
+    <div class="video-item">
+      <svg width="16" height="16" fill="var(--red)" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"/></svg>
+      <a href="${v.url}" target="_blank">${v.desc}</a>
+      <span>${v.url.slice(0,40)}...</span>
+      <button onclick="removeVideo(${i})"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>`).join('');
+}
+
+// ─── REPORTS ───
+let currentEditReport = null;
+
+function newReport(){
+  currentEditReport=null;
+  ['rm-date','rm-comp','rm-home','rm-away','rm-score','rm-mins','rm-rating','rm-goals','rm-assists','rm-strengths','rm-weak','rm-notes'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('rm-physical').value='';
+  document.getElementById('rm-mental').value='';
+  document.getElementById('report-modal').style.display='flex';
+}
+
+function closeReportModal(){ document.getElementById('report-modal').style.display='none'; }
+
+function saveReport(){
+  const date=document.getElementById('rm-date').value;
+  if(!date){ toast('Data do jogo obrigatória!','error'); return; }
+  const report={
+    id:genId(),
+    date, competition:document.getElementById('rm-comp').value,
+    homeTeam:document.getElementById('rm-home').value,
+    awayTeam:document.getElementById('rm-away').value,
+    score:document.getElementById('rm-score').value,
+    minutes:document.getElementById('rm-mins').value,
+    rating:parseFloat(document.getElementById('rm-rating').value)||0,
+    goals:parseInt(document.getElementById('rm-goals').value)||0,
+    assists:parseInt(document.getElementById('rm-assists').value)||0,
+    physical:document.getElementById('rm-physical').value,
+    mental:document.getElementById('rm-mental').value,
+    strengths:document.getElementById('rm-strengths').value,
+    weaknesses:document.getElementById('rm-weak').value,
+    notes:document.getElementById('rm-notes').value,
+    createdAt:new Date().toISOString()
+  };
+  if(currentEditReport){
+    const idx=tempReports.findIndex(r=>r.id===currentEditReport);
+    if(idx>-1) tempReports[idx]=report;
+  } else {
+    tempReports.push(report);
+  }
+  closeReportModal();
+  renderReportsList();
+  toast('Relatório guardado!');
+}
+
+function updateReportRating(){}
+
+function renderReportsList(){
+  const c=document.getElementById('reports-list'); if(!c) return;
+  if(!tempReports.length){
+    c.innerHTML='<p style="color:var(--text3);font-size:13px;text-align:center;padding:30px 0">Nenhum relatório ainda.<br>Adicione o primeiro relatório de observação.</p>';
+    return;
+  }
+  const sorted=[...tempReports].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  c.innerHTML=sorted.map(r=>`
+    <div class="report-item" onclick="showReportDetail('${r.id}')">
+      <div class="ri-left">
+        <h4>${fmt(r.date)} ${r.competition?'· '+r.competition:''}</h4>
+        <div class="ri-meta">
+          <span>${r.homeTeam||'?'} vs ${r.awayTeam||'?'}</span>
+          ${r.score?`<span>${r.score}</span>`:''}
+          ${r.minutes?`<span>${r.minutes}'</span>`:''}
+        </div>
+      </div>
+      <div class="ri-rating">${r.rating||'—'}</div>
+    </div>`).join('');
+}
+
+function showReportDetail(id){
+  const r=tempReports.find(x=>x.id===id);
+  if(!r) return;
+  const panel=document.getElementById('report-detail-panel');
+  const perf=(label,val)=>val?`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text2);font-size:13px">${label}</span><strong style="font-size:13px">${val}</strong></div>`:'';
+  panel.innerHTML=`<div class="card card-inner">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">${r.competition||'Observação'}</div>
+        <h3 style="font-size:18px;font-weight:700">${r.homeTeam||'?'} vs ${r.awayTeam||'?'}</h3>
+        <div style="font-size:13px;color:var(--text2);margin-top:2px">${fmt(r.date)} ${r.score?'· '+r.score:''}</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-family:var(--font-display);font-size:48px;color:var(--accent);line-height:1">${r.rating||'—'}</div>
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px">Nota</div>
+      </div>
+    </div>
+    ${perf('Minutos jogados',r.minutes?r.minutes+"'":'—')}
+    ${perf('Golos',r.goals)}
+    ${perf('Assistências',r.assists)}
+    ${perf('Desempenho Físico',r.physical)}
+    ${perf('Desempenho Mental',r.mental)}
+    ${r.strengths?`<div style="margin-top:14px"><div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Pontos Fortes</div><p style="font-size:13px;color:var(--text2);line-height:1.6">${r.strengths}</p></div>`:''}
+    ${r.weaknesses?`<div style="margin-top:12px"><div style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">A Melhorar</div><p style="font-size:13px;color:var(--text2);line-height:1.6">${r.weaknesses}</p></div>`:''}
+    ${r.notes?`<div style="margin-top:12px"><div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Notas</div><p style="font-size:13px;color:var(--text2);line-height:1.6">${r.notes}</p></div>`:''}
+    <div style="display:flex;gap:8px;margin-top:16px;padding-top:12px;border-top:1px solid var(--border)">
+      <button class="btn-danger" onclick="deleteReport('${r.id}')" style="font-size:12px;padding:7px 12px">Eliminar</button>
+    </div>
+  </div>`;
+}
+
+function deleteReport(id){
+  if(!confirm('Eliminar este relatório?')) return;
+  tempReports=tempReports.filter(r=>r.id!==id);
+  document.getElementById('report-detail-panel').innerHTML=`<div class="card card-inner" style="text-align:center;padding:40px 20px;color:var(--text3)"><p>Relatório eliminado</p></div>`;
+  renderReportsList();
+  toast('Relatório eliminado');
+}
+
+// ═══════════════════════════════════════════════
+// ANALYTICS
+// ═══════════════════════════════════════════════
+function destroyCharts(){
+  Object.values(analyticsCharts).forEach(c=>{ try{c.destroy()}catch(e){} });
+  analyticsCharts={};
+}
+
+function renderAnalytics(){
+  destroyCharts();
+  const N=players.length;
+  document.getElementById('a-total').textContent=N;
+  const avgAge=N?round1(players.reduce((s,p)=>s+(p.age||0),0)/N):0;
+  document.getElementById('a-avg-age').textContent=avgAge||'—';
+  const ratings=players.map(p=>calcRating(p.metrics||{})).filter(r=>r>0);
+  document.getElementById('a-avg-rat').textContent=ratings.length?round1(ratings.reduce((a,b)=>a+b,0)/ratings.length):'—';
+  document.getElementById('a-promises').textContent=players.filter(p=>p.tag==='promessa').length;
+
+  const colors=['#00e5a0','#4d9fff','#b084ff','#ffbe0b','#ff4d6d','#00c9b1','#ff8c42','#a8e6cf'];
+  const chartOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8896b0',font:{size:11},boxWidth:12}}}};
+
+  // Position chart
+  const posCount={};
+  players.forEach(p=>{ if(p.position) posCount[p.position]=(posCount[p.position]||0)+1; });
+  analyticsCharts.pos=new Chart(document.getElementById('chart-pos'),{
+    type:'doughnut',
+    data:{labels:Object.keys(posCount),datasets:[{data:Object.values(posCount),backgroundColor:colors,borderWidth:0}]},
+    options:{...chartOpts}
+  });
+
+  // Age chart
+  const ageBuckets={'≤18':0,'19-21':0,'22-25':0,'26-30':0,'30+':0};
+  players.forEach(p=>{ const a=p.age||0; if(a<=18)ageBuckets['≤18']++; else if(a<=21)ageBuckets['19-21']++; else if(a<=25)ageBuckets['22-25']++; else if(a<=30)ageBuckets['26-30']++; else ageBuckets['30+']++; });
+  analyticsCharts.age=new Chart(document.getElementById('chart-age'),{
+    type:'bar',
+    data:{labels:Object.keys(ageBuckets),datasets:[{label:'Atletas',data:Object.values(ageBuckets),backgroundColor:'#4d9fff',borderRadius:6}]},
+    options:{...chartOpts,plugins:{...chartOpts.plugins,legend:{display:false}},scales:{x:{ticks:{color:'#8896b0'}},y:{beginAtZero:true,ticks:{color:'#8896b0',stepSize:1},grid:{color:'rgba(255,255,255,0.05)'}}}}
+  });
+
+  // Top players
+  const top=[...players].sort((a,b)=>calcRating(b.metrics||{})-calcRating(a.metrics||{})).slice(0,8);
+  analyticsCharts.top=new Chart(document.getElementById('chart-top'),{
+    type:'bar',
+    data:{labels:top.map(p=>p.name.split(' ')[0]),datasets:[{label:'Nota',data:top.map(p=>calcRating(p.metrics||{})),backgroundColor:'#00e5a0',borderRadius:6}]},
+    options:{...chartOpts,indexAxis:'y',plugins:{...chartOpts.plugins,legend:{display:false}},scales:{x:{beginAtZero:true,max:10,ticks:{color:'#8896b0'},grid:{color:'rgba(255,255,255,0.05)'}},y:{ticks:{color:'#8896b0'}}}}
+  });
+
+  // Tags chart
+  const tagCount={};
+  players.forEach(p=>{ if(p.tag) tagCount[p.tag]=(tagCount[p.tag]||0)+1; });
+  const tagLabels={promessa:'🌟 Promessa',urgente:'🔥 Urgente',monitorar:'👁 Monitorar',contactado:'✅ Contactado',descartado:'❌ Descartado'};
+  analyticsCharts.tags=new Chart(document.getElementById('chart-tags'),{
+    type:'pie',
+    data:{labels:Object.keys(tagCount).map(t=>tagLabels[t]||t),datasets:[{data:Object.values(tagCount),backgroundColor:['#ffbe0b','#ff4d6d','#4d9fff','#00e5a0','#4d607a'],borderWidth:0}]},
+    options:{...chartOpts}
+  });
+}
+
+// ═══════════════════════════════════════════════
+// COMPARE
+// ═══════════════════════════════════════════════
+function initCompare(){
+  ['cmp1','cmp2','cmp3'].forEach(id=>{
+    const sel=document.getElementById(id);
+    const cur=sel.value;
+    sel.innerHTML='<option value="">—</option>'+players.map(p=>`<option value="${p.id}" ${p.id===cur?'selected':''}>${p.name}</option>`).join('');
+  });
+  renderCompare();
+}
+
+function renderCompare(){
+  const ids=['cmp1','cmp2','cmp3'].map(id=>document.getElementById(id).value).filter(Boolean);
+  const sel=ids.map(id=>players.find(p=>p.id===id)).filter(Boolean);
+  const out=document.getElementById('compare-out');
+  if(!sel.length){ out.innerHTML='<div class="card card-inner" style="text-align:center;padding:60px;color:var(--text3)">Selecione atletas para comparar</div>'; return; }
+  const allMetrics=new Set();
+  sel.forEach(p=>Object.keys(p.metrics||{}).forEach(m=>allMetrics.add(m)));
+  const metList=Array.from(allMetrics);
+  const barColors=['#00e5a0','#4d9fff','#b084ff'];
+  out.innerHTML=`
+    <div class="card card-inner" style="margin-bottom:16px">
+      <div class="compare-cards" style="grid-template-columns:repeat(${sel.length},1fr)">
+        ${sel.map((p,i)=>`<div class="compare-player-header">
+          ${p.photo?`<img src="${p.photo}" alt="${p.name}">`:`<div style="width:72px;height:72px;border-radius:50%;background:var(--bg3);border:3px solid ${barColors[i]};margin:0 auto 8px;display:flex;align-items:center;justify-content:center"><svg width="32" height="32" fill="none" stroke="${barColors[i]}" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>`}
+          <div style="font-size:16px;font-weight:700;margin-bottom:2px">${p.name}</div>
+          <div style="font-size:12px;color:var(--text2)">${p.club||'Agente Livre'} · ${p.position||'N/A'}</div>
+          <div style="font-family:var(--font-display);font-size:36px;color:${barColors[i]};margin-top:8px">${calcRating(p.metrics||{})}</div>
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px">Nota Geral</div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="card card-inner">
+      <div class="section-title">Comparação Métrica</div>
+      ${metList.map(m=>`
+        <div class="compare-metric-row">
+          <div class="cmr-label">${m}</div>
+          <div class="compare-bars">
+            ${sel.map((p,i)=>{
+              const v=(p.metrics&&p.metrics[m])||0;
+              return `<div class="cbar">
+                <div class="cbar-track"><div class="cbar-fill" style="width:${v*10}%;background:${barColors[i]}"></div></div>
+                <div class="cbar-name">${v}</div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>`).join('')}
+    </div>
+    ${sel.length>=2?`<div class="card card-inner" style="margin-top:16px">
+      <div class="section-title">Radar Comparativo</div>
+      <canvas id="compare-radar" style="max-height:320px"></canvas>
+    </div>`:''}
+  `;
+  if(sel.length>=2){
+    setTimeout(()=>{
+      const canvas=document.getElementById('compare-radar'); if(!canvas) return;
+      new Chart(canvas,{
+        type:'radar',
+        data:{labels:metList,datasets:sel.map((p,i)=>({
+          label:p.name,
+          data:metList.map(m=>(p.metrics&&p.metrics[m])||0),
+          backgroundColor:barColors[i].replace('#','').length===6?hexToRgba(barColors[i],0.15):barColors[i],
+          borderColor:barColors[i],borderWidth:2,pointBackgroundColor:barColors[i],pointRadius:3
+        }))},
+        options:{scales:{r:{beginAtZero:true,max:10,ticks:{color:'#4d607a',font:{size:10}},grid:{color:'rgba(255,255,255,0.06)'},angleLines:{color:'rgba(255,255,255,0.06)'},pointLabels:{color:'#8896b0'}}},plugins:{legend:{labels:{color:'#8896b0'}}}}
+      });
+    },50);
+  }
+}
+
+function hexToRgba(hex,a){ const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16); return `rgba(${r},${g},${b},${a})`; }
+
+// ═══════════════════════════════════════════════
+// EXPORT / IMPORT / PDF
+// ═══════════════════════════════════════════════
+function exportAll(){
+  const blob=new Blob([JSON.stringify(players,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`scoutflow_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  toast('Dados exportados!');
+}
+
+function importData(){
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
+  inp.onchange=e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const r=new FileReader();
+    r.onload=ev=>{
+      try{
+        const data=JSON.parse(ev.target.result);
+        if(!Array.isArray(data)) throw new Error();
+        if(confirm(`Importar ${data.length} atletas? Substitui os dados atuais.`)){
+          players=data; save(); renderGrid(); toast('Dados importados!');
         }
-
-        function formatDate(date) {
-            return new Date(date).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        }
-
-        function calculateOverallRating(metrics) {
-            const values = Object.values(metrics).map(v => parseFloat(v) || 0);
-            if (values.length === 0) return 0;
-            return (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1);
-        }
-
-        function normalizeMetricName(name) {
-            return name.trim().replace(/\s+/g, ' ');
-        }
-
-        function hashMetricName(name) {
-            let hash = 0;
-            for (let i = 0; i < name.length; i++) {
-                hash = ((hash << 5) - hash) + name.charCodeAt(i);
-                hash |= 0;
-            }
-            return Math.abs(hash);
-        }
-
-        function formatMetricId(name) {
-            const cleaned = name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
-            return cleaned || `metric-${hashMetricName(name)}`;
-        }
-
-        function getBaseMetrics(position) {
-            return position && positionMetrics[position] ? positionMetrics[position] : defaultMetrics;
-        }
-
-        function getCurrentMetricValues() {
-            const metrics = {};
-            document.querySelectorAll('[data-m]').forEach(i => metrics[i.dataset.m] = parseFloat(i.value));
-            return metrics;
-        }
-
-        function getYouTubeEmbedUrl(url) {
-            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-            const match = url.match(regExp);
-            return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : null;
-        }
-
-        // VIEW MANAGEMENT
-        function showView(view) {
-            document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
-            document.getElementById('view-' + view).classList.remove('hidden');
-            
-            if (view === 'home') {
-                renderGrid();
-            } else if (view === 'analytics') {
-                renderAnalytics();
-            } else if (view === 'comparison') {
-                initComparison();
-            }
-        }
-
-        // PLAYER GRID
-        function renderGrid() {
-            const grid = document.getElementById('player-grid');
-            const filtered = getFilteredPlayers();
-            
-            if (filtered.length === 0) {
-                grid.innerHTML = `
-                    <div class="col-span-full glass-card p-20 text-center">
-                        <svg class="w-20 h-20 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
-                        <p class="text-slate-400 text-lg font-bold">Nenhum atleta encontrado</p>
-                        <p class="text-slate-300 text-sm mt-2">Experimente ajustar os filtros ou adicione um novo atleta</p>
-                    </div>
-                `;
-                return;
-            }
-
-            grid.innerHTML = filtered.map(p => {
-                const rating = calculateOverallRating(p.metrics || {});
-                const tagClass = p.tag ? `tag-${p.tag}` : '';
-                const tagText = {
-                    'promessa': '🌟 Promessa',
-                    'urgente': '🔥 Urgente',
-                    'monitorar': '👁️ Monitorar',
-                    'contactado': '✅ Contactado',
-                    'descartado': '❌ Descartado'
-                };
-
-                return `
-                    <div class="glass-card overflow-hidden hover:scale-[1.02] hover:shadow-2xl transition-all cursor-pointer group" onclick="editPlayer('${p.id}')">
-                        <div class="h-56 bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden relative">
-                            ${p.photo ? `<img src="${p.photo}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">` : `
-                                <div class="flex items-center justify-center h-full">
-                                    <svg class="w-20 h-20 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                                </div>
-                            `}
-                            ${p.position ? `<div class="badge bg-white/90 text-emerald-600">${p.position}</div>` : ''}
-                            ${p.videos && p.videos.length > 0 ? `
-                                <div class="absolute bottom-3 right-3 bg-red-500 p-2 rounded-full text-white shadow-lg">
-                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"/></svg>
-                                </div>
-                            ` : ''}
-                        </div>
-                        <div class="p-5">
-                            <div class="flex items-start justify-between mb-2">
-                                <div class="flex-1">
-                                    <p class="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">${p.club || 'Agente Livre'}</p>
-                                    <h3 class="font-black text-slate-800 text-xl leading-tight">${p.name}</h3>
-                                </div>
-                                <div class="text-right">
-                                    <div class="text-2xl font-black ${rating >= 7.5 ? 'text-emerald-500' : rating >= 6 ? 'text-blue-500' : 'text-slate-400'}">${rating}</div>
-                                    <div class="text-[9px] text-slate-400 font-bold uppercase">Nota</div>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-3 text-xs text-slate-500 mb-3">
-                                ${p.age ? `<span>📅 ${p.age} anos</span>` : ''}
-                                ${p.height ? `<span>📏 ${p.height}cm</span>` : ''}
-                                ${p.nationality ? `<span>🌍 ${p.nationality}</span>` : ''}
-                            </div>
-                            ${p.tag ? `<span class="tag ${tagClass}">${tagText[p.tag]}</span>` : ''}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // FILTERS
-        function getFilteredPlayers() {
-            let filtered = [...players];
-            
-            const search = document.getElementById('search-input')?.value.toLowerCase() || '';
-            const position = document.getElementById('filter-position')?.value || '';
-            const tag = document.getElementById('filter-tag')?.value || '';
-            const sort = document.getElementById('sort-by')?.value || 'recent';
-            
-            if (search) {
-                filtered = filtered.filter(p => 
-                    p.name.toLowerCase().includes(search) ||
-                    (p.club && p.club.toLowerCase().includes(search)) ||
-                    (p.agent && p.agent.toLowerCase().includes(search))
-                );
-            }
-            
-            if (position) {
-                filtered = filtered.filter(p => p.position === position || p.position2 === position);
-            }
-            
-            if (tag) {
-                filtered = filtered.filter(p => p.tag === tag);
-            }
-            
-            // Sorting
-            switch(sort) {
-                case 'name':
-                    filtered.sort((a, b) => a.name.localeCompare(b.name));
-                    break;
-                case 'rating':
-                    filtered.sort((a, b) => calculateOverallRating(b.metrics || {}) - calculateOverallRating(a.metrics || {}));
-                    break;
-                case 'age':
-                    filtered.sort((a, b) => (a.age || 0) - (b.age || 0));
-                    break;
-                default: // recent
-                    filtered.sort((a, b) => (b.id || 0) - (a.id || 0));
-            }
-            
-            return filtered;
-        }
-
-        function applyFilters() {
-            renderGrid();
-        }
-
-        function quickFilter(type, value) {
-            resetFilters();
-            // Implement quick filter logic based on type/value
-            if (type === 'age' && value === 'sub21') {
-                players = players.filter(p => p.age && p.age < 21);
-            } else if (type === 'rating' && value === 'high') {
-                players = players.filter(p => calculateOverallRating(p.metrics || {}) >= 7.5);
-            }
-            renderGrid();
-        }
-
-        function resetFilters() {
-            document.getElementById('search-input').value = '';
-            document.getElementById('filter-position').value = '';
-            document.getElementById('filter-tag').value = '';
-            document.getElementById('sort-by').value = 'recent';
-            players = JSON.parse(localStorage.getItem('scoutflow_advanced_v1')) || [];
-            renderGrid();
-        }
-
-        // PLAYER EDITOR
-        function prepareNewPlayer() {
-            currentId = generateId();
-            tempPhoto = "";
-            currentVideos = [];
-            currentCustomMetrics = [];
-            document.querySelectorAll('input:not([type="file"]), textarea, select').forEach(i => i.value = "");
-            document.getElementById('photo-preview').innerHTML = `
-                <div class="text-center">
-                    <svg class="w-16 h-16 mx-auto text-slate-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                    <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">Carregar Foto</span>
-                </div>
-            `;
-            renderMetricsInputs({});
-            renderVideoList();
-            document.getElementById('evaluation-history-section').style.display = 'none';
-            showView('editor');
-        }
-
-        function editPlayer(id) {
-            const p = players.find(x => x.id === id);
-            if (!p) return;
-            
-            currentId = id;
-            tempPhoto = p.photo || "";
-            currentVideos = p.videos || [];
-            
-            // Fill form fields
-            document.getElementById('p-name').value = p.name || "";
-            document.getElementById('p-club').value = p.club || "";
-            document.getElementById('p-age').value = p.age || "";
-            document.getElementById('p-height').value = p.height || "";
-            document.getElementById('p-position').value = p.position || "";
-            document.getElementById('p-position2').value = p.position2 || "";
-            document.getElementById('p-foot').value = p.foot || "";
-            document.getElementById('p-nationality').value = p.nationality || "";
-            document.getElementById('p-agent').value = p.agent || "";
-            document.getElementById('p-contract-end').value = p.contractEnd || "";
-            document.getElementById('p-release-clause').value = p.releaseClause || "";
-            document.getElementById('p-market-value').value = p.marketValue || "";
-            document.getElementById('p-tag').value = p.tag || "";
-            document.getElementById('p-negotiation').value = p.negotiation || "";
-            document.getElementById('p-goals').value = p.goals || "";
-            document.getElementById('p-assists').value = p.assists || "";
-            document.getElementById('p-minutes').value = p.minutes || "";
-            document.getElementById('p-games').value = p.games || "";
-            document.getElementById('p-playstyle').value = p.playstyle || "";
-            document.getElementById('p-system').value = p.system || "";
-            document.getElementById('p-strengths').value = p.strengths || "";
-            document.getElementById('p-weaknesses').value = p.weaknesses || "";
-            document.getElementById('p-injuries').value = p.injuries || "";
-            document.getElementById('p-notes').value = p.notes || "";
-            
-            if (p.photo) {
-                document.getElementById('photo-preview').innerHTML = `<img src="${p.photo}" class="w-full h-full object-cover">`;
-            }
-            
-            currentCustomMetrics = Object.keys(p.metrics || {}).filter(m => !getBaseMetrics(p.position).includes(m));
-            renderMetricsInputs(p.metrics || {}, p.position);
-            renderVideoList();
-            renderEvaluationHistory(p.evaluationHistory || []);
-            
-            showView('editor');
-        }
-
-        function renderMetricsInputs(data, position) {
-            const container = document.getElementById('metrics-editor');
-            const selectedPosition = position || document.getElementById('p-position').value;
-            const baseMetrics = getBaseMetrics(selectedPosition);
-            const dataMetrics = Object.keys(data || {}).filter(m => !baseMetrics.includes(m));
-            const customMetrics = Array.from(new Set([...currentCustomMetrics, ...dataMetrics]));
-            currentCustomMetrics = customMetrics;
-            const metrics = [...baseMetrics, ...customMetrics];
-            
-            container.innerHTML = metrics.map(m => {
-                const value = data[m] || 5;
-                const metricId = formatMetricId(m);
-                const isCustom = customMetrics.includes(m);
-                return `
-                    <div class="bg-gradient-to-br from-slate-50 to-white p-5 rounded-2xl border border-slate-100 hover:border-emerald-200 transition">
-                        <div class="flex justify-between text-[11px] font-bold mb-2">
-                            <div class="flex items-center gap-2">
-                                <span class="text-slate-600 uppercase">${m}</span>
-                                ${isCustom ? `<button type="button" onclick="removeCustomMetric('${m}')" class="text-[10px] text-red-500 font-black uppercase hover:underline">Remover</button>` : ''}
-                            </div>
-                            <span class="text-emerald-600 font-black text-lg" id="v-${metricId}">${value}</span>
-                        </div>
-                        <input type="range" min="0" max="10" step="0.5" value="${value}" 
-                            class="w-full h-2 accent-emerald-500 cursor-pointer" 
-                            oninput="updateMetricValue('${metricId}', this.value)" 
-                            data-m="${m}">
-                        <div class="flex justify-between text-[9px] text-slate-400 font-bold mt-1">
-                            <span>0</span>
-                            <span>5</span>
-                            <span>10</span>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-            
-            updateOverallRating();
-        }
-
-        function addCustomMetric() {
-            const input = document.getElementById('custom-metric-name');
-            if (!input) return;
-            const name = normalizeMetricName(input.value);
-            if (!name) return;
-            const baseMetrics = getBaseMetrics(document.getElementById('p-position').value);
-            const exists = [...baseMetrics, ...currentCustomMetrics].some(m => m.toLowerCase() === name.toLowerCase());
-            if (exists) {
-                alert('Essa métrica já existe. Escolha outro nome.');
-                return;
-            }
-            const currentValues = getCurrentMetricValues();
-            currentCustomMetrics.push(name);
-            input.value = "";
-            renderMetricsInputs(currentValues, document.getElementById('p-position').value);
-            updateRadarChart();
-        }
-
-        function removeCustomMetric(name) {
-            const currentValues = getCurrentMetricValues();
-            delete currentValues[name];
-            currentCustomMetrics = currentCustomMetrics.filter(m => m !== name);
-            renderMetricsInputs(currentValues, document.getElementById('p-position').value);
-            updateRadarChart();
-        }
-
-        function updateMetricValue(metricId, value) {
-            document.getElementById('v-' + metricId).innerText = value;
-            updateOverallRating();
-            updateRadarChart();
-        }
-
-        function updateOverallRating() {
-            const rating = calculateOverallRating(getCurrentMetricValues());
-            document.getElementById('overall-rating').innerText = rating;
-        }
-
-        // Listen to position change to update metrics
-        document.addEventListener('DOMContentLoaded', function() {
-            const posSelect = document.getElementById('p-position');
-            if (posSelect) {
-                posSelect.addEventListener('change', function() {
-                    const currentMetrics = getCurrentMetricValues();
-                    currentCustomMetrics = Object.keys(currentMetrics).filter(m => !getBaseMetrics(this.value).includes(m));
-                    renderMetricsInputs(currentMetrics, this.value);
-                    updateRadarChart();
-                });
-            }
-
-            const customMetricInput = document.getElementById('custom-metric-name');
-            if (customMetricInput) {
-                customMetricInput.addEventListener('keydown', function(event) {
-                    if (event.key === 'Enter') {
-                        event.preventDefault();
-                        addCustomMetric();
-                    }
-                });
-            }
-        });
-
-        // RADAR CHART
-        function updateRadarChart() {
-            const metrics = {};
-            const labels = [];
-            const values = [];
-            
-            document.querySelectorAll('[data-m]').forEach(i => {
-                labels.push(i.dataset.m);
-                values.push(parseFloat(i.value));
-            });
-            
-            if (radarChart) {
-                radarChart.data.labels = labels;
-                radarChart.data.datasets[0].data = values;
-                radarChart.update();
-            } else {
-                const ctx = document.getElementById('radarChart');
-                if (ctx) {
-                    radarChart = new Chart(ctx, {
-                        type: 'radar',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                label: 'Avaliação',
-                                data: values,
-                                backgroundColor: 'rgba(16, 185, 129, 0.2)',
-                                borderColor: 'rgb(16, 185, 129)',
-                                pointBackgroundColor: 'rgb(16, 185, 129)',
-                                pointBorderColor: '#fff',
-                                pointHoverBackgroundColor: '#fff',
-                                pointHoverBorderColor: 'rgb(16, 185, 129)',
-                                borderWidth: 2
-                            }]
-                        },
-                        options: {
-                            scales: {
-                                r: {
-                                    beginAtZero: true,
-                                    max: 10,
-                                    ticks: { stepSize: 2 }
-                                }
-                            },
-                            plugins: {
-                                legend: { display: false }
-                            }
-                        }
-                    });
-                }
-            }
-        }
-
-        // VIDEO LINKS
-        function addVideoLink() {
-            const urlInput = document.querySelector('.video-url');
-            const descInput = document.querySelector('.video-desc');
-            const url = urlInput.value.trim();
-            
-            if (!url) return;
-            
-            currentVideos.push({
-                url: url,
-                description: descInput.value.trim() || 'Vídeo sem descrição',
-                addedAt: new Date().toISOString()
-            });
-            
-            urlInput.value = '';
-            descInput.value = '';
-            renderVideoList();
-        }
-
-        function renderVideoList() {
-            const container = document.getElementById('video-list');
-            if (!currentVideos || currentVideos.length === 0) {
-                container.innerHTML = '<p class="text-slate-400 text-sm text-center py-4">Nenhum vídeo adicionado</p>';
-                return;
-            }
-            
-            container.innerHTML = currentVideos.map((v, idx) => `
-                <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-                    <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"/></svg>
-                    <div class="flex-1">
-                        <a href="${v.url}" target="_blank" class="text-sm font-bold text-emerald-600 hover:underline">${v.description}</a>
-                        <p class="text-xs text-slate-400">${v.url}</p>
-                    </div>
-                    <button onclick="removeVideo(${idx})" class="text-red-500 hover:text-red-700">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-                </div>
-            `).join('');
-        }
-
-        function removeVideo(idx) {
-            currentVideos.splice(idx, 1);
-            renderVideoList();
-        }
-
-        // EVALUATION HISTORY
-        function renderEvaluationHistory(history) {
-            const section = document.getElementById('evaluation-history-section');
-            const timeline = document.getElementById('evaluation-timeline');
-            
-            if (!history || history.length === 0) {
-                section.style.display = 'none';
-                return;
-            }
-            
-            section.style.display = 'block';
-            timeline.innerHTML = history.map(ev => `
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="bg-slate-50 p-4 rounded-xl">
-                        <div class="flex justify-between items-start mb-2">
-                            <div>
-                                <div class="font-bold text-slate-800">${formatDate(ev.date)}</div>
-                                <div class="text-xs text-slate-500">${ev.scoutName || 'Scout'}</div>
-                            </div>
-                            <div class="text-2xl font-black text-emerald-600">${calculateOverallRating(ev.metrics)}</div>
-                        </div>
-                        ${ev.notes ? `<p class="text-sm text-slate-600 mt-2">${ev.notes}</p>` : ''}
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // SAVE PLAYER
-        function savePlayer() {
-            const name = document.getElementById('p-name').value.trim();
-            const position = document.getElementById('p-position').value;
-            
-            if (!name) {
-                alert("⚠️ Insira o nome do atleta!");
-                return;
-            }
-            
-            if (!position) {
-                alert("⚠️ Selecione a posição do atleta!");
-                return;
-            }
-            
-            const metrics = {};
-            document.querySelectorAll('[data-m]').forEach(i => metrics[i.dataset.m] = parseFloat(i.value));
-            
-            const existingPlayer = players.find(p => p.id === currentId);
-            const evaluationHistory = existingPlayer ? (existingPlayer.evaluationHistory || []) : [];
-            
-            // Add current evaluation to history if editing existing player
-            if (existingPlayer) {
-                evaluationHistory.push({
-                    date: new Date().toISOString(),
-                    metrics: metrics,
-                    notes: document.getElementById('p-notes').value,
-                    scoutName: 'Current Scout' // Can be made dynamic
-                });
-            }
-            
-            const data = {
-                id: currentId,
-                name: name,
-                club: document.getElementById('p-club').value,
-                age: parseInt(document.getElementById('p-age').value) || null,
-                height: document.getElementById('p-height').value,
-                position: position,
-                position2: document.getElementById('p-position2').value,
-                foot: document.getElementById('p-foot').value,
-                nationality: document.getElementById('p-nationality').value,
-                agent: document.getElementById('p-agent').value,
-                contractEnd: document.getElementById('p-contract-end').value,
-                releaseClause: document.getElementById('p-release-clause').value,
-                marketValue: document.getElementById('p-market-value').value,
-                tag: document.getElementById('p-tag').value,
-                negotiation: document.getElementById('p-negotiation').value,
-                goals: parseInt(document.getElementById('p-goals').value) || 0,
-                assists: parseInt(document.getElementById('p-assists').value) || 0,
-                minutes: parseInt(document.getElementById('p-minutes').value) || 0,
-                games: parseInt(document.getElementById('p-games').value) || 0,
-                playstyle: document.getElementById('p-playstyle').value,
-                system: document.getElementById('p-system').value,
-                strengths: document.getElementById('p-strengths').value,
-                weaknesses: document.getElementById('p-weaknesses').value,
-                injuries: document.getElementById('p-injuries').value,
-                notes: document.getElementById('p-notes').value,
-                photo: tempPhoto,
-                videos: currentVideos,
-                metrics: metrics,
-                evaluationHistory: evaluationHistory,
-                lastUpdated: new Date().toISOString()
-            };
-            
-            const idx = players.findIndex(p => p.id === currentId);
-            if (idx > -1) {
-                players[idx] = data;
-            } else {
-                players.push(data);
-            }
-            
-            localStorage.setItem('scoutflow_advanced_v1', JSON.stringify(players));
-            
-            // Show success message
-            const btn = event.target;
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<svg class="w-4 h-4 inline-block animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Guardando...';
-            
-            setTimeout(() => {
-                btn.innerHTML = '✓ Guardado!';
-                setTimeout(() => {
-                    showView('home');
-                }, 500);
-            }, 500);
-        }
-
-        function deletePlayer() {
-            if (!confirm('⚠️ Tem a certeza que deseja eliminar este atleta? Esta ação não pode ser revertida.')) return;
-            
-            players = players.filter(p => p.id !== currentId);
-            localStorage.setItem('scoutflow_advanced_v1', JSON.stringify(players));
-            showView('home');
-        }
-
-        // PHOTO UPLOAD
-        function handlePhoto(input) {
-            if (!input.files || !input.files[0]) return;
-            
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                tempPhoto = e.target.result;
-                document.getElementById('photo-preview').innerHTML = `<img src="${tempPhoto}" class="w-full h-full object-cover">`;
-            };
-            reader.readAsDataURL(input.files[0]);
-        }
-
-        // ANALYTICS
-        function renderAnalytics() {
-            // Calculate stats
-            const total = players.length;
-            const avgAge = total > 0 ? (players.reduce((sum, p) => sum + (p.age || 0), 0) / total).toFixed(1) : 0;
-            const avgRating = total > 0 ? (players.reduce((sum, p) => sum + parseFloat(calculateOverallRating(p.metrics || {})), 0) / total).toFixed(1) : 0;
-            const promises = players.filter(p => p.tag === 'promessa').length;
-            
-            document.getElementById('stat-total').textContent = total;
-            document.getElementById('stat-avg-age').textContent = avgAge;
-            document.getElementById('stat-avg-rating').textContent = avgRating;
-            document.getElementById('stat-promises').textContent = promises;
-            
-            // Position distribution
-            const positionCounts = {};
-            players.forEach(p => {
-                if (p.position) {
-                    positionCounts[p.position] = (positionCounts[p.position] || 0) + 1;
-                }
-            });
-            
-            new Chart(document.getElementById('positionChart'), {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(positionCounts),
-                    datasets: [{
-                        data: Object.values(positionCounts),
-                        backgroundColor: ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899', '#14b8a6', '#f97316']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
-            });
-            
-            // Age distribution
-            const ageCounts = { '0-18': 0, '19-21': 0, '22-25': 0, '26-30': 0, '30+': 0 };
-            players.forEach(p => {
-                const age = p.age || 0;
-                if (age <= 18) ageCounts['0-18']++;
-                else if (age <= 21) ageCounts['19-21']++;
-                else if (age <= 25) ageCounts['22-25']++;
-                else if (age <= 30) ageCounts['26-30']++;
-                else ageCounts['30+']++;
-            });
-            
-            new Chart(document.getElementById('ageChart'), {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(ageCounts),
-                    datasets: [{
-                        label: 'Atletas',
-                        data: Object.values(ageCounts),
-                        backgroundColor: '#10b981'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: true } }
-                }
-            });
-            
-            // Top players
-            const topPlayers = [...players]
-                .sort((a, b) => calculateOverallRating(b.metrics || {}) - calculateOverallRating(a.metrics || {}))
-                .slice(0, 10);
-            
-            new Chart(document.getElementById('topPlayersChart'), {
-                type: 'horizontalBar',
-                data: {
-                    labels: topPlayers.map(p => p.name),
-                    datasets: [{
-                        label: 'Avaliação',
-                        data: topPlayers.map(p => calculateOverallRating(p.metrics || {})),
-                        backgroundColor: '#10b981'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { x: { beginAtZero: true, max: 10 } }
-                }
-            });
-            
-            // Tags distribution
-            const tagCounts = {};
-            players.forEach(p => {
-                if (p.tag) {
-                    tagCounts[p.tag] = (tagCounts[p.tag] || 0) + 1;
-                }
-            });
-            
-            new Chart(document.getElementById('tagsChart'), {
-                type: 'pie',
-                data: {
-                    labels: Object.keys(tagCounts).map(t => ({
-                        'promessa': '🌟 Promessa',
-                        'urgente': '🔥 Urgente',
-                        'monitorar': '👁️ Monitorar',
-                        'contactado': '✅ Contactado',
-                        'descartado': '❌ Descartado'
-                    }[t])),
-                    datasets: [{
-                        data: Object.values(tagCounts),
-                        backgroundColor: ['#fef3c7', '#fee2e2', '#dbeafe', '#d1fae5', '#f1f5f9']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
-            });
-        }
-
-        // COMPARISON
-        function initComparison() {
-            const selects = ['compare-player-1', 'compare-player-2', 'compare-player-3'];
-            selects.forEach(id => {
-                const select = document.getElementById(id);
-                select.innerHTML = '<option value="">Selecionar...</option>' + 
-                    players.map(p => `<option value="${p.id}">${p.name} (${p.position || 'N/A'})</option>`).join('');
-            });
-            updateComparison();
-        }
-
-        function updateComparison() {
-            const ids = [
-                document.getElementById('compare-player-1').value,
-                document.getElementById('compare-player-2').value,
-                document.getElementById('compare-player-3').value
-            ].filter(id => id);
-            
-            const selectedPlayers = ids.map(id => players.find(p => p.id === id)).filter(p => p);
-            const container = document.getElementById('comparison-content');
-            
-            if (selectedPlayers.length === 0) {
-                container.innerHTML = '<div class="glass-card p-20 text-center text-slate-400">Selecione atletas para comparar</div>';
-                return;
-            }
-            
-            // Radar comparison
-            const allMetrics = new Set();
-            selectedPlayers.forEach(p => Object.keys(p.metrics || {}).forEach(m => allMetrics.add(m)));
-            const metricsList = Array.from(allMetrics);
-            
-            container.innerHTML = `
-                <div class="glass-card p-6 mb-6">
-                    <h3 class="font-bold text-slate-800 mb-4">Comparação de Perfil Técnico</h3>
-                    <canvas id="comparisonRadar" height="120"></canvas>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-${selectedPlayers.length} gap-6">
-                    ${selectedPlayers.map(p => `
-                        <div class="glass-card p-6">
-                            <div class="text-center mb-4">
-                                ${p.photo ? `<img src="${p.photo}" class="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4 border-emerald-500">` : 
-                                    `<div class="w-32 h-32 rounded-full mx-auto mb-4 bg-slate-100 flex items-center justify-center">
-                                        <svg class="w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                                    </div>`}
-                                <h3 class="font-black text-xl text-slate-800">${p.name}</h3>
-                                <p class="text-sm text-slate-500">${p.club || 'N/A'}</p>
-                                <div class="text-3xl font-black text-emerald-600 mt-2">${calculateOverallRating(p.metrics || {})}</div>
-                            </div>
-                            <div class="space-y-2 text-sm">
-                                <div class="flex justify-between"><span class="text-slate-600">Idade:</span><strong>${p.age || 'N/A'}</strong></div>
-                                <div class="flex justify-between"><span class="text-slate-600">Posição:</span><strong>${p.position || 'N/A'}</strong></div>
-                                <div class="flex justify-between"><span class="text-slate-600">Altura:</span><strong>${p.height ? p.height + 'cm' : 'N/A'}</strong></div>
-                                <div class="flex justify-between"><span class="text-slate-600">Pé:</span><strong>${p.foot || 'N/A'}</strong></div>
-                                <div class="flex justify-between"><span class="text-slate-600">Golos:</span><strong>${p.goals || 0}</strong></div>
-                                <div class="flex justify-between"><span class="text-slate-600">Assistências:</span><strong>${p.assists || 0}</strong></div>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-                
-                <div class="glass-card p-6 mt-6">
-                    <h3 class="font-bold text-slate-800 mb-4">Comparação Métrica por Métrica</h3>
-                    <div class="space-y-4">
-                        ${metricsList.map(metric => `
-                            <div>
-                                <div class="text-sm font-bold text-slate-600 mb-2">${metric}</div>
-                                <div class="grid grid-cols-${selectedPlayers.length} gap-4">
-                                    ${selectedPlayers.map(p => {
-                                        const value = (p.metrics && p.metrics[metric]) || 0;
-                                        return `
-                                            <div>
-                                                <div class="metric-bar">
-                                                    <div class="metric-fill" style="width: ${value * 10}%"></div>
-                                                </div>
-                                                <div class="text-xs text-center mt-1 font-bold text-emerald-600">${value}</div>
-                                            </div>
-                                        `;
-                                    }).join('')}
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-            
-            // Render comparison radar
-            const colors = ['rgba(16, 185, 129, 0.6)', 'rgba(59, 130, 246, 0.6)', 'rgba(139, 92, 246, 0.6)'];
-            const datasets = selectedPlayers.map((p, idx) => ({
-                label: p.name,
-                data: metricsList.map(m => (p.metrics && p.metrics[m]) || 0),
-                backgroundColor: colors[idx],
-                borderColor: colors[idx].replace('0.6', '1'),
-                borderWidth: 2
-            }));
-            
-            new Chart(document.getElementById('comparisonRadar'), {
-                type: 'radar',
-                data: {
-                    labels: metricsList,
-                    datasets: datasets
-                },
-                options: {
-                    scales: {
-                        r: {
-                            beginAtZero: true,
-                            max: 10
-                        }
-                    }
-                }
-            });
-        }
-
-        // EXPORT / IMPORT
-        function exportAllData() {
-            const dataStr = JSON.stringify(players, null, 2);
-            const dataBlob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(dataBlob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `scoutflow_backup_${new Date().toISOString().split('T')[0]}.json`;
-            link.click();
-        }
-
-        function importData() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'application/json';
-            input.onchange = (e) => {
-                const file = e.target.files[0];
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    try {
-                        const imported = JSON.parse(event.target.result);
-                        if (confirm(`Importar ${imported.length} atletas? Isto irá substituir os dados atuais.`)) {
-                            players = imported;
-                            localStorage.setItem('scoutflow_advanced_v1', JSON.stringify(players));
-                            renderGrid();
-                            alert('✓ Dados importados com sucesso!');
-                        }
-                    } catch (err) {
-                        alert('❌ Erro ao importar ficheiro. Verifique o formato.');
-                    }
-                };
-                reader.readAsText(file);
-            };
-            input.click();
-        }
-
-        function exportPlayerPDF() {
-            const player = players.find(p => p.id === currentId);
-            if (!player) {
-                alert('Erro: Atleta não encontrado');
-                return;
-            }
-
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-            const pageWidth = doc.internal.pageSize.getWidth();
-            const pageHeight = doc.internal.pageSize.getHeight();
-            const margin = 14;
-            const contentWidth = pageWidth - (margin * 2);
-
-            const palette = {
-                primary: [16, 185, 129],
-                dark: [15, 23, 42],
-                muted: [100, 116, 139],
-                light: [241, 245, 249],
-                border: [226, 232, 240],
-                white: [255, 255, 255]
-            };
-
-            const safeText = (value, fallback = '—') => {
-                if (value === undefined || value === null) return fallback;
-                const str = String(value).trim();
-                return str ? str : fallback;
-            };
-
-            const normalizeNumber = (value) => {
-                const num = Number(value);
-                return Number.isFinite(num) ? Math.max(0, Math.min(10, num)) : 0;
-            };
-
-            const drawSectionTitle = (title, y) => {
-                doc.setFillColor(...palette.light);
-                doc.roundedRect(margin, y - 5, contentWidth, 8, 2, 2, 'F');
-                doc.setTextColor(...palette.dark);
-                doc.setFontSize(11);
-                doc.setFont(undefined, 'bold');
-                doc.text(title, margin + 3, y);
-                return y + 8;
-            };
-
-            const ensureSpace = (currentY, minSpace) => {
-                if (currentY + minSpace > pageHeight - 18) {
-                    doc.addPage();
-                    return 18;
-                }
-                return currentY;
-            };
-
-            // Header
-            doc.setFillColor(...palette.dark);
-            doc.rect(0, 0, pageWidth, 36, 'F');
-
-            // Foto
-            if (player.photo) {
-                try {
-                    let format = 'JPEG';
-                    if (player.photo.startsWith('data:image/png')) format = 'PNG';
-                    if (player.photo.startsWith('data:image/webp')) format = 'WEBP';
-                    doc.addImage(player.photo, format, margin, 8, 24, 24, undefined, 'FAST');
-
-                    doc.setDrawColor(...palette.white);
-                    doc.setLineWidth(0.6);
-                    doc.rect(margin, 8, 24, 24);
-                } catch (err) {
-                    console.warn('Não foi possível adicionar foto ao PDF:', err);
-                }
-            }
-
-            doc.setTextColor(...palette.white);
-            doc.setFont(undefined, 'bold');
-            doc.setFontSize(18);
-            doc.text(safeText(player.name, 'Sem Nome'), margin + 30, 16);
-
-            doc.setFont(undefined, 'normal');
-            doc.setFontSize(10);
-            doc.text(safeText(player.club, 'Sem Clube'), margin + 30, 22);
-            doc.text(`${safeText(player.position, 'N/A')} • ${safeText(player.position2, 'Sem posição secundária')}`, margin + 30, 27);
-
-            const rating = calculateOverallRating(player.metrics || {});
-            doc.setFillColor(...palette.primary);
-            doc.roundedRect(pageWidth - 44, 9, 30, 18, 3, 3, 'F');
-            doc.setTextColor(...palette.white);
-            doc.setFont(undefined, 'bold');
-            doc.setFontSize(8);
-            doc.text('RATING GERAL', pageWidth - 29, 15, { align: 'center' });
-            doc.setFontSize(16);
-            doc.text(String(rating), pageWidth - 29, 23, { align: 'center' });
-
-            let y = 44;
-
-            // Helpers de layout para evitar sobreposição entre secções
-            const drawSimpleRowsSection = (title, rows) => {
-                const visibleRows = rows.filter(([, value]) => {
-                    const val = safeText(value, 'N/A');
-                    return val !== 'N/A' && val !== '—';
-                });
-                if (!visibleRows.length) return;
-
-                const lineHeight = 6;
-                const boxPadding = 4;
-                const boxHeight = (visibleRows.length * lineHeight) + (boxPadding * 2);
-
-                y = ensureSpace(y, boxHeight + 20);
-                y = drawSectionTitle(title, y);
-
-                doc.setDrawColor(...palette.border);
-                doc.setFillColor(...palette.white);
-                doc.roundedRect(margin, y - 2, contentWidth, boxHeight, 2, 2, 'FD');
-
-                let rowY = y + boxPadding;
-                visibleRows.forEach(([label, value]) => {
-                    doc.setFont(undefined, 'bold');
-                    doc.setTextColor(...palette.muted);
-                    doc.text(`${label}:`, margin + 4, rowY);
-
-                    doc.setFont(undefined, 'normal');
-                    doc.setTextColor(...palette.dark);
-                    doc.text(safeText(value, 'N/A'), margin + 42, rowY);
-                    rowY += lineHeight;
-                });
-
-                y += boxHeight + 4;
-            };
-
-            const drawTwoColumnSummary = () => {
-                y = ensureSpace(y, 72);
-                y = drawSectionTitle('RESUMO DO ATLETA', y);
-
-                const leftRows = [
-                    ['Idade', player.age ? `${player.age} anos` : 'N/A'],
-                    ['Altura', safeText(player.height, 'N/A')],
-                    ['Pé preferencial', safeText(player.foot, 'N/A')],
-                    ['Nacionalidade', safeText(player.nationality, 'N/A')]
-                ];
-
-                const rightRows = [
-                    ['Agente', safeText(player.agent, 'N/A')],
-                    ['Tag', safeText(player.tag, 'N/A')],
-                    ['Negociação', safeText(player.negotiation, 'N/A')],
-                    ['Atualizado', player.lastUpdated ? formatDate(player.lastUpdated) : new Date().toLocaleDateString('pt-PT')]
-                ];
-
-                const lineHeight = 7;
-                const boxPaddingY = 5;
-                const rowsCount = Math.max(leftRows.length, rightRows.length);
-                const boxHeight = (rowsCount * lineHeight) + (boxPaddingY * 2);
-
-                doc.setDrawColor(...palette.border);
-                doc.setFillColor(...palette.white);
-                doc.roundedRect(margin, y - 2, contentWidth, boxHeight, 2, 2, 'FD');
-
-                const leftX = margin + 4;
-                const rightX = margin + (contentWidth / 2) + 2;
-                let leftY = y + boxPaddingY;
-                let rightY = y + boxPaddingY;
-
-                leftRows.forEach(([label, value]) => {
-                    doc.setFont(undefined, 'bold');
-                    doc.setTextColor(...palette.muted);
-                    doc.text(`${label}:`, leftX, leftY);
-
-                    doc.setFont(undefined, 'normal');
-                    doc.setTextColor(...palette.dark);
-                    const text = doc.splitTextToSize(safeText(value, 'N/A'), (contentWidth / 2) - 30);
-                    doc.text(text, leftX + 26, leftY);
-                    leftY += lineHeight;
-                });
-
-                rightRows.forEach(([label, value]) => {
-                    doc.setFont(undefined, 'bold');
-                    doc.setTextColor(...palette.muted);
-                    doc.text(`${label}:`, rightX, rightY);
-
-                    doc.setFont(undefined, 'normal');
-                    doc.setTextColor(...palette.dark);
-                    const text = doc.splitTextToSize(safeText(value, 'N/A'), (contentWidth / 2) - 30);
-                    doc.text(text, rightX + 25, rightY);
-                    rightY += lineHeight;
-                });
-
-                y += boxHeight + 4;
-            };
-
-            const drawParagraphSection = (title, content) => {
-                if (!content || !String(content).trim()) return;
-
-                const lines = doc.splitTextToSize(String(content).trim(), contentWidth - 10);
-                const lineHeight = 5.8;
-                const boxPadding = 4;
-                const boxHeight = (lines.length * lineHeight) + (boxPadding * 2);
-
-                y = ensureSpace(y, boxHeight + 20);
-                y = drawSectionTitle(title, y);
-
-                doc.setDrawColor(...palette.border);
-                doc.setFillColor(...palette.white);
-                doc.roundedRect(margin, y - 2, contentWidth, boxHeight, 2, 2, 'FD');
-
-                let textY = y + boxPadding;
-                lines.forEach((line) => {
-                    doc.text(line, margin + 4, textY);
-                    textY += lineHeight;
-                });
-
-                y += boxHeight + 4;
-            };
-
-            const drawTacticalSection = () => {
-                const rows = [
-                    ['Estilo de jogo', safeText(player.playstyle, 'N/A')],
-                    ['Sistema ideal', safeText(player.system, 'N/A')],
-                    ['Pontos fortes', safeText(player.strengths, 'N/A')],
-                    ['Pontos a melhorar', safeText(player.weaknesses, 'N/A')]
-                ];
-
-                const processed = rows.map(([label, value]) => ({
-                    label,
-                    lines: doc.splitTextToSize(value, contentWidth - 44)
-                }));
-
-                const rowGap = 2.5;
-                const lineHeight = 5;
-                const boxPadding = 4;
-                const contentHeight = processed.reduce((acc, row) => acc + Math.max(1, row.lines.length) * lineHeight + rowGap, 0);
-                const boxHeight = contentHeight + (boxPadding * 2);
-
-                y = ensureSpace(y, boxHeight + 20);
-                y = drawSectionTitle('ANÁLISE TÁTICA', y);
-
-                doc.setDrawColor(...palette.border);
-                doc.setFillColor(...palette.white);
-                doc.roundedRect(margin, y - 2, contentWidth, boxHeight, 2, 2, 'FD');
-
-                let rowY = y + boxPadding;
-                processed.forEach((row) => {
-                    doc.setFont(undefined, 'bold');
-                    doc.setTextColor(...palette.muted);
-                    doc.text(`${row.label}:`, margin + 4, rowY);
-
-                    doc.setFont(undefined, 'normal');
-                    doc.setTextColor(...palette.dark);
-                    doc.text(row.lines, margin + 38, rowY);
-
-                    rowY += Math.max(1, row.lines.length) * lineHeight + rowGap;
-                });
-
-                y += boxHeight + 4;
-            };
-
-            const drawEvaluationHistorySection = () => {
-                if (!Array.isArray(player.evaluationHistory) || !player.evaluationHistory.length) return;
-
-                const last3 = player.evaluationHistory.slice(-3).reverse();
-                const lineHeight = 6;
-                const boxPadding = 4;
-                const boxHeight = (last3.length * lineHeight) + (boxPadding * 2);
-
-                y = ensureSpace(y, boxHeight + 20);
-                y = drawSectionTitle('HISTÓRICO DE AVALIAÇÕES', y);
-
-                doc.setDrawColor(...palette.border);
-                doc.setFillColor(...palette.white);
-                doc.roundedRect(margin, y - 2, contentWidth, boxHeight, 2, 2, 'FD');
-
-                doc.setFontSize(9);
-                doc.setTextColor(...palette.dark);
-                doc.setFont(undefined, 'normal');
-
-                let entryY = y + boxPadding;
-                last3.forEach((ev) => {
-                    const evRating = calculateOverallRating(ev.metrics || {});
-                    const line = `${formatDate(ev.date)} | ${safeText(ev.scoutName, 'Scout')} | Nota: ${evRating}`;
-                    doc.text(line, margin + 4, entryY);
-                    entryY += lineHeight;
-                });
-
-                y += boxHeight + 4;
-            };
-
-            // Resumo
-            drawTwoColumnSummary();
-
-            // Estatísticas
-            y = ensureSpace(y, 42);
-            y = drawSectionTitle('ESTATÍSTICAS DA ÉPOCA', y);
-            doc.setDrawColor(...palette.border);
-            doc.roundedRect(margin, y - 2, contentWidth, 24, 2, 2, 'S');
-
-            const stats = [
-                ['Jogos', player.games || 0],
-                ['Minutos', player.minutes || 0],
-                ['Golos', player.goals || 0],
-                ['Assistências', player.assists || 0]
-            ];
-
-            stats.forEach((item, idx) => {
-                const x = margin + 3 + (idx * 47);
-                doc.setFillColor(...palette.light);
-                doc.roundedRect(x, y + 2, 44, 16, 2, 2, 'F');
-                doc.setTextColor(...palette.muted);
-                doc.setFontSize(8);
-                doc.setFont(undefined, 'bold');
-                doc.text(item[0], x + 22, y + 8, { align: 'center' });
-                doc.setTextColor(...palette.dark);
-                doc.setFontSize(13);
-                doc.text(String(item[1]), x + 22, y + 15, { align: 'center' });
-            });
-            y += 26;
-
-            // Métricas
-            const metricsEntries = Object.entries(player.metrics || {});
-            if (metricsEntries.length) {
-                y = ensureSpace(y, 24);
-                y = drawSectionTitle('AVALIAÇÃO TÉCNICA (0-10)', y);
-
-                metricsEntries.forEach(([metric, value]) => {
-                    y = ensureSpace(y, 10);
-                    const score = normalizeNumber(value);
-
-                    doc.setFontSize(9);
-                    doc.setTextColor(...palette.dark);
-                    doc.setFont(undefined, 'bold');
-                    doc.text(metric, margin, y);
-                    doc.setFont(undefined, 'normal');
-                    doc.text(score.toFixed(1), pageWidth - margin, y, { align: 'right' });
-
-                    const barY = y + 1.5;
-                    doc.setFillColor(...palette.border);
-                    doc.roundedRect(margin, barY, contentWidth, 3.8, 1.8, 1.8, 'F');
-                    doc.setFillColor(...palette.primary);
-                    doc.roundedRect(margin, barY, (score / 10) * contentWidth, 3.8, 1.8, 1.8, 'F');
-                    y += 8;
-                });
-            }
-
-            // Contrato e mercado
-            drawSimpleRowsSection('INFORMAÇÃO CONTRATUAL', [
-                ['Fim de contrato', player.contractEnd ? formatDate(player.contractEnd) : 'N/A'],
-                ['Cláusula de rescisão', safeText(player.releaseClause, 'N/A')],
-                ['Valor de mercado', safeText(player.marketValue, 'N/A')]
-            ]);
-
-            // Análise + notas
-            drawTacticalSection();
-            drawParagraphSection('HISTÓRICO DE LESÕES', player.injuries);
-            drawParagraphSection('OBSERVAÇÕES DO SCOUT', player.notes);
-
-            if (Array.isArray(player.videos) && player.videos.length) {
-                y = ensureSpace(y, 18);
-                y = drawSectionTitle('VÍDEOS ASSOCIADOS', y);
-                doc.setFontSize(9);
-                doc.setTextColor(...palette.dark);
-                const videoText = `Total de vídeos: ${player.videos.length}`;
-                doc.text(videoText, margin + 3, y + 2);
-                y += 8;
-            }
-
-            drawEvaluationHistorySection();
-
-            // Rodapé
-            const pageCount = doc.internal.getNumberOfPages();
-            for (let i = 1; i <= pageCount; i++) {
-                doc.setPage(i);
-                doc.setDrawColor(...palette.border);
-                doc.line(margin, pageHeight - 12, pageWidth - margin, pageHeight - 12);
-                doc.setFontSize(8);
-                doc.setTextColor(...palette.muted);
-                doc.text(`ScoutFlow Pro • ${new Date().toLocaleDateString('pt-PT')}`, margin, pageHeight - 7);
-                doc.text(`Página ${i} de ${pageCount}`, pageWidth - margin, pageHeight - 7, { align: 'right' });
-            }
-
-            // Salvar PDF
-            const cleanName = safeText(player.name, 'atleta').replace(/\s+/g, '_');
-            const fileName = `${cleanName}_${new Date().toISOString().split('T')[0]}.pdf`;
-            doc.save(fileName);
-
-            // Feedback visual
-            const btn = (typeof event !== 'undefined' && event?.target) ? event.target : null;
-            if (btn) {
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '✓ PDF Exportado!';
-                btn.classList.add('bg-emerald-600');
-                setTimeout(() => {
-                    btn.innerHTML = originalText;
-                    btn.classList.remove('bg-emerald-600');
-                }, 2000);
-            }
-        }
-
-        // KEYBOARD SHORTCUTS
-        document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey || e.metaKey) {
-                if (e.key === 'n') {
-                    e.preventDefault();
-                    prepareNewPlayer();
-                } else if (e.key === 's' && document.getElementById('view-editor').classList.contains('hidden') === false) {
-                    e.preventDefault();
-                    savePlayer();
-                }
-            }
-            if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
-                e.preventDefault();
-                document.getElementById('search-input').focus();
-            }
-        });
-
-        // INIT
-        window.onload = () => {
-            showView('home');
-        };
- </script>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <script>
-      const supabaseUrl = 'https://ocfqofvctutmvoejtgtl.supabase.co'; 
-      const supabaseKey = 'sb_publishable_lXRlEB09_NOBP24xeY38rw_7WXG_K_l'; 
-      const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
-      let meuGrafico;
-
-      async function carregarDadosDoScout() {
-          console.log("A procurar atletas no Supabase...");
-          const { data: atletas, error } = await _supabase
-              .from('atletas')
-              .select('nome, nota');
-
-          if (error) {
-              console.error('Erro de ligação:', error.message);
-              return;
-          }
-
-          const ctx = document.getElementById('graficoScout'); // Garante que este ID existe no teu HTML
-          if (!ctx) return;
-
-          if (meuGrafico) meuGrafico.destroy();
-
-          meuGrafico = new Chart(ctx, {
-              type: 'bar',
-              data: {
-                  labels: atletas.map(a => a.nome),
-                  datasets: [{
-                      label: 'Pontuação Técnica',
-                      data: atletas.map(a => a.nota),
-                      backgroundColor: '#3b82f6'
-                  }]
-              },
-              options: {
-                  indexAxis: 'y', // Resolve o erro "horizontalBar"
-                  responsive: true,
-                  scales: { x: { beginAtZero: true, max: 10 } }
-              }
-          });
-      }
-
-      carregarDadosDoScout();
-    </script>
+      }catch(e){ toast('Erro ao importar ficheiro!','error'); }
+    };
+    r.readAsText(f);
+  };
+  inp.click();
+}
+
+function exportPDF(){
+  const p=players.find(x=>x.id===currentId);
+  if(!p){ toast('Guarde o atleta primeiro!','error'); return; }
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:'mm',format:'a4'});
+  const W=210, M=16, CW=W-M*2;
+  const PAL={acc:[0,229,160],dark:[10,14,26],text:[232,237,245],muted:[136,150,176],light:[26,34,53],white:[255,255,255],border:[30,45,69]};
+  let y=0;
+
+  // Header
+  doc.setFillColor(...PAL.dark); doc.rect(0,0,W,40,'F');
+  doc.setFillColor(...PAL.acc); doc.roundedRect(M,8,24,24,4,4,'F');
+  doc.setTextColor(...PAL.dark); doc.setFont(undefined,'bold'); doc.setFontSize(14);
+  doc.text('SF',M+12,22,{align:'center'});
+  doc.setTextColor(...PAL.white); doc.setFontSize(20); doc.setFont(undefined,'bold');
+  doc.text((p.name||'Atleta').toUpperCase(),M+30,18);
+  doc.setFontSize(10); doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.muted);
+  doc.text(`${p.club||'Agente Livre'} · ${p.position||'N/A'}`,M+30,26);
+  const r=calcRating(p.metrics||{});
+  doc.setFillColor(...PAL.acc); doc.roundedRect(W-M-28,9,28,22,4,4,'F');
+  doc.setTextColor(...PAL.dark); doc.setFontSize(18); doc.setFont(undefined,'bold');
+  doc.text(String(r),W-M-14,20,{align:'center'});
+  doc.setFontSize(8); doc.text('NOTA',W-M-14,27,{align:'center'});
+  y=50;
+
+  const row=(label,val,x2=M+50)=>{
+    if(!val||val==='—') return;
+    doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.muted); doc.setFontSize(9);
+    doc.text(label+':',M,y);
+    doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.text);
+    doc.text(String(val),x2,y);
+    y+=7;
+  };
+
+  const sectionTitle=(t)=>{
+    if(y>265){ doc.addPage(); y=18; }
+    doc.setFillColor(...PAL.light); doc.roundedRect(M,y-4,CW,9,2,2,'F');
+    doc.setTextColor(...PAL.acc); doc.setFont(undefined,'bold'); doc.setFontSize(10);
+    doc.text(t,M+4,y+2); y+=12;
+  };
+
+  sectionTitle('INFORMAÇÃO PESSOAL');
+  row('Idade',p.age?p.age+' anos':'—');
+  row('Altura',p.height?p.height+'cm':'—');
+  row('Peso',p.weight?p.weight+'kg':'—');
+  row('Pé',p.foot||'—');
+  row('Nacionalidade',p.nationality||'—');
+  row('Agente',p.agent||'—');
+
+  sectionTitle('CONTRATO & MERCADO');
+  row('Fim de Contrato',p.contractEnd?fmt(p.contractEnd):'—');
+  row('Cláusula',p.releaseClause||'—');
+  row('Valor Mercado',p.marketValue||'—');
+  row('Status',p.tag||'—');
+
+  sectionTitle('ESTATÍSTICAS DA ÉPOCA');
+  row('Jogos',p.games||0); row('Minutos',p.minutes||0);
+  row('Golos',p.goals||0); row('Assistências',p.assists||0);
+  row('Cartões Amarelos',p.yellowCards||0); row('Cartões Vermelhos',p.redCards||0);
+
+  sectionTitle('AVALIAÇÃO TÉCNICA');
+  Object.entries(p.metrics||{}).forEach(([m,v])=>{
+    if(y>265){ doc.addPage(); y=18; }
+    doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.muted); doc.setFontSize(9);
+    doc.text(m,M,y);
+    doc.setTextColor(...PAL.acc); doc.text(String(v),M+80,y);
+    doc.setFillColor(...PAL.light); doc.roundedRect(M+90,y-4,CW-90,5,2,2,'F');
+    doc.setFillColor(...PAL.acc); doc.roundedRect(M+90,y-4,(v/10)*(CW-90),5,2,2,'F');
+    y+=8;
+  });
+
+  if(p.strengths||p.weaknesses||p.notes){
+    sectionTitle('ANÁLISE DO SCOUT');
+    if(p.strengths){ row('Pontos Fortes',p.strengths,M+35); y+=2; }
+    if(p.weaknesses){ row('A Melhorar',p.weaknesses,M+35); y+=2; }
+    if(p.notes){
+      if(y>255){ doc.addPage(); y=18; }
+      doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.muted); doc.setFontSize(9);
+      doc.text('Notas:',M,y); y+=5;
+      doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.text);
+      const lines=doc.splitTextToSize(p.notes,CW);
+      doc.text(lines,M,y); y+=lines.length*5+4;
+    }
+  }
+
+  if(p.reports&&p.reports.length){
+    sectionTitle(`RELATÓRIOS DE JOGO (${p.reports.length})`);
+    [...p.reports].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5).forEach(r=>{
+      if(y>262){ doc.addPage(); y=18; }
+      doc.setFillColor(...PAL.light); doc.roundedRect(M,y-3,CW,12,2,2,'F');
+      doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.text); doc.setFontSize(9);
+      doc.text(`${fmt(r.date)} · ${r.homeTeam||'?'} vs ${r.awayTeam||'?'}`,M+3,y+3);
+      doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.muted);
+      doc.text(`Nota: ${r.rating||'—'} · Golos: ${r.goals||0} · Assist: ${r.assists||0}`,M+3,y+8);
+      y+=16;
+    });
+  }
+
+  // Footer
+  const pages=doc.internal.getNumberOfPages();
+  for(let i=1;i<=pages;i++){
+    doc.setPage(i);
+    doc.setDrawColor(...PAL.border); doc.line(M,290,W-M,290);
+    doc.setFontSize(8); doc.setTextColor(...PAL.muted);
+    doc.text(`ScoutFlow Pro · ${new Date().toLocaleDateString('pt-PT')}`,M,294);
+    doc.text(`${i}/${pages}`,W-M,294,{align:'right'});
+  }
+
+  doc.save(`${(p.name||'atleta').replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.pdf`);
+  toast('PDF exportado!');
+}
+
+// ═══════════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════════════
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='n'){ e.preventDefault(); newPlayer(); }
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'){ const ed=document.getElementById('view-editor'); if(ed.classList.contains('active')){ e.preventDefault(); savePlayer(); } }
+  if(e.key==='Escape'){ const m=document.getElementById('report-modal'); if(m.style.display!=='none') closeReportModal(); }
+});
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+renderGrid();
+</script>
 </body>
 </html>
