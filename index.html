@@ -387,20 +387,257 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
 
 .actions-bar { display: flex; gap: 10px; align-items: center; margin-bottom: 24px; flex-wrap: wrap; }
 
-/* responsive */
+/* ── ALERTAS DE CONTRATO ── */
+.contract-badge {
+  position: absolute; bottom: 10px; left: 10px;
+  background: rgba(255,77,109,0.92); backdrop-filter: blur(6px);
+  color: #fff; font-size: 10px; font-weight: 700;
+  padding: 3px 8px; border-radius: 6px;
+  display: flex; align-items: center; gap: 4px;
+  animation: pulse-red 2s infinite;
+}
+.contract-badge.warn {
+  background: rgba(255,190,11,0.92); color: #1a1200;
+}
+@keyframes pulse-red {
+  0%,100% { box-shadow: 0 0 0 0 rgba(255,77,109,0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(255,77,109,0); }
+}
+
+/* ── NOTAS RÁPIDAS ── */
+#quick-note-fab {
+  position: fixed; bottom: 90px; right: 20px; z-index: 150;
+  width: 50px; height: 50px; border-radius: 50%;
+  background: var(--surface2); border: 1px solid var(--border2);
+  color: var(--text2); font-size: 22px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  transition: all 0.2s; -webkit-tap-highlight-color: transparent;
+}
+#quick-note-fab:hover { background: var(--accent); color: var(--bg); transform: scale(1.1); }
+#quick-note-panel {
+  position: fixed; bottom: 150px; right: 20px; z-index: 149;
+  width: 300px; background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: var(--radius); box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  overflow: hidden; display: none;
+  animation: slideUp 0.2s ease;
+}
+@keyframes slideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+.qnp-header {
+  padding: 12px 16px; background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 12px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 1px;
+}
+.qnp-header button { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 16px; line-height: 1; }
+#quick-note-text {
+  width: 100%; height: 120px; background: var(--bg2); border: none;
+  color: var(--text); font-family: var(--font-body); font-size: 13px;
+  padding: 12px 16px; resize: none; outline: none; line-height: 1.6;
+}
+.qnp-footer {
+  padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;
+  border-top: 1px solid var(--border);
+}
+.qnp-footer span { font-size: 11px; color: var(--text3); }
+#qn-list { padding: 0 12px 8px; max-height: 160px; overflow-y: auto; }
+.qn-item {
+  padding: 8px 0; border-bottom: 1px solid var(--border);
+  font-size: 12px; color: var(--text2); line-height: 1.5;
+  display: flex; justify-content: space-between; gap: 8px;
+}
+.qn-item button { background: none; border: none; color: var(--text3); cursor: pointer; flex-shrink: 0; }
+.qn-item button:hover { color: var(--red); }
+.qn-time { font-size: 10px; color: var(--text3); display: block; margin-top: 2px; font-family: var(--font-mono); }
+
+/* ── KANBAN ── */
+.kanban-board { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 12px; align-items: flex-start; }
+.kanban-board::-webkit-scrollbar { height: 4px; }
+.kanban-board::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+.kanban-col {
+  flex: 0 0 220px; background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.kanban-col-header {
+  padding: 12px 14px; font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1px;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+.kanban-count {
+  background: var(--bg3); color: var(--text3);
+  font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;
+}
+.kanban-cards { padding: 10px; min-height: 80px; display: flex; flex-direction: column; gap: 8px; }
+.kanban-card {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 10px 12px; cursor: pointer;
+  transition: all 0.2s;
+}
+.kanban-card:hover { border-color: var(--border2); transform: translateY(-1px); }
+.kc-name { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+.kc-meta { font-size: 11px; color: var(--text2); display: flex; justify-content: space-between; align-items: center; }
+.kc-rating { font-family: var(--font-mono); color: var(--accent); font-weight: 700; }
+.kc-pos { font-size: 10px; color: var(--text3); font-family: var(--font-mono); }
+
+/* ── CALENDÁRIO ── */
+.cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
+.cal-day-header { text-align: center; font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; padding: 4px 0; }
+.cal-day {
+  aspect-ratio: 1; background: var(--bg3); border-radius: 8px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 600; color: var(--text2);
+  position: relative; cursor: default; transition: all 0.2s;
+}
+.cal-day.has-event { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(0,229,160,0.3); cursor: pointer; }
+.cal-day.has-event:hover { background: rgba(0,229,160,0.2); }
+.cal-day.today { border: 2px solid var(--accent); color: var(--accent); }
+.cal-day.other-month { color: var(--text3); opacity: 0.4; }
+.cal-dot { width: 5px; height: 5px; background: var(--accent); border-radius: 50%; position: absolute; bottom: 4px; }
+.cal-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.cal-nav button { background: var(--bg3); border: 1px solid var(--border2); color: var(--text2); border-radius: var(--radius-sm); padding: 6px 12px; cursor: pointer; font-family: var(--font-body); transition: all 0.2s; }
+.cal-nav button:hover { background: var(--surface2); color: var(--text); }
+.cal-nav h3 { font-family: var(--font-display); font-size: 20px; letter-spacing: 1px; color: var(--text); }
+.event-item {
+  background: var(--bg3); border: 1px solid var(--border); border-left: 3px solid var(--accent);
+  border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 8px;
+  display: flex; justify-content: space-between; align-items: center; cursor: pointer;
+  transition: all 0.2s;
+}
+.event-item:hover { background: var(--surface); border-left-color: var(--accent2); }
+.event-item.past { opacity: 0.5; border-left-color: var(--text3); }
+.ei-left h4 { font-size: 13px; font-weight: 600; }
+.ei-left p { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.ei-date { font-family: var(--font-mono); font-size: 12px; color: var(--text3); text-align: right; }
+
+/* ── EVOLUÇÃO ── */
+.evo-chart-wrap { position: relative; height: 260px; }
+
+/* ── VIEWS NOVAS ── */
+#view-kanban .page-title, #view-calendar .page-title, #view-evolution .page-title { }
+
+/* ── RESPONSIVE 380px (pequenos iPhones) ── */
+@media (max-width: 380px) {
+  .grid-4 { grid-template-columns: 1fr; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .pc-img { height: 200px; }
+}
+.mobile-nav {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+  background: rgba(10,14,26,0.97);
+  border-top: 1px solid var(--border2);
+  backdrop-filter: blur(20px);
+  padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+}
+.mobile-nav-inner { display: flex; justify-content: space-around; align-items: center; }
+.mnav-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  background: none; border: none; cursor: pointer; padding: 6px 12px;
+  color: var(--text3); font-family: var(--font-body); font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.5px; transition: color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.mnav-btn svg { width: 22px; height: 22px; }
+.mnav-btn.active { color: var(--accent); }
+.mnav-btn.accent { color: var(--bg); }
+.mnav-btn.accent .mnav-icon { background: var(--accent); border-radius: 12px; padding: 6px; }
+.mnav-icon { display: flex; align-items: center; justify-content: center; }
+
+/* ── RESPONSIVE 900px ── */
 @media (max-width: 900px) {
   .editor-layout { grid-template-columns: 1fr; }
   .stats-row { grid-template-columns: 1fr 1fr; }
   .chart-grid { grid-template-columns: 1fr; }
   .compare-selects { grid-template-columns: 1fr; }
+  #tab-tecnico > div { grid-template-columns: 1fr !important; }
+  #tab-pitch > div { grid-template-columns: 1fr !important; }
+  #reports-layout { grid-template-columns: 1fr !important; }
 }
+
+/* ── RESPONSIVE 600px (MOBILE) ── */
 @media (max-width: 600px) {
-  main { padding: 16px; }
-  nav { padding: 0 16px; }
-  .nav-title { display: none; }
-  .form-row, .form-row-3 { grid-template-columns: 1fr; }
-  .stats-row { grid-template-columns: 1fr 1fr; }
+  /* Layout base */
+  main { padding: 14px 14px 90px; }
+
+  /* Esconder nav desktop, mostrar mobile */
+  .nav-links { display: none !important; }
+  .nav-brand { gap: 8px; }
+  .nav-badge { display: none; }
+  nav { padding: 0 14px; height: 56px; }
+  .mobile-nav { display: block; }
+
+  /* Page headers */
+  .page-title { font-size: 30px; }
+  .page-header { flex-direction: column !important; align-items: flex-start !important; gap: 10px; }
+  .page-header > div:last-child { width: 100%; display: flex; gap: 8px; }
+  .page-header .btn-ghost { flex: 1; justify-content: center; font-size: 12px; padding: 8px 10px; }
+
+  /* Toolbar */
+  .toolbar { flex-direction: column; gap: 10px; padding: 14px; }
+  .search-wrap { min-width: unset; width: 100%; }
+  .toolbar select { width: 100% !important; }
+  .filter-row { width: 100%; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
+  .filter-row::-webkit-scrollbar { display: none; }
+
+  /* Grid de atletas */
+  .grid-4 { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .pc-img { height: 140px; }
+  .pc-body { padding: 10px 12px; }
+  .pc-name { font-size: 14px; }
+
+  /* Editor */
+  .actions-bar { gap: 6px; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
+  .actions-bar::-webkit-scrollbar { display: none; }
+  .actions-bar .btn-ghost, .actions-bar .btn-danger, .actions-bar .btn-primary { font-size: 12px; padding: 8px 12px; white-space: nowrap; flex-shrink: 0; }
+  .actions-bar > div[style*="flex:1"] { display: none; }
+
+  /* Tabs */
+  .tabs { overflow-x: auto; width: 100%; flex-wrap: nowrap; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { white-space: nowrap; flex-shrink: 0; padding: 7px 14px; }
+
+  /* Forms */
+  .form-row, .form-row-3 { grid-template-columns: 1fr; gap: 10px; }
+
+  /* Métricas */
   .metric-grid { grid-template-columns: 1fr; }
+  #tab-tecnico > div { grid-template-columns: 1fr !important; }
+
+  /* Stats analytics */
+  .stats-row { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-val { font-size: 28px; }
+
+  /* Comparar */
+  .compare-selects { grid-template-columns: 1fr; }
+  .compare-cards { grid-template-columns: 1fr !important; }
+  .compare-bars { flex-direction: column; gap: 8px; }
+
+  /* Pitch & reports */
+  #tab-pitch > div { grid-template-columns: 1fr !important; }
+  #reports-layout { grid-template-columns: 1fr !important; }
+
+  /* Modal */
+  .modal { padding: 20px 16px; max-height: 92vh; border-radius: 20px 20px 0 0; }
+  .modal-bg { align-items: flex-end; padding: 0; }
+  .form-row-3 { grid-template-columns: 1fr 1fr; }
+
+  /* Video input */
+  #vid-url, #vid-desc { font-size: 13px; }
+
+  /* Overall ring */
+  .overall-ring { width: 72px; height: 72px; }
+  .ring-svg { width: 72px; height: 72px; }
+  .ring-val { font-size: 20px; }
+
+  /* Card inner padding */
+  .card-inner { padding: 14px; }
+
+  /* Section titles */
+  .section-title { font-size: 9px; }
+
+  /* Radar chart height */
+  #radarChart { max-height: 240px !important; }
 }
 </style>
 </head>
@@ -418,6 +655,9 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
   </a>
   <div class="nav-links">
     <button class="nav-link active" id="nl-home" onclick="showView('home')">Atletas</button>
+    <button class="nav-link" id="nl-kanban" onclick="showView('kanban')">Pipeline</button>
+    <button class="nav-link" id="nl-calendar" onclick="showView('calendar')">Calendário</button>
+    <button class="nav-link" id="nl-evolution" onclick="showView('evolution')">Evolução</button>
     <button class="nav-link" id="nl-analytics" onclick="showView('analytics')">Analytics</button>
     <button class="nav-link" id="nl-compare" onclick="showView('compare')">Comparar</button>
     <button class="btn-primary" onclick="newPlayer()" style="margin-left:8px">
@@ -483,6 +723,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
       <button class="chip" id="chip-sub21" onclick="toggleChip('sub21')">Sub-21</button>
       <button class="chip" id="chip-high" onclick="toggleChip('high')">Nota ≥ 7.5</button>
       <button class="chip" id="chip-free" onclick="toggleChip('free')">Agente Livre</button>
+      <button class="chip" id="chip-expiring" onclick="toggleChip('expiring')" style="color:var(--red)">📋 Contrato a Expirar</button>
     </div>
   </div>
 
@@ -499,6 +740,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
     <button class="btn-ghost" id="btn-report" onclick="newReport()">
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
       + Relatório de Jogo
+    </button>
+    <button class="btn-ghost" onclick="goToEvolution()">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      Ver Evolução
     </button>
     <div style="flex:1"></div>
     <button class="btn-ghost" onclick="exportPDF()">
@@ -892,6 +1137,146 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
 </main>
 </div>
 
+<!-- ═══════════════ KANBAN ═══════════════ -->
+<div class="view" id="view-kanban">
+  <div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:24px;">
+    <div>
+      <div class="page-title">PIPELINE <span>KANBAN</span></div>
+      <div class="page-sub">Processo de recrutamento por fase</div>
+    </div>
+  </div>
+  <div class="kanban-board" id="kanban-board"></div>
+</div>
+
+<!-- ═══════════════ CALENDÁRIO ═══════════════ -->
+<div class="view" id="view-calendar">
+  <div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:24px;">
+    <div>
+      <div class="page-title">CALENDÁRIO <span>DE OBSERVAÇÕES</span></div>
+      <div class="page-sub">Agenda de jogos e observações planeadas</div>
+    </div>
+    <button class="btn-primary" onclick="openNewEvent()">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      + Observação
+    </button>
+  </div>
+  <div style="display:grid; grid-template-columns: 1fr 340px; gap:20px;" id="cal-layout">
+    <div class="card card-inner">
+      <div class="cal-nav">
+        <button onclick="calPrev()">← Anterior</button>
+        <h3 id="cal-title"></h3>
+        <button onclick="calNext()">Próximo →</button>
+      </div>
+      <div class="cal-grid" id="cal-day-headers"></div>
+      <div class="cal-grid" id="cal-grid" style="margin-top:6px;"></div>
+    </div>
+    <div class="card card-inner">
+      <div class="section-title">Próximas Observações</div>
+      <div id="events-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ EVOLUÇÃO ═══════════════ -->
+<div class="view" id="view-evolution">
+  <div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:24px;">
+    <div>
+      <div class="page-title">EVOLUÇÃO <span>DO ATLETA</span></div>
+      <div class="page-sub">Progresso das métricas ao longo do tempo</div>
+    </div>
+  </div>
+  <div class="card card-inner" style="margin-bottom:16px;">
+    <div class="field" style="max-width:360px;">
+      <label>Selecionar Atleta</label>
+      <select id="evo-player" onchange="renderEvolution()">
+        <option value="">— Escolher atleta —</option>
+      </select>
+    </div>
+  </div>
+  <div id="evo-content">
+    <div style="text-align:center; padding:60px 20px; color:var(--text3);">
+      <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin:0 auto 12px;display:block"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      <p>Selecione um atleta para ver a evolução</p>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- ── NOTAS RÁPIDAS FAB ── -->
+<button id="quick-note-fab" onclick="toggleQuickNote()" title="Notas Rápidas">📝</button>
+<div id="quick-note-panel">
+  <div class="qnp-header">
+    <span>📝 Notas Rápidas</span>
+    <button onclick="toggleQuickNote()">×</button>
+  </div>
+  <textarea id="quick-note-text" placeholder="Escreve uma nota rápida de campo...&#10;&#10;Ex: João Silva (Benfica B) - grande jogo, acompanhar..." onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey))saveQuickNote()"></textarea>
+  <div class="qnp-footer">
+    <span>Ctrl+Enter para guardar</span>
+    <button class="btn-primary" onclick="saveQuickNote()" style="font-size:11px;padding:6px 12px;">Guardar Nota</button>
+  </div>
+  <div id="qn-list"></div>
+</div>
+
+<!-- ── MODAL EVENTO CALENDÁRIO ── -->
+<div id="event-modal" style="display:none" class="modal-bg" onclick="if(event.target===this)closeEventModal()">
+  <div class="modal">
+    <h2>📅 Nova Observação</h2>
+    <div style="display:flex; flex-direction:column; gap:14px;">
+      <div class="form-row">
+        <div class="field"><label>Data *</label><input type="date" id="ev-date"></div>
+        <div class="field"><label>Hora</label><input type="time" id="ev-time" value="15:00"></div>
+      </div>
+      <div class="field"><label>Jogo / Evento *</label><input type="text" id="ev-title" placeholder="Ex: Sporting B vs Benfica B"></div>
+      <div class="form-row">
+        <div class="field"><label>Competição</label><input type="text" id="ev-comp" placeholder="Ex: Liga Revelação"></div>
+        <div class="field"><label>Local</label><input type="text" id="ev-local" placeholder="Ex: Academia Sporting"></div>
+      </div>
+      <div class="field">
+        <label>Atletas a Observar</label>
+        <select id="ev-players" multiple style="height:90px; padding:6px;">
+        </select>
+        <p style="font-size:11px;color:var(--text3);margin-top:4px;">Ctrl+click para selecionar múltiplos</p>
+      </div>
+      <div class="field"><label>Notas</label><textarea id="ev-notes" placeholder="Objetivos da observação, contexto..." style="height:70px"></textarea></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button class="btn-ghost" onclick="closeEventModal()">Cancelar</button>
+        <button class="btn-primary" onclick="saveEvent()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-inner">
+    <button class="mnav-btn active" id="mnl-home" onclick="showView('home')">
+      <div class="mnav-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg></div>
+      Atletas
+    </button>
+    <button class="mnav-btn" id="mnl-kanban" onclick="showView('kanban')">
+      <div class="mnav-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/><rect x="17" y="3" width="5" height="15" rx="1"/></svg></div>
+      Pipeline
+    </button>
+    <button class="mnav-btn" onclick="newPlayer()" style="color:var(--bg)">
+      <div class="mnav-icon" style="background:var(--accent);border-radius:14px;padding:8px;margin-bottom:2px"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></div>
+      Novo
+    </button>
+    <button class="mnav-btn" id="mnl-calendar" onclick="showView('calendar')">
+      <div class="mnav-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+      Agenda
+    </button>
+    <button class="mnav-btn" id="mnl-analytics" onclick="showView('analytics')">
+      <div class="mnav-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></div>
+      Stats
+    </button>
+    <button class="mnav-btn" id="mnl-save" onclick="savePlayer()" style="display:none;color:var(--accent)">
+      <div class="mnav-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></div>
+      Guardar
+    </button>
+  </div>
+</nav>
+
 <!-- REPORT MODAL -->
 <div id="report-modal" style="display:none" class="modal-bg" onclick="if(event.target===this)closeReportModal()">
   <div class="modal">
@@ -1123,15 +1508,25 @@ function toast(msg, type='ok'){
 function showView(name){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
-  document.getElementById('view-'+name).classList.add('active');
+  document.querySelectorAll('.mnav-btn').forEach(l=>l.classList.remove('active'));
+  const viewEl = document.getElementById('view-'+name);
+  if (!viewEl) return;
+  viewEl.classList.add('active');
   const nl = document.getElementById('nl-'+name);
   if(nl) nl.classList.add('active');
+  const mnl = document.getElementById('mnl-'+name);
+  if(mnl) mnl.classList.add('active');
+  const saveBtn = document.getElementById('mnl-save');
+  if(saveBtn) saveBtn.style.display = name==='editor' ? 'flex' : 'none';
   if(name==='home') renderGrid();
   if(name==='analytics') renderAnalytics();
   if(name==='compare') initCompare();
+  if(name==='kanban') renderKanban();
+  if(name==='calendar') renderCalendar();
+  if(name==='evolution') initEvolution();
 }
 
-function goHome(){ showView('home'); }
+function goHome(){ showView('home'); window.scrollTo(0,0); }
 
 // ═══════════════════════════════════════════════
 // PLAYER GRID
@@ -1148,6 +1543,7 @@ function getFiltered(){
   if(activeChips.has('sub21')) list = list.filter(p=>p.age && p.age<21);
   if(activeChips.has('high')) list = list.filter(p=>calcRating(p.metrics||{})>=7.5);
   if(activeChips.has('free')) list = list.filter(p=>!p.club||p.club.trim()==='');
+  if(activeChips.has('expiring')) list = list.filter(p=>contractStatus(p.contractEnd)!==null);
   if(sort==='rating') list.sort((a,b)=>calcRating(b.metrics||{})-calcRating(a.metrics||{}));
   else if(sort==='name') list.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
   else if(sort==='age') list.sort((a,b)=>(a.age||99)-(b.age||99));
@@ -1166,12 +1562,14 @@ function renderGrid(){
   const TAG_LABELS = {promessa:'🌟 Promessa',urgente:'🔥 Urgente',monitorar:'👁 Monitorar',contactado:'✅ Contactado',descartado:'❌ Descartado'};
   grid.innerHTML = list.map(p=>{
     const r = calcRating(p.metrics||{});
-    const rCls = r>=7.5?'':'med'+(r<5?' low':'');
+    const rCls = r>=7.5?'':(r>=5?'med':'low');
+    const contract = contractStatus(p.contractEnd);
     return `<div class="player-card" onclick="editPlayer('${p.id}')">
       <div class="pc-img">
         ${p.photo?`<img src="${p.photo}" alt="${p.name}">`:`<svg fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`}
         ${p.position?`<div class="pc-pos">${p.position}</div>`:''}
         ${r>0?`<div class="pc-rating ${rCls}">${r}</div>`:''}
+        ${contract?`<div class="${contract.cls}">📋 ${contract.label}</div>`:''}
       </div>
       <div class="pc-body">
         <div class="pc-club">${p.club||'Agente Livre'}</div>
@@ -1217,6 +1615,8 @@ function newPlayer(){
   clearForm();
   showView('editor');
   switchTab('perfil');
+  // mobile: scroll to top
+  window.scrollTo(0,0);
 }
 
 function clearForm(){
@@ -1265,6 +1665,7 @@ function editPlayer(id){
   renderVideoList();
   showView('editor');
   switchTab('perfil');
+  window.scrollTo(0,0);
 }
 
 function savePlayer(){
@@ -1894,13 +2295,364 @@ function exportPDF(){
   toast('PDF exportado!');
 }
 
+
+// ═══════════════════════════════════════════════
+// ALERTAS DE CONTRATO
+// ═══════════════════════════════════════════════
+function contractStatus(contractEnd) {
+  if (!contractEnd) return null;
+  const today = new Date();
+  const end = new Date(contractEnd);
+  const diffDays = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+  if (diffDays < 0) return { label: 'Expirado', cls: 'contract-badge' };
+  if (diffDays <= 90) return { label: `${diffDays}d ⚠`, cls: 'contract-badge' };
+  if (diffDays <= 180) return { label: `${Math.ceil(diffDays/30)}m restantes`, cls: 'contract-badge warn' };
+  return null;
+}
+
+// Patch renderGrid to include contract alerts
+const _origRenderGrid = renderGrid;
+// We'll extend renderGrid inline — done directly in the updated renderGrid below.
+
+// ═══════════════════════════════════════════════
+// NOTAS RÁPIDAS
+// ═══════════════════════════════════════════════
+const QN_KEY = 'scoutflow_quicknotes';
+let quickNotes = JSON.parse(localStorage.getItem(QN_KEY) || '[]');
+
+function toggleQuickNote() {
+  const panel = document.getElementById('quick-note-panel');
+  const isOpen = panel.style.display === 'block';
+  panel.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) {
+    renderQuickNotes();
+    document.getElementById('quick-note-text').focus();
+  }
+}
+
+function saveQuickNote() {
+  const txt = document.getElementById('quick-note-text').value.trim();
+  if (!txt) return;
+  quickNotes.unshift({ id: genId(), text: txt, ts: new Date().toISOString() });
+  localStorage.setItem(QN_KEY, JSON.stringify(quickNotes));
+  document.getElementById('quick-note-text').value = '';
+  renderQuickNotes();
+  toast('Nota guardada!');
+}
+
+function deleteQuickNote(id) {
+  quickNotes = quickNotes.filter(n => n.id !== id);
+  localStorage.setItem(QN_KEY, JSON.stringify(quickNotes));
+  renderQuickNotes();
+}
+
+function renderQuickNotes() {
+  const c = document.getElementById('qn-list');
+  if (!quickNotes.length) { c.innerHTML = '<p style="color:var(--text3);font-size:12px;padding:8px 12px">Sem notas guardadas</p>'; return; }
+  c.innerHTML = quickNotes.slice(0, 8).map(n => `
+    <div class="qn-item">
+      <div>
+        <span>${n.text.slice(0, 80)}${n.text.length > 80 ? '…' : ''}</span>
+        <span class="qn-time">${new Date(n.ts).toLocaleString('pt-PT', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })}</span>
+      </div>
+      <button onclick="deleteQuickNote('${n.id}')">×</button>
+    </div>`).join('');
+}
+
+// Close quick note panel on outside click
+document.addEventListener('click', e => {
+  const panel = document.getElementById('quick-note-panel');
+  const fab = document.getElementById('quick-note-fab');
+  if (panel.style.display === 'block' && !panel.contains(e.target) && e.target !== fab) {
+    panel.style.display = 'none';
+  }
+});
+
+// ═══════════════════════════════════════════════
+// KANBAN PIPELINE
+// ═══════════════════════════════════════════════
+const KANBAN_COLS = [
+  { id: '',          label: 'Identificado',    color: 'var(--text3)' },
+  { id: 'monitorar', label: 'A Monitorar',     color: 'var(--blue)' },
+  { id: 'contactado',label: 'Contactado',      color: 'var(--accent)' },
+  { id: 'urgente',   label: 'Urgente',         color: 'var(--red)' },
+  { id: 'promessa',  label: 'Promessa',        color: 'var(--amber)' },
+  { id: 'descartado',label: 'Descartado',      color: 'var(--text3)' },
+];
+
+function renderKanban() {
+  const board = document.getElementById('kanban-board');
+  board.innerHTML = KANBAN_COLS.map(col => {
+    const cards = players.filter(p => (p.tag || '') === col.id);
+    return `<div class="kanban-col">
+      <div class="kanban-col-header" style="color:${col.color}">
+        ${col.label}
+        <span class="kanban-count">${cards.length}</span>
+      </div>
+      <div class="kanban-cards">
+        ${cards.length ? cards.map(p => {
+          const r = calcRating(p.metrics || {});
+          return `<div class="kanban-card" onclick="editPlayer('${p.id}')">
+            <div class="kc-name">${p.name}</div>
+            <div class="kc-meta">
+              <span class="kc-pos">${p.position || '—'} · ${p.age ? p.age + 'a' : '—'}</span>
+              <span class="kc-rating">${r > 0 ? r : '—'}</span>
+            </div>
+            ${p.club ? `<div style="font-size:10px;color:var(--text3);margin-top:4px">${p.club}</div>` : ''}
+          </div>`;
+        }).join('') : `<div style="padding:16px;text-align:center;color:var(--text3);font-size:12px">Sem atletas</div>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════
+// CALENDÁRIO DE OBSERVAÇÕES
+// ═══════════════════════════════════════════════
+const CAL_KEY = 'scoutflow_calendar';
+let calEvents = JSON.parse(localStorage.getItem(CAL_KEY) || '[]');
+let calDate = new Date();
+
+const MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const DAYS_PT = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+function renderCalendar() {
+  const year = calDate.getFullYear();
+  const month = calDate.getMonth();
+  document.getElementById('cal-title').textContent = `${MONTHS_PT[month]} ${year}`;
+
+  // Headers
+  document.getElementById('cal-day-headers').innerHTML = DAYS_PT.map(d =>
+    `<div class="cal-day-header">${d}</div>`).join('');
+
+  // Days
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInPrevMonth = new Date(year, month, 0).getDate();
+  const today = new Date();
+
+  let cells = '';
+  // Prev month padding
+  for (let i = firstDay - 1; i >= 0; i--) {
+    cells += `<div class="cal-day other-month">${daysInPrevMonth - i}</div>`;
+  }
+  // Current month
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const hasEvent = calEvents.some(e => e.date === dateStr);
+    const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === d;
+    cells += `<div class="cal-day${hasEvent ? ' has-event' : ''}${isToday ? ' today' : ''}"
+      onclick="${hasEvent ? `showDayEvents('${dateStr}')` : ''}" title="${hasEvent ? 'Ver eventos' : ''}">
+      ${d}${hasEvent ? '<div class="cal-dot"></div>' : ''}
+    </div>`;
+  }
+  // Next month padding
+  const total = firstDay + daysInMonth;
+  const remaining = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for (let i = 1; i <= remaining; i++) {
+    cells += `<div class="cal-day other-month">${i}</div>`;
+  }
+  document.getElementById('cal-grid').innerHTML = cells;
+  renderEventsList();
+}
+
+function renderEventsList() {
+  const c = document.getElementById('events-list');
+  const today = new Date().toISOString().slice(0, 10);
+  const upcoming = [...calEvents]
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(0, 12);
+  if (!upcoming.length) {
+    c.innerHTML = '<p style="color:var(--text3);font-size:13px;text-align:center;padding:30px 0">Sem observações agendadas</p>';
+    return;
+  }
+  c.innerHTML = upcoming.map(ev => {
+    const isPast = ev.date < today;
+    const playerNames = (ev.players || []).map(id => {
+      const p = players.find(x => x.id === id);
+      return p ? p.name.split(' ')[0] : '';
+    }).filter(Boolean).join(', ');
+    return `<div class="event-item${isPast ? ' past' : ''}" onclick="showDayEvents('${ev.date}')">
+      <div class="ei-left">
+        <h4>${ev.title}</h4>
+        <p>${ev.comp || ''}${playerNames ? ' · ' + playerNames : ''}</p>
+      </div>
+      <div class="ei-date">
+        ${ev.date.slice(8,10)}/${ev.date.slice(5,7)}<br>
+        <span style="font-size:10px">${ev.time || ''}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showDayEvents(dateStr) {
+  const evs = calEvents.filter(e => e.date === dateStr);
+  if (!evs.length) return;
+  const names = evs.map(e => `• ${e.title}${e.time ? ' às ' + e.time : ''}${e.comp ? ' (' + e.comp + ')' : ''}`).join('\n');
+  if (confirm(`Observações em ${fmt(dateStr)}:\n\n${names}\n\nEliminar evento?`)) {
+    calEvents = calEvents.filter(e => e.date !== dateStr);
+    localStorage.setItem(CAL_KEY, JSON.stringify(calEvents));
+    renderCalendar();
+    toast('Evento eliminado');
+  }
+}
+
+function calPrev() { calDate.setMonth(calDate.getMonth() - 1); renderCalendar(); }
+function calNext() { calDate.setMonth(calDate.getMonth() + 1); renderCalendar(); }
+
+function openNewEvent() {
+  const sel = document.getElementById('ev-players');
+  sel.innerHTML = players.map(p => `<option value="${p.id}">${p.name}${p.position ? ' ('+p.position+')' : ''}</option>`).join('');
+  document.getElementById('ev-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('ev-title').value = '';
+  document.getElementById('ev-comp').value = '';
+  document.getElementById('ev-local').value = '';
+  document.getElementById('ev-notes').value = '';
+  document.getElementById('event-modal').style.display = 'flex';
+}
+
+function closeEventModal() { document.getElementById('event-modal').style.display = 'none'; }
+
+function saveEvent() {
+  const date = document.getElementById('ev-date').value;
+  const title = document.getElementById('ev-title').value.trim();
+  if (!date || !title) { toast('Data e título obrigatórios!', 'error'); return; }
+  const selEl = document.getElementById('ev-players');
+  const selectedPlayers = Array.from(selEl.selectedOptions).map(o => o.value);
+  calEvents.push({
+    id: genId(), date, time: document.getElementById('ev-time').value,
+    title, comp: document.getElementById('ev-comp').value,
+    local: document.getElementById('ev-local').value,
+    notes: document.getElementById('ev-notes').value,
+    players: selectedPlayers,
+    createdAt: new Date().toISOString()
+  });
+  localStorage.setItem(CAL_KEY, JSON.stringify(calEvents));
+  closeEventModal();
+  renderCalendar();
+  toast('Observação agendada!');
+}
+
+// ═══════════════════════════════════════════════
+// EVOLUÇÃO DO ATLETA
+// ═══════════════════════════════════════════════
+let evoChartInst = null;
+
+function initEvolution() {
+  const sel = document.getElementById('evo-player');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Escolher atleta —</option>' +
+    players.map(p => `<option value="${p.id}" ${p.id === cur ? 'selected' : ''}>${p.name}</option>`).join('');
+  if (cur) renderEvolution();
+}
+
+function renderEvolution() {
+  const id = document.getElementById('evo-player').value;
+  const p = players.find(x => x.id === id);
+  const out = document.getElementById('evo-content');
+
+  if (!p) {
+    out.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--text3)"><p>Selecione um atleta</p></div>`;
+    return;
+  }
+
+  const reports = [...(p.reports || [])].sort((a, b) => a.date.localeCompare(b.date));
+
+  if (reports.length < 2) {
+    out.innerHTML = `
+      <div class="card card-inner">
+        <div style="text-align:center;padding:40px 20px;color:var(--text3)">
+          <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin:0 auto 12px;display:block"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          <p style="margin-bottom:6px">São precisos pelo menos 2 relatórios de jogo para mostrar evolução.</p>
+          <p style="font-size:12px">${p.name} tem ${reports.length} relatório${reports.length === 1 ? '' : 's'}.</p>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const labels = reports.map(r => fmt(r.date));
+  const ratings = reports.map(r => r.rating || 0);
+  const goals = reports.map(r => r.goals || 0);
+  const assists = reports.map(r => r.assists || 0);
+
+  // Summary stats
+  const avgRating = round1(ratings.reduce((a,b)=>a+b,0)/ratings.length);
+  const totalGoals = goals.reduce((a,b)=>a+b,0);
+  const totalAssists = assists.reduce((a,b)=>a+b,0);
+  const trend = ratings.length >= 2 ? (ratings[ratings.length-1] - ratings[0]).toFixed(1) : 0;
+  const trendColor = trend > 0 ? 'var(--accent)' : trend < 0 ? 'var(--red)' : 'var(--text3)';
+  const trendIcon = trend > 0 ? '↑' : trend < 0 ? '↓' : '→';
+
+  out.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px">
+      <div class="stat-box"><div class="stat-val green">${avgRating}</div><div class="stat-lbl">Nota Média</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:${trendColor}">${trendIcon}${Math.abs(trend)}</div><div class="stat-lbl">Tendência</div></div>
+      <div class="stat-box"><div class="stat-val amber">${totalGoals}</div><div class="stat-lbl">Golos (relatórios)</div></div>
+      <div class="stat-box"><div class="stat-val blue">${totalAssists}</div><div class="stat-lbl">Assistências</div></div>
+    </div>
+    <div class="card card-inner" style="margin-bottom:16px">
+      <h3 style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:16px">Evolução da Nota por Jogo</h3>
+      <div class="evo-chart-wrap"><canvas id="evo-chart"></canvas></div>
+    </div>
+    <div class="card card-inner">
+      <h3 style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:16px">Golos &amp; Assistências por Jogo</h3>
+      <div class="evo-chart-wrap"><canvas id="evo-chart2"></canvas></div>
+    </div>`;
+
+  setTimeout(() => {
+    const cOpts = { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#8896b0', font: { size: 11 }, boxWidth: 12 } } },
+      scales: { x: { ticks: { color: '#8896b0', font:{size:10} }, grid: { color: 'rgba(255,255,255,0.04)' } },
+                y: { ticks: { color: '#8896b0' }, grid: { color: 'rgba(255,255,255,0.04)' } } }
+    };
+    new Chart(document.getElementById('evo-chart'), {
+      type: 'line',
+      data: { labels, datasets: [{
+        label: 'Nota', data: ratings,
+        borderColor: '#00e5a0', backgroundColor: 'rgba(0,229,160,0.1)',
+        tension: 0.4, fill: true, pointBackgroundColor: '#00e5a0', pointRadius: 5, pointHoverRadius: 7
+      }]},
+      options: { ...cOpts, scales: { ...cOpts.scales, y: { ...cOpts.scales.y, beginAtZero: false, min: 0, max: 10 } } }
+    });
+    new Chart(document.getElementById('evo-chart2'), {
+      type: 'bar',
+      data: { labels, datasets: [
+        { label: 'Golos', data: goals, backgroundColor: '#00e5a0', borderRadius: 4 },
+        { label: 'Assistências', data: assists, backgroundColor: '#4d9fff', borderRadius: 4 }
+      ]},
+      options: { ...cOpts, scales: { ...cOpts.scales, y: { ...cOpts.scales.y, beginAtZero: true, ticks: { ...cOpts.scales.y.ticks, stepSize: 1 } } } }
+    });
+  }, 50);
+}
+
+// ═══════════════════════════════════════════════
+// EVOLUÇÃO — navegação a partir do editor
+// ═══════════════════════════════════════════════
+function goToEvolution() {
+  const prevId = currentId;
+  showView('evolution');
+  setTimeout(() => {
+    const sel = document.getElementById('evo-player');
+    if (sel && prevId) { sel.value = prevId; renderEvolution(); }
+  }, 60);
+}
+
 // ═══════════════════════════════════════════════
 // KEYBOARD SHORTCUTS
 // ═══════════════════════════════════════════════
-document.addEventListener('keydown',e=>{
-  if((e.ctrlKey||e.metaKey)&&e.key==='n'){ e.preventDefault(); newPlayer(); }
-  if((e.ctrlKey||e.metaKey)&&e.key==='s'){ const ed=document.getElementById('view-editor'); if(ed.classList.contains('active')){ e.preventDefault(); savePlayer(); } }
-  if(e.key==='Escape'){ const m=document.getElementById('report-modal'); if(m.style.display!=='none') closeReportModal(); }
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey||e.metaKey) && e.key==='n') { e.preventDefault(); newPlayer(); }
+  if ((e.ctrlKey||e.metaKey) && e.key==='s') {
+    const ed = document.getElementById('view-editor');
+    if (ed && ed.classList.contains('active')) { e.preventDefault(); savePlayer(); }
+  }
+  if (e.key === 'Escape') {
+    if (document.getElementById('report-modal').style.display !== 'none') closeReportModal();
+    if (document.getElementById('event-modal').style.display !== 'none') closeEventModal();
+    if (document.getElementById('quick-note-panel').style.display === 'block') {
+      document.getElementById('quick-note-panel').style.display = 'none';
+    }
+  }
 });
 
 // ═══════════════════════════════════════════════
