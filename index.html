@@ -660,7 +660,12 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
     <button class="nav-link" id="nl-evolution" onclick="showView('evolution')">Evolução</button>
     <button class="nav-link" id="nl-analytics" onclick="showView('analytics')">Analytics</button>
     <button class="nav-link" id="nl-compare" onclick="showView('compare')">Comparar</button>
-    <button class="btn-primary" onclick="newPlayer()" style="margin-left:8px">
+    <!-- Sync status indicator -->
+    <button onclick="manualSync()" title="Sincronizar com cloud" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;font-family:var(--font-body);font-size:12px;color:var(--text2);transition:all 0.2s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='var(--bg3)'">
+      <div id="sync-dot" style="width:8px;height:8px;border-radius:50%;background:#ffbe0b;flex-shrink:0;transition:background 0.3s;"></div>
+      <span id="sync-lbl">A carregar…</span>
+    </button>
+    <button class="btn-primary" onclick="newPlayer()" style="margin-left:4px">
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
       Novo Atleta
     </button>
@@ -1334,7 +1339,122 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
+// ═══════════════════════════════════════════════
+// SUPABASE CONFIG
+// ═══════════════════════════════════════════════
+const SB_URL  = 'https://macdfqkbwanwzmkrdpuq.supabase.co';
+const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hY2RmcWtid2Fud3pta3JkcHVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1MTQ2MDksImV4cCI6MjA5MDA5MDYwOX0.YYoMHrEgVlIOlV1sgjNFNVJFqeiLRa6FjzorHqY9_Ys';
+const sb      = supabase.createClient(SB_URL, SB_KEY);
+let   isOnline = navigator.onLine;
+let   syncPending = false; // alterações locais ainda não sincronizadas
+
+// ─── indicador visual de estado ───
+function setSyncStatus(state) {
+  // state: 'ok' | 'syncing' | 'offline' | 'error'
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-lbl');
+  if (!dot) return;
+  const map = {
+    ok:      { color: '#00e5a0', text: 'Sincronizado' },
+    syncing: { color: '#ffbe0b', text: 'A sincronizar…' },
+    offline: { color: '#ff4d6d', text: 'Offline' },
+    error:   { color: '#ff4d6d', text: 'Erro sync' },
+    pending: { color: '#ffbe0b', text: 'Alterações pendentes' },
+  };
+  const s = map[state] || map.ok;
+  dot.style.background = s.color;
+  if (lbl) lbl.textContent = s.text;
+}
+
+window.addEventListener('online',  () => { isOnline = true;  setSyncStatus('syncing'); syncAllToCloud(); });
+window.addEventListener('offline', () => { isOnline = false; setSyncStatus('offline'); });
+
+// ─── Carregar TUDO da cloud (primeira carga / refresh) ───
+async function loadFromCloud() {
+  if (!isOnline) return;
+  setSyncStatus('syncing');
+  try {
+    const { data, error } = await sb.from('atletas').select('id, data');
+    if (error) throw error;
+    if (data && data.length > 0) {
+      // Merge: cloud ganha sobre localStorage em caso de conflito (updated_at mais recente)
+      const cloudMap = {};
+      data.forEach(row => { cloudMap[row.id] = row.data; });
+      // Qualquer atleta local que não esteja na cloud → fica (será sincronizado)
+      const localIds = new Set(players.map(p => p.id));
+      data.forEach(row => {
+        if (!localIds.has(row.id)) players.push(row.data);
+        else {
+          const idx = players.findIndex(p => p.id === row.id);
+          if (idx > -1) {
+            const cloudTs = new Date(row.data._ts || 0).getTime();
+            const localTs = new Date(players[idx]._ts || 0).getTime();
+            if (cloudTs > localTs) players[idx] = row.data;
+          }
+        }
+      });
+      save();
+    }
+    setSyncStatus('ok');
+    renderGrid();
+  } catch (e) {
+    console.warn('Supabase load error:', e.message);
+    setSyncStatus('error');
+  }
+}
+
+// ─── Guardar um atleta na cloud ───
+async function syncPlayerToCloud(player) {
+  if (!isOnline) { syncPending = true; setSyncStatus('pending'); return; }
+  setSyncStatus('syncing');
+  try {
+    const { error } = await sb.from('atletas').upsert({ id: player.id, data: player });
+    if (error) throw error;
+    setSyncStatus('ok');
+    syncPending = false;
+  } catch (e) {
+    console.warn('Supabase upsert error:', e.message);
+    setSyncStatus('error');
+  }
+}
+
+// ─── Eliminar um atleta da cloud ───
+async function deletePlayerFromCloud(id) {
+  if (!isOnline) { syncPending = true; return; }
+  try {
+    await sb.from('atletas').delete().eq('id', id);
+  } catch (e) {
+    console.warn('Supabase delete error:', e.message);
+  }
+}
+
+// ─── Sync completo (todos os locais → cloud) ───
+async function syncAllToCloud() {
+  if (!isOnline || !players.length) return;
+  setSyncStatus('syncing');
+  try {
+    const rows = players.map(p => ({ id: p.id, data: p }));
+    const { error } = await sb.from('atletas').upsert(rows);
+    if (error) throw error;
+    setSyncStatus('ok');
+    syncPending = false;
+  } catch (e) {
+    console.warn('Supabase sync error:', e.message);
+    setSyncStatus('error');
+  }
+}
+
+// ─── Sync manual (botão na nav) ───
+async function manualSync() {
+  if (!isOnline) { toast('Sem ligação à internet', 'error'); return; }
+  setSyncStatus('syncing');
+  await loadFromCloud();
+  await syncAllToCloud();
+  toast('Sincronização completa!');
+}
+
 // ═══════════════════════════════════════════════
 // DATA & STATE
 // ═══════════════════════════════════════════════
@@ -1484,8 +1604,8 @@ const FORMATIONS = {
 // UTILS
 // ═══════════════════════════════════════════════
 const genId = () => `${Date.now()}${Math.random().toString(36).slice(2,7)}`;
-const save = () => localStorage.setItem(DB_KEY, JSON.stringify(players));
-const fmt = d => d ? new Date(d).toLocaleDateString('pt-PT') : '—';
+const save  = () => localStorage.setItem(DB_KEY, JSON.stringify(players));
+const fmt   = d => d ? new Date(d).toLocaleDateString('pt-PT') : '—';
 const round1 = n => Math.round(n*10)/10;
 
 function calcRating(metrics){
@@ -1713,14 +1833,19 @@ function savePlayer(){
   const idx = players.findIndex(p=>p.id===currentId);
   if(idx>-1) players[idx]=data; else players.push(data);
   save();
-  toast('Perfil guardado com sucesso!');
+  syncPlayerToCloud(data);
+  toast('Perfil guardado' + (isOnline ? ' e sincronizado ☁️' : ' localmente (offline)'));
   showView('home');
 }
 
 function deletePlayer(){
   if(!confirm('Eliminar este atleta? Esta ação não pode ser revertida.')) return;
-  players=players.filter(p=>p.id!==currentId);
-  save(); showView('home'); toast('Atleta eliminado');
+  const idToDelete = currentId;
+  players=players.filter(p=>p.id!==idToDelete);
+  save();
+  deletePlayerFromCloud(idToDelete);
+  showView('home');
+  toast('Atleta eliminado');
 }
 
 // ─── PHOTO ───
@@ -2659,6 +2784,12 @@ document.addEventListener('keydown', e => {
 // INIT
 // ═══════════════════════════════════════════════
 renderGrid();
+// Carregar da cloud ao iniciar (merge com localStorage)
+if (!isOnline) {
+  setSyncStatus('offline');
+} else {
+  loadFromCloud();
+}
 </script>
 </body>
 </html>
