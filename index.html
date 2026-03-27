@@ -743,19 +743,51 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
 </head>
 <body>
 <!-- ═══════════ AUTH SCREEN ═══════════ -->
-<div id="auth-screen">
+<div id="auth-screen" style="position:fixed;inset:0;z-index:500;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px;">
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(0,229,160,0.1) 0%,transparent 60%);pointer-events:none;"></div>
   <div class="auth-box">
     <div class="auth-logo">⚽</div>
-    <div class="auth-title">SCOUTFLOW PRO</div>
-    <div class="auth-sub">Sistema de scouting da tua equipa.<br>Entra com a tua conta Google para continuar.</div>
-    <button class="btn-google" onclick="loginGoogle()">
-      <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.3C33.6 33.1 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.7-8 19.7-20 0-1.3-.1-2.7-.1-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 15.1 18.9 12 24 12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-1.9 13.5-5l-6.2-5.2C29.4 35.5 26.8 36 24 36c-5.2 0-9.6-2.9-11.3-7.1l-6.6 4.8C9.8 39.8 16.5 44 24 44z"/><path fill="#1976D2" d="M43.6 20H24v8h11.3c-.9 2.4-2.5 4.4-4.6 5.8l6.2 5.2C40.8 35.8 44 30.4 44 24c0-1.3-.1-2.7-.4-4z"/></svg>
-      Entrar com Google
-    </button>
-    <div class="auth-footer">
-      Ao entrar, aceitas que os teus dados de perfil sejam partilhados com a equipa de scouting.<br>
-      Só utilizadores aprovados pelo admin têm acesso.
+    <div class="auth-title">SCOUTFLOW</div>
+    <div class="auth-sub" id="auth-sub">Sistema de scouting profissional.<br>Inicia sessão ou cria a tua conta.</div>
+    <!-- LOGIN -->
+    <div id="auth-login-form">
+      <div class="field" style="margin-bottom:12px;text-align:left">
+        <label style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Email</label>
+        <input type="email" id="auth-email" placeholder="o.teu@email.com" onkeydown="if(event.key==='Enter')authLogin()">
+      </div>
+      <div class="field" style="margin-bottom:20px;text-align:left">
+        <label style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Password</label>
+        <input type="password" id="auth-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')authLogin()">
+      </div>
+      <button class="btn-primary" onclick="authLogin()" id="btn-login" style="width:100%;justify-content:center;padding:14px;font-size:15px">Entrar</button>
+      <div style="margin:20px 0;display:flex;align-items:center;gap:12px">
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+        <span style="font-size:12px;color:var(--text3)">ou</span>
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+      </div>
+      <button class="btn-ghost" onclick="showRegister()" style="width:100%;justify-content:center;padding:12px">Criar conta nova</button>
     </div>
+    <!-- REGISTO -->
+    <div id="auth-register-form" style="display:none">
+      <div class="field" style="margin-bottom:12px;text-align:left">
+        <label style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Nome</label>
+        <input type="text" id="auth-name" placeholder="O teu nome" onkeydown="if(event.key==='Enter')authRegister()">
+      </div>
+      <div class="field" style="margin-bottom:12px;text-align:left">
+        <label style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Email</label>
+        <input type="email" id="auth-email2" placeholder="o.teu@email.com" onkeydown="if(event.key==='Enter')authRegister()">
+      </div>
+      <div class="field" style="margin-bottom:20px;text-align:left">
+        <label style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Password</label>
+        <input type="password" id="auth-pass2" placeholder="Mínimo 6 caracteres" onkeydown="if(event.key==='Enter')authRegister()">
+      </div>
+      <button class="btn-primary" id="btn-register" onclick="authRegister()" style="width:100%;justify-content:center;padding:14px;font-size:15px">Criar Conta</button>
+      <div style="margin-top:16px">
+        <button class="btn-ghost" onclick="showLogin()" style="width:100%;justify-content:center;padding:12px">← Já tenho conta</button>
+      </div>
+    </div>
+    <div id="auth-error" style="display:none;margin-top:16px;background:var(--red-dim);border:1px solid rgba(255,77,109,0.3);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;color:var(--red);text-align:left"></div>
+    <div class="auth-footer">🔒 Os teus dados são privados e seguros.<br>Partilhados apenas com a tua equipa de scouting.</div>
   </div>
 </div>
 
@@ -778,12 +810,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
     <button class="nav-link" id="nl-analytics" onclick="showView('analytics')">Analytics</button>
     <button class="nav-link" id="nl-compare" onclick="showView('compare')">Comparar</button>
     <button class="nav-link" id="nl-team" onclick="showView('team')">👥 Equipa</button>
-    <!-- Sync -->
     <button onclick="manualSync()" title="Sincronizar" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;font-family:var(--font-body);font-size:12px;color:var(--text2);transition:all 0.2s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='var(--bg3)'">
       <div id="sync-dot" style="width:8px;height:8px;border-radius:50%;background:#ffbe0b;flex-shrink:0;transition:background 0.3s;"></div>
       <span id="sync-lbl">A carregar…</span>
     </button>
-    <!-- Scout avatar -->
     <div class="nav-scout" id="nav-scout-btn" onclick="toggleScoutMenu()" style="display:none">
       <div class="scout-avatar-placeholder" id="nav-avatar-inner">?</div>
       <div class="nav-scout-info">
@@ -869,6 +899,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
       <button class="chip" id="chip-high" onclick="toggleChip('high')">Nota ≥ 7.5</button>
       <button class="chip" id="chip-free" onclick="toggleChip('free')">Agente Livre</button>
       <button class="chip" id="chip-expiring" onclick="toggleChip('expiring')" style="color:var(--red)">📋 Contrato a Expirar</button>
+      <button class="chip" id="chip-expiring" onclick="toggleChip('expiring')" style="color:var(--red)">📋 Contrato a Expirar</button>
     </div>
   </div>
 
@@ -885,6 +916,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
     <button class="btn-ghost" id="btn-report" onclick="newReport()">
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
       + Relatório de Jogo
+    </button>
+    <button class="btn-ghost" onclick="goToEvolution()">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      Ver Evolução
     </button>
     <button class="btn-ghost" onclick="goToEvolution()">
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
@@ -1279,8 +1314,6 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
   <div id="compare-out"></div>
 </div>
 
-</main>
-</div>
 
 <!-- ═══════════════ KANBAN ═══════════════ -->
 <div class="view" id="view-kanban">
@@ -1346,7 +1379,22 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
   </div>
 </div>
 
+<!-- ═══════════════ EQUIPA ═══════════════ -->
+<div class="view" id="view-team">
+  <div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:24px;">
+    <div>
+      <div class="page-title">EQUIPA <span>DE SCOUTS</span></div>
+      <div class="page-sub">Todos os utilizadores registados na plataforma</div>
+    </div>
+  </div>
+  <div class="card card-inner" style="max-width:700px">
+    <div class="section-title">Scouts Registados</div>
+    <div id="team-list"><p style="color:var(--text3);text-align:center;padding:30px">A carregar...</p></div>
+  </div>
+</div>
+
 </main>
+</div>
 
 <!-- ── NOTAS RÁPIDAS FAB ── -->
 <button id="quick-note-fab" onclick="toggleQuickNote()" title="Notas Rápidas">📝</button>
@@ -1392,80 +1440,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
   </div>
 </div>
 
-<!-- ═══════════════ EQUIPA ═══════════════ -->
-<div class="view" id="view-team">
-  <div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:24px;">
-    <div>
-      <div class="page-title">EQUIPA <span>DE SCOUTS</span></div>
-      <div class="page-sub">Todos os utilizadores registados na plataforma</div>
-    </div>
-  </div>
-  <div class="card card-inner" style="max-width:700px">
-    <div class="section-title">Scouts Registados</div>
-    <div id="team-list"><p style="color:var(--text3);text-align:center;padding:30px">A carregar...</p></div>
-  </div>
-</div>
-
-</main>
-
-<!-- ═══════════════ AUTH SCREEN ═══════════════ -->
-<div id="auth-screen">
-  <div class="auth-box">
-    <div class="auth-logo">⚽</div>
-    <div class="auth-title">SCOUTFLOW</div>
-    <div class="auth-sub" id="auth-sub">Sistema de scouting profissional.<br>Inicia sessão ou cria a tua conta.</div>
-
-    <!-- LOGIN -->
-    <div id="auth-login-form">
-      <div class="field" style="margin-bottom:12px;text-align:left">
-        <label style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Email</label>
-        <input type="email" id="auth-email" placeholder="o.teu@email.com" onkeydown="if(event.key==='Enter')authLogin()">
-      </div>
-      <div class="field" style="margin-bottom:20px;text-align:left">
-        <label style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Password</label>
-        <input type="password" id="auth-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')authLogin()">
-      </div>
-      <button class="btn-primary" onclick="authLogin()" id="btn-login" style="width:100%;justify-content:center;padding:14px;font-size:15px">
-        Entrar
-      </button>
-      <div style="margin:20px 0;display:flex;align-items:center;gap:12px">
-        <div style="flex:1;height:1px;background:var(--border)"></div>
-        <span style="font-size:12px;color:var(--text3)">ou</span>
-        <div style="flex:1;height:1px;background:var(--border)"></div>
-      </div>
-      <button class="btn-ghost" onclick="showRegister()" style="width:100%;justify-content:center;padding:12px">
-        Criar conta nova
-      </button>
-    </div>
-
-    <!-- REGISTO -->
-    <div id="auth-register-form" style="display:none">
-      <div class="field" style="margin-bottom:12px;text-align:left">
-        <label style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Nome</label>
-        <input type="text" id="auth-name" placeholder="O teu nome" onkeydown="if(event.key==='Enter')authRegister()">
-      </div>
-      <div class="field" style="margin-bottom:12px;text-align:left">
-        <label style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Email</label>
-        <input type="email" id="auth-email2" placeholder="o.teu@email.com" onkeydown="if(event.key==='Enter')authRegister()">
-      </div>
-      <div class="field" style="margin-bottom:20px;text-align:left">
-        <label style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Password</label>
-        <input type="password" id="auth-pass2" placeholder="Mínimo 6 caracteres" onkeydown="if(event.key==='Enter')authRegister()">
-      </div>
-      <button class="btn-primary" onclick="authRegister()" style="width:100%;justify-content:center;padding:14px;font-size:15px">
-        Criar Conta
-      </button>
-      <div style="margin-top:16px">
-        <button class="btn-ghost" onclick="showLogin()" style="width:100%;justify-content:center;padding:12px">
-          ← Já tenho conta
-        </button>
-      </div>
-    </div>
-
-    <div id="auth-error" style="display:none;margin-top:16px;background:var(--red-dim);border:1px solid rgba(255,77,109,0.3);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;color:var(--red);text-align:left"></div>
-    <div class="auth-footer">🔒 Os teus dados são privados e seguros.<br>Partilhados apenas com a tua equipa de scouting.</div>
-  </div>
-</div>
+<!-- MOBILE BOTTOM NAV -->
 <nav class="mobile-nav">
   <div class="mobile-nav-inner">
     <button class="mnav-btn active" id="mnl-home" onclick="showView('home')">
@@ -1559,38 +1534,22 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
 // ═══════════════════════════════════════════════
 const SB_URL = 'https://macdfqkbwanwzmkrdpuq.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hY2RmcWtid2Fud3pta3JkcHVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1MTQ2MDksImV4cCI6MjA5MDA5MDYwOX0.YYoMHrEgVlIOlV1sgjNFNVJFqeiLRa6FjzorHqY9_Ys';
-const sb    = supabase.createClient(SB_URL, SB_KEY);
+const sb = supabase.createClient(SB_URL, SB_KEY);
 
-let currentUser  = null;   // objeto { id, email, nome, initials }
-let isOnline     = navigator.onLine;
-let syncPending  = false;
+let currentUser = null;
+let isOnline = navigator.onLine;
+let syncPending = false;
 
-// ─── AUTH: estado da sessão ───────────────────
+// ─── AUTH STATE ───────────────────────────────
 sb.auth.onAuthStateChange(async (event, session) => {
-  if (session?.user) {
-    await onUserLoggedIn(session.user);
-  } else {
-    onUserLoggedOut();
-  }
+  if (session?.user) await onUserLoggedIn(session.user);
+  else onUserLoggedOut();
 });
 
 async function onUserLoggedIn(user) {
-  // Garantir registo na tabela scouts
-  const nome = user.user_metadata?.full_name
-    || user.user_metadata?.nome
-    || user.email.split('@')[0];
-  await sb.from('scouts').upsert({
-    id: user.id, email: user.email, nome
-  }, { onConflict: 'id', ignoreDuplicates: false });
-
-  currentUser = {
-    id:       user.id,
-    email:    user.email,
-    nome:     nome,
-    initials: nome.slice(0,2).toUpperCase()
-  };
-
-  // Atualizar UI nav
+  const nome = user.user_metadata?.full_name || user.user_metadata?.nome || user.email.split('@')[0];
+  await sb.from('scouts').upsert({ id: user.id, email: user.email, nome }, { onConflict: 'id' });
+  currentUser = { id: user.id, email: user.email, nome, initials: nome.slice(0,2).toUpperCase() };
   const btn = document.getElementById('nav-scout-btn');
   if (btn) {
     btn.style.display = 'flex';
@@ -1598,57 +1557,53 @@ async function onUserLoggedIn(user) {
     document.getElementById('nav-avatar-inner').textContent = currentUser.initials;
     document.getElementById('menu-email').textContent = currentUser.email;
   }
-
-  // Esconder ecrã de auth, mostrar app
   document.getElementById('auth-screen').style.display = 'none';
-  document.querySelector('.app').style.display = 'flex';
-
-  // Carregar dados
+  document.getElementById('main-app').style.display = 'flex';
   await loadFromCloud();
 }
 
 function onUserLoggedOut() {
   currentUser = null;
   document.getElementById('auth-screen').style.display = 'flex';
-  document.querySelector('.app').style.display = 'none';
+  document.getElementById('main-app').style.display = 'none';
   const btn = document.getElementById('nav-scout-btn');
   if (btn) btn.style.display = 'none';
 }
 
-// ─── AUTH: login ──────────────────────────────
+// ─── LOGIN ────────────────────────────────────
 async function authLogin() {
   const email = document.getElementById('auth-email').value.trim();
   const pass  = document.getElementById('auth-pass').value;
-  if (!email || !pass) { showAuthError('Preenche email e password.'); return; }
-  setAuthLoading('btn-login', true);
+  if (!email) { showAuthError('Insere o teu email.'); return; }
+  if (!pass)  { showAuthError('Insere a tua password.'); return; }
+  const btn = document.getElementById('btn-login');
+  btn.disabled = true; btn.textContent = 'A entrar…';
   hideAuthError();
   const { error } = await sb.auth.signInWithPassword({ email, password: pass });
-  if (error) { showAuthError(translateAuthError(error.message)); setAuthLoading('btn-login', false); }
+  btn.disabled = false; btn.textContent = 'Entrar';
+  if (error) showAuthError(translateAuthError(error.message));
 }
 
-// ─── AUTH: registo ────────────────────────────
+// ─── REGISTO ──────────────────────────────────
 async function authRegister() {
   const nome  = document.getElementById('auth-name').value.trim();
   const email = document.getElementById('auth-email2').value.trim();
   const pass  = document.getElementById('auth-pass2').value;
-  if (!nome || !email || !pass) { showAuthError('Preenche todos os campos.'); return; }
-  if (pass.length < 6) { showAuthError('A password deve ter pelo menos 6 caracteres.'); return; }
-  setAuthLoading('btn-login', true);
+  if (!nome)  { showAuthError('Insere o teu nome.'); return; }
+  if (!email) { showAuthError('Insere o teu email.'); return; }
+  if (!pass || pass.length < 6) { showAuthError('A password deve ter pelo menos 6 caracteres.'); return; }
+  const btn = document.getElementById('btn-register');
+  btn.disabled = true; btn.textContent = 'A criar conta…';
   hideAuthError();
-  const { error } = await sb.auth.signUp({
-    email, password: pass,
-    options: { data: { full_name: nome, nome } }
-  });
-  if (error) {
-    showAuthError(translateAuthError(error.message));
-    setAuthLoading('btn-login', false);
-  } else {
-    showAuthError('✅ Conta criada! Verifica o email para confirmar (ou entra já se não houver confirmação necessária).', 'ok');
-    setTimeout(() => showLogin(), 2500);
-  }
+  const { data, error } = await sb.auth.signUp({ email, password: pass, options: { data: { full_name: nome, nome } } });
+  btn.disabled = false; btn.textContent = 'Criar Conta';
+  if (error) { showAuthError(translateAuthError(error.message)); return; }
+  if (data?.session) return; // login automático
+  showAuthError('✅ Conta criada! Verifica o teu email para confirmar e depois entra.', 'ok');
+  setTimeout(() => showLogin(), 3000);
 }
 
-// ─── AUTH: logout ─────────────────────────────
+// ─── LOGOUT ───────────────────────────────────
 async function authLogout() {
   closeScoutMenu();
   await sb.auth.signOut();
@@ -1657,32 +1612,27 @@ async function authLogout() {
   toast('Sessão terminada. Até logo!');
 }
 
-// ─── AUTH: helpers UI ─────────────────────────
+// ─── AUTH UI ──────────────────────────────────
 function showRegister() {
-  document.getElementById('auth-login-form').style.display   = 'none';
+  document.getElementById('auth-login-form').style.display = 'none';
   document.getElementById('auth-register-form').style.display = 'block';
   document.getElementById('auth-sub').textContent = 'Cria a tua conta gratuita.';
   hideAuthError();
 }
 function showLogin() {
-  document.getElementById('auth-login-form').style.display   = 'block';
+  document.getElementById('auth-login-form').style.display = 'block';
   document.getElementById('auth-register-form').style.display = 'none';
-  document.getElementById('auth-sub').textContent = 'Sistema de scouting profissional.\nInicia sessão ou cria a tua conta.';
+  document.getElementById('auth-sub').textContent = 'Sistema de scouting profissional.';
   hideAuthError();
 }
 function showAuthError(msg, type='error') {
   const el = document.getElementById('auth-error');
-  el.textContent = msg;
-  el.style.display = 'block';
+  el.textContent = msg; el.style.display = 'block';
   el.style.color = type === 'ok' ? 'var(--accent)' : 'var(--red)';
   el.style.background = type === 'ok' ? 'var(--accent-dim)' : 'var(--red-dim)';
   el.style.borderColor = type === 'ok' ? 'rgba(0,229,160,0.3)' : 'rgba(255,77,109,0.3)';
 }
 function hideAuthError() { document.getElementById('auth-error').style.display = 'none'; }
-function setAuthLoading(btnId, loading) {
-  const b = document.getElementById(btnId);
-  if (b) { b.disabled = loading; b.style.opacity = loading ? '0.6' : '1'; }
-}
 function translateAuthError(msg) {
   if (msg.includes('Invalid login')) return 'Email ou password incorretos.';
   if (msg.includes('already registered')) return 'Este email já está registado. Faz login.';
@@ -1693,29 +1643,19 @@ function translateAuthError(msg) {
 }
 
 // ─── SCOUT MENU ───────────────────────────────
-function toggleScoutMenu() {
-  document.getElementById('scout-menu').classList.toggle('open');
-}
-function closeScoutMenu() {
-  document.getElementById('scout-menu').classList.remove('open');
-}
+function toggleScoutMenu() { document.getElementById('scout-menu').classList.toggle('open'); }
+function closeScoutMenu()  { document.getElementById('scout-menu').classList.remove('open'); }
 document.addEventListener('click', e => {
   const btn = document.getElementById('nav-scout-btn');
   if (btn && !btn.contains(e.target)) closeScoutMenu();
 });
 
-// ─── SYNC STATUS ─────────────────────────────
+// ─── SYNC STATUS ──────────────────────────────
 function setSyncStatus(state) {
   const dot = document.getElementById('sync-dot');
   const lbl = document.getElementById('sync-lbl');
   if (!dot) return;
-  const map = {
-    ok:      { color: '#00e5a0', text: 'Sincronizado' },
-    syncing: { color: '#ffbe0b', text: 'A sincronizar…' },
-    offline: { color: '#ff4d6d', text: 'Offline' },
-    error:   { color: '#ff4d6d', text: 'Erro sync' },
-    pending: { color: '#ffbe0b', text: 'Pendente' },
-  };
+  const map = { ok:{color:'#00e5a0',text:'Sincronizado'}, syncing:{color:'#ffbe0b',text:'A sincronizar…'}, offline:{color:'#ff4d6d',text:'Offline'}, error:{color:'#ff4d6d',text:'Erro sync'}, pending:{color:'#ffbe0b',text:'Pendente'} };
   const s = map[state] || map.ok;
   dot.style.background = s.color;
   if (lbl) lbl.textContent = s.text;
@@ -1724,7 +1664,7 @@ function setSyncStatus(state) {
 window.addEventListener('online',  () => { isOnline = true;  setSyncStatus('syncing'); syncAllToCloud(); });
 window.addEventListener('offline', () => { isOnline = false; setSyncStatus('offline'); });
 
-// ─── CLOUD: carregar ─────────────────────────
+// ─── CLOUD LOAD ───────────────────────────────
 async function loadFromCloud() {
   if (!isOnline || !currentUser) return;
   setSyncStatus('syncing');
@@ -1744,13 +1684,10 @@ async function loadFromCloud() {
     }
     setSyncStatus('ok');
     renderGrid();
-  } catch(e) {
-    console.warn('load error:', e.message);
-    setSyncStatus('error');
-  }
+  } catch(e) { console.warn('load error:', e.message); setSyncStatus('error'); }
 }
 
-// ─── CLOUD: guardar 1 atleta ─────────────────
+// ─── CLOUD SAVE ───────────────────────────────
 async function syncPlayerToCloud(player) {
   if (!isOnline || !currentUser) { syncPending = true; setSyncStatus('pending'); return; }
   setSyncStatus('syncing');
@@ -1758,31 +1695,24 @@ async function syncPlayerToCloud(player) {
     const { error } = await sb.from('atletas').upsert({ id: player.id, data: player });
     if (error) throw error;
     setSyncStatus('ok'); syncPending = false;
-  } catch(e) {
-    console.warn('upsert error:', e.message);
-    setSyncStatus('error');
-  }
+  } catch(e) { console.warn('upsert error:', e.message); setSyncStatus('error'); }
 }
 
-// ─── CLOUD: eliminar ─────────────────────────
+// ─── CLOUD DELETE ─────────────────────────────
 async function deletePlayerFromCloud(id) {
   if (!isOnline || !currentUser) return;
   try { await sb.from('atletas').delete().eq('id', id); } catch(e) {}
 }
 
-// ─── CLOUD: sync total ───────────────────────
+// ─── CLOUD SYNC ALL ───────────────────────────
 async function syncAllToCloud() {
   if (!isOnline || !currentUser || !players.length) return;
   setSyncStatus('syncing');
   try {
-    const rows = players.map(p => ({ id: p.id, data: p }));
-    const { error } = await sb.from('atletas').upsert(rows);
+    const { error } = await sb.from('atletas').upsert(players.map(p => ({ id: p.id, data: p })));
     if (error) throw error;
     setSyncStatus('ok'); syncPending = false;
-  } catch(e) {
-    console.warn('sync error:', e.message);
-    setSyncStatus('error');
-  }
+  } catch(e) { console.warn('sync error:', e.message); setSyncStatus('error'); }
 }
 
 async function manualSync() {
@@ -1793,7 +1723,7 @@ async function manualSync() {
   toast('Sincronização completa!');
 }
 
-// ─── EQUIPA: listar scouts ───────────────────
+// ─── EQUIPA ───────────────────────────────────
 async function loadTeam() {
   const c = document.getElementById('team-list');
   if (!c) return;
@@ -1801,138 +1731,23 @@ async function loadTeam() {
     const { data, error } = await sb.from('scouts').select('*').order('created_at');
     if (error) throw error;
     if (!data?.length) { c.innerHTML = '<p style="color:var(--text3);text-align:center;padding:30px">Nenhum scout registado ainda.</p>'; return; }
-
-    // Contar atletas por scout
     const counts = {};
     players.forEach(p => { if(p.scout_id) counts[p.scout_id] = (counts[p.scout_id]||0)+1; });
-
     c.innerHTML = data.map(s => {
       const initials = (s.nome||s.email).slice(0,2).toUpperCase();
       const isMe = currentUser && s.id === currentUser.id;
-      const nAtletas = counts[s.id] || 0;
+      const n = counts[s.id] || 0;
       return `<div class="scout-row">
         <div class="sr-avatar" style="${isMe?'border:2px solid var(--accent)':''}">${initials}</div>
         <div class="sr-info">
           <div class="sr-name">${s.nome||'—'} ${isMe?'<span style="font-size:10px;color:var(--accent)">(tu)</span>':''}</div>
           <div class="sr-email">${s.email}</div>
-          <div class="sr-stats">📋 ${nAtletas} atleta${nAtletas!==1?'s':''} adicionado${nAtletas!==1?'s':''} · Membro desde ${new Date(s.created_at).toLocaleDateString('pt-PT')}</div>
+          <div class="sr-stats">📋 ${n} atleta${n!==1?'s':''} · Membro desde ${new Date(s.created_at).toLocaleDateString('pt-PT')}</div>
         </div>
         <span class="role-badge role-scout">Scout</span>
       </div>`;
     }).join('');
-  } catch(e) {
-    c.innerHTML = `<p style="color:var(--red);text-align:center;padding:20px">Erro ao carregar equipa: ${e.message}</p>`;
-  }
-}
-
-// ═══════════════════════════════════════════════
-// DATA & STATE
-// ═══════════════════════════════════════════════
-const DB_KEY = 'scoutflow_v2';
-
-// ─── indicador visual de estado ───
-function setSyncStatus(state) {
-  // state: 'ok' | 'syncing' | 'offline' | 'error'
-  const dot = document.getElementById('sync-dot');
-  const lbl = document.getElementById('sync-lbl');
-  if (!dot) return;
-  const map = {
-    ok:      { color: '#00e5a0', text: 'Sincronizado' },
-    syncing: { color: '#ffbe0b', text: 'A sincronizar…' },
-    offline: { color: '#ff4d6d', text: 'Offline' },
-    error:   { color: '#ff4d6d', text: 'Erro sync' },
-    pending: { color: '#ffbe0b', text: 'Alterações pendentes' },
-  };
-  const s = map[state] || map.ok;
-  dot.style.background = s.color;
-  if (lbl) lbl.textContent = s.text;
-}
-
-window.addEventListener('online',  () => { isOnline = true;  setSyncStatus('syncing'); syncAllToCloud(); });
-window.addEventListener('offline', () => { isOnline = false; setSyncStatus('offline'); });
-
-// ─── Carregar TUDO da cloud (primeira carga / refresh) ───
-async function loadFromCloud() {
-  if (!isOnline) return;
-  setSyncStatus('syncing');
-  try {
-    const { data, error } = await sb.from('atletas').select('id, data');
-    if (error) throw error;
-    if (data && data.length > 0) {
-      // Merge: cloud ganha sobre localStorage em caso de conflito (updated_at mais recente)
-      const cloudMap = {};
-      data.forEach(row => { cloudMap[row.id] = row.data; });
-      // Qualquer atleta local que não esteja na cloud → fica (será sincronizado)
-      const localIds = new Set(players.map(p => p.id));
-      data.forEach(row => {
-        if (!localIds.has(row.id)) players.push(row.data);
-        else {
-          const idx = players.findIndex(p => p.id === row.id);
-          if (idx > -1) {
-            const cloudTs = new Date(row.data._ts || 0).getTime();
-            const localTs = new Date(players[idx]._ts || 0).getTime();
-            if (cloudTs > localTs) players[idx] = row.data;
-          }
-        }
-      });
-      save();
-    }
-    setSyncStatus('ok');
-    renderGrid();
-  } catch (e) {
-    console.warn('Supabase load error:', e.message);
-    setSyncStatus('error');
-  }
-}
-
-// ─── Guardar um atleta na cloud ───
-async function syncPlayerToCloud(player) {
-  if (!isOnline) { syncPending = true; setSyncStatus('pending'); return; }
-  setSyncStatus('syncing');
-  try {
-    const { error } = await sb.from('atletas').upsert({ id: player.id, data: player });
-    if (error) throw error;
-    setSyncStatus('ok');
-    syncPending = false;
-  } catch (e) {
-    console.warn('Supabase upsert error:', e.message);
-    setSyncStatus('error');
-  }
-}
-
-// ─── Eliminar um atleta da cloud ───
-async function deletePlayerFromCloud(id) {
-  if (!isOnline) { syncPending = true; return; }
-  try {
-    await sb.from('atletas').delete().eq('id', id);
-  } catch (e) {
-    console.warn('Supabase delete error:', e.message);
-  }
-}
-
-// ─── Sync completo (todos os locais → cloud) ───
-async function syncAllToCloud() {
-  if (!isOnline || !players.length) return;
-  setSyncStatus('syncing');
-  try {
-    const rows = players.map(p => ({ id: p.id, data: p }));
-    const { error } = await sb.from('atletas').upsert(rows);
-    if (error) throw error;
-    setSyncStatus('ok');
-    syncPending = false;
-  } catch (e) {
-    console.warn('Supabase sync error:', e.message);
-    setSyncStatus('error');
-  }
-}
-
-// ─── Sync manual (botão na nav) ───
-async function manualSync() {
-  if (!isOnline) { toast('Sem ligação à internet', 'error'); return; }
-  setSyncStatus('syncing');
-  await loadFromCloud();
-  await syncAllToCloud();
-  toast('Sincronização completa!');
+  } catch(e) { c.innerHTML = `<p style="color:var(--red);text-align:center;padding:20px">Erro: ${e.message}</p>`; }
 }
 
 // ═══════════════════════════════════════════════
@@ -3267,8 +3082,7 @@ document.addEventListener('keydown', e => {
 // ═══════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════
-// App começa escondida — só aparece após login
-document.querySelector('.app').style.display = 'none';
+// App começa escondida — auth onAuthStateChange trata do login/load
 renderGrid();
 if (!isOnline) setSyncStatus('offline');
 </script>
