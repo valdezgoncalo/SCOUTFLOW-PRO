@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>ScoutFlow Pro</title>
+<meta name="version" content="v3.2-20260328">
+<!-- Cache bust: força PWA a recarregar quando o ficheiro muda -->
 
 <!-- PWA: sem cache agressivo -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -759,9 +761,16 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
 <div id="splash-screen" style="position:fixed;inset:0;z-index:600;background:#0a0e1a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;">
   <div style="width:72px;height:72px;background:#00e5a0;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:36px;box-shadow:0 0 40px rgba(0,229,160,0.4);">⚽</div>
   <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;color:#e8edf5;">SCOUTFLOW PRO</div>
-  <div style="width:40px;height:3px;background:#1a2235;border-radius:2px;overflow:hidden;">
+  <div style="width:120px;height:3px;background:#1a2235;border-radius:2px;overflow:hidden;">
     <div style="width:100%;height:100%;background:#00e5a0;border-radius:2px;animation:loadBar 1.2s ease-in-out infinite;"></div>
   </div>
+  <div id="splash-status" style="font-size:11px;color:#4d607a;font-family:'DM Mono',monospace;margin-top:-8px;">A verificar sessão…</div>
+  <!-- Botão de escape: aparece após 4s se ainda estiver no splash -->
+  <button id="splash-escape" onclick="onUserLoggedOut()"
+    style="display:none;margin-top:8px;background:transparent;border:1px solid #4d607a;color:#4d607a;
+    padding:8px 20px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;">
+    Ir para o login →
+  </button>
 </div>
 <style>
 @keyframes loadBar {
@@ -1588,19 +1597,28 @@ sb.auth.onAuthStateChange(async (event, session) => {
   if (!_authHandled) { _authHandled = true; onUserLoggedOut(); }
 });
 
+function setSplashStatus(msg) {
+  const el = document.getElementById('splash-status');
+  if (el) el.textContent = msg;
+}
+
 function hideSplash() {
   const s = document.getElementById('splash-screen');
   if (s) { s.style.opacity = '0'; s.style.transition = 'opacity 0.3s'; setTimeout(() => s.remove(), 300); }
 }
 
 async function onUserLoggedIn(user) {
+  // Marcar IMEDIATAMENTE — antes de qualquer await — para o fallback não duplicar
+  _authHandled = true;
+  setSplashStatus('A carregar perfil…');
+
   const nome = user.user_metadata?.full_name || user.user_metadata?.nome || user.email.split('@')[0];
-  try {
-    await sb.from('scouts').upsert({ id: user.id, email: user.email, nome }, { onConflict: 'id' });
-  } catch(e) { console.warn('scouts upsert failed (non-blocking):', e.message); }
+
+  // upsert não-bloqueante — não impede o login se falhar
+  sb.from('scouts').upsert({ id: user.id, email: user.email, nome }, { onConflict: 'id' })
+    .catch(e => console.warn('scouts upsert (non-blocking):', e.message));
 
   currentUser = { id: user.id, email: user.email, nome, initials: nome.slice(0,2).toUpperCase() };
-  _authHandled = true;
 
   const btn = document.getElementById('nav-scout-btn');
   if (btn) {
@@ -1609,15 +1627,19 @@ async function onUserLoggedIn(user) {
     document.getElementById('nav-avatar-inner').textContent = currentUser.initials;
     document.getElementById('menu-email').textContent = currentUser.email;
   }
+
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('main-app').style.display = 'flex';
   hideSplash();
-  loadFromCloud().catch(e => console.warn('loadFromCloud failed:', e.message));
+
+  // Carregar dados em background — não bloqueia a entrada
+  setSyncStatus('syncing');
+  loadFromCloud().catch(e => { console.warn('loadFromCloud:', e.message); setSyncStatus('error'); });
 }
 
 function onUserLoggedOut() {
-  currentUser = null;
   _authHandled = true;
+  currentUser = null;
   document.getElementById('auth-screen').style.display = 'flex';
   document.getElementById('main-app').style.display = 'none';
   const btn = document.getElementById('nav-scout-btn');
@@ -3140,23 +3162,39 @@ document.addEventListener('keydown', e => {
 renderGrid();
 if (!isOnline) setSyncStatus('offline');
 
-// Fallback explícito para PWA/Chrome Android:
-// onAuthStateChange pode não disparar se a app foi fechada e reaberta
-// getSession() recupera a sessão do localStorage sem precisar de rede
+// Fallback 1 — após 1.5s tenta getSession() se onAuthStateChange não disparou
 setTimeout(async () => {
-  if (_authHandled) return; // onAuthStateChange já tratou
+  if (_authHandled) return;
+  setSplashStatus('A recuperar sessão…');
   try {
-    const { data: { session } } = await sb.auth.getSession();
+    const { data: { session }, error } = await sb.auth.getSession();
+    if (_authHandled) return;
+    if (error) throw error;
     if (session?.user) {
       await onUserLoggedIn(session.user);
     } else {
       onUserLoggedOut();
     }
   } catch(e) {
-    console.warn('getSession fallback failed:', e.message);
-    onUserLoggedOut();
+    console.warn('getSession fallback:', e.message);
+    if (!_authHandled) onUserLoggedOut();
   }
-}, 800); // 800ms — suficiente para onAuthStateChange disparar primeiro
+}, 1500);
+
+// Fallback 2 — após 4s mostra botão de escape manual
+setTimeout(() => {
+  if (_authHandled) return;
+  setSplashStatus('Ligação lenta — podes continuar manualmente');
+  const btn = document.getElementById('splash-escape');
+  if (btn) btn.style.display = 'block';
+}, 4000);
+
+// Fallback 3 — hard timeout 8s: força ecrã de login automaticamente
+setTimeout(() => {
+  if (_authHandled) return;
+  console.warn('Auth hard timeout — forçando ecrã de login');
+  onUserLoggedOut();
+}, 8000);
 </script>
 </body>
 </html>
