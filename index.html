@@ -1608,18 +1608,18 @@ function hideSplash() {
 }
 
 async function onUserLoggedIn(user) {
-  // Marcar IMEDIATAMENTE — antes de qualquer await — para o fallback não duplicar
   _authHandled = true;
-  setSplashStatus('A carregar perfil…');
+  setSplashStatus('A entrar…');
 
-  const nome = user.user_metadata?.full_name || user.user_metadata?.nome || user.email.split('@')[0];
+  currentUser = {
+    id:       user.id,
+    email:    user.email,
+    nome:     user.user_metadata?.full_name || user.user_metadata?.nome || user.email.split('@')[0],
+    initials: ''
+  };
+  currentUser.initials = currentUser.nome.slice(0,2).toUpperCase();
 
-  // upsert não-bloqueante — não impede o login se falhar
-  sb.from('scouts').upsert({ id: user.id, email: user.email, nome }, { onConflict: 'id' })
-    .catch(e => console.warn('scouts upsert (non-blocking):', e.message));
-
-  currentUser = { id: user.id, email: user.email, nome, initials: nome.slice(0,2).toUpperCase() };
-
+  // Atualizar UI nav
   const btn = document.getElementById('nav-scout-btn');
   if (btn) {
     btn.style.display = 'flex';
@@ -1628,13 +1628,23 @@ async function onUserLoggedIn(user) {
     document.getElementById('menu-email').textContent = currentUser.email;
   }
 
+  // Mostrar app IMEDIATAMENTE — sem aguardar nada de rede
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('main-app').style.display = 'flex';
   hideSplash();
 
-  // Carregar dados em background — não bloqueia a entrada
-  setSyncStatus('syncing');
-  loadFromCloud().catch(e => { console.warn('loadFromCloud:', e.message); setSyncStatus('error'); });
+  // Tudo o que vai à rede fica em background, depois de a app estar visível
+  setTimeout(() => {
+    // Registar scout na tabela (não bloqueia nada)
+    sb.from('scouts').upsert(
+      { id: currentUser.id, email: currentUser.email, nome: currentUser.nome },
+      { onConflict: 'id' }
+    ).catch(e => console.warn('scouts upsert:', e.message));
+
+    // Carregar dados
+    setSyncStatus('syncing');
+    loadFromCloud().catch(e => { console.warn('loadFromCloud:', e.message); setSyncStatus('error'); });
+  }, 100);
 }
 
 function onUserLoggedOut() {
