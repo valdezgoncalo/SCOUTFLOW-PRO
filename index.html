@@ -2,8 +2,21 @@
 <html lang="pt-pt">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>ScoutFlow Pro</title>
+
+<!-- PWA: sem cache agressivo -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
+<!-- PWA Manifest inline -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ScoutFlow">
+<meta name="theme-color" content="#0a0e1a">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -742,8 +755,24 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
 </style>
 </head>
 <body>
+<!-- ── SPLASH LOADING (PWA) ── -->
+<div id="splash-screen" style="position:fixed;inset:0;z-index:600;background:#0a0e1a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;">
+  <div style="width:72px;height:72px;background:#00e5a0;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:36px;box-shadow:0 0 40px rgba(0,229,160,0.4);">⚽</div>
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;color:#e8edf5;">SCOUTFLOW PRO</div>
+  <div style="width:40px;height:3px;background:#1a2235;border-radius:2px;overflow:hidden;">
+    <div style="width:100%;height:100%;background:#00e5a0;border-radius:2px;animation:loadBar 1.2s ease-in-out infinite;"></div>
+  </div>
+</div>
+<style>
+@keyframes loadBar {
+  0%   { transform: translateX(-100%); }
+  50%  { transform: translateX(0%); }
+  100% { transform: translateX(100%); }
+}
+</style>
+
 <!-- ═══════════ AUTH SCREEN ═══════════ -->
-<div id="auth-screen" style="position:fixed;inset:0;z-index:500;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px;">
+<div id="auth-screen" style="position:fixed;inset:0;z-index:500;background:var(--bg);display:none;align-items:center;justify-content:center;padding:20px;">
   <div style="position:absolute;inset:0;background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(0,229,160,0.1) 0%,transparent 60%);pointer-events:none;"></div>
   <div class="auth-box">
     <div class="auth-logo">⚽</div>
@@ -1534,22 +1563,45 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
 // ═══════════════════════════════════════════════
 const SB_URL = 'https://macdfqkbwanwzmkrdpuq.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hY2RmcWtid2Fud3pta3JkcHVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1MTQ2MDksImV4cCI6MjA5MDA5MDYwOX0.YYoMHrEgVlIOlV1sgjNFNVJFqeiLRa6FjzorHqY9_Ys';
-const sb = supabase.createClient(SB_URL, SB_KEY);
+const sb = supabase.createClient(SB_URL, SB_KEY, {
+  auth: {
+    persistSession: true,
+    storageKey: 'scoutflow_auth',
+    storage: window.localStorage,
+    autoRefreshToken: true,
+    detectSessionInUrl: false,
+  }
+});
 
 let currentUser = null;
 let isOnline = navigator.onLine;
 let syncPending = false;
+let _authHandled = false; // evita duplo trigger do onAuthStateChange
 
 // ─── AUTH STATE ───────────────────────────────
 sb.auth.onAuthStateChange(async (event, session) => {
-  if (session?.user) await onUserLoggedIn(session.user);
-  else onUserLoggedOut();
+  // SIGNED_OUT explícito → logout
+  if (event === 'SIGNED_OUT') { onUserLoggedOut(); return; }
+  // Com sessão válida → login
+  if (session?.user) { await onUserLoggedIn(session.user); return; }
+  // Sem sessão e não é SIGNED_OUT → mostrar login (primeira visita)
+  if (!_authHandled) { _authHandled = true; onUserLoggedOut(); }
 });
+
+function hideSplash() {
+  const s = document.getElementById('splash-screen');
+  if (s) { s.style.opacity = '0'; s.style.transition = 'opacity 0.3s'; setTimeout(() => s.remove(), 300); }
+}
 
 async function onUserLoggedIn(user) {
   const nome = user.user_metadata?.full_name || user.user_metadata?.nome || user.email.split('@')[0];
-  await sb.from('scouts').upsert({ id: user.id, email: user.email, nome }, { onConflict: 'id' });
+  try {
+    await sb.from('scouts').upsert({ id: user.id, email: user.email, nome }, { onConflict: 'id' });
+  } catch(e) { console.warn('scouts upsert failed (non-blocking):', e.message); }
+
   currentUser = { id: user.id, email: user.email, nome, initials: nome.slice(0,2).toUpperCase() };
+  _authHandled = true;
+
   const btn = document.getElementById('nav-scout-btn');
   if (btn) {
     btn.style.display = 'flex';
@@ -1559,15 +1611,18 @@ async function onUserLoggedIn(user) {
   }
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('main-app').style.display = 'flex';
-  await loadFromCloud();
+  hideSplash();
+  loadFromCloud().catch(e => console.warn('loadFromCloud failed:', e.message));
 }
 
 function onUserLoggedOut() {
   currentUser = null;
+  _authHandled = true;
   document.getElementById('auth-screen').style.display = 'flex';
   document.getElementById('main-app').style.display = 'none';
   const btn = document.getElementById('nav-scout-btn');
   if (btn) btn.style.display = 'none';
+  hideSplash();
 }
 
 // ─── LOGIN ────────────────────────────────────
@@ -3082,9 +3137,26 @@ document.addEventListener('keydown', e => {
 // ═══════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════
-// App começa escondida — auth onAuthStateChange trata do login/load
 renderGrid();
 if (!isOnline) setSyncStatus('offline');
+
+// Fallback explícito para PWA/Chrome Android:
+// onAuthStateChange pode não disparar se a app foi fechada e reaberta
+// getSession() recupera a sessão do localStorage sem precisar de rede
+setTimeout(async () => {
+  if (_authHandled) return; // onAuthStateChange já tratou
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session?.user) {
+      await onUserLoggedIn(session.user);
+    } else {
+      onUserLoggedOut();
+    }
+  } catch(e) {
+    console.warn('getSession fallback failed:', e.message);
+    onUserLoggedOut();
+  }
+}, 800); // 800ms — suficiente para onAuthStateChange disparar primeiro
 </script>
 </body>
 </html>
