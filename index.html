@@ -798,12 +798,41 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
         <input type="password" id="auth-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')authLogin()">
       </div>
       <button class="btn-primary" onclick="authLogin()" id="btn-login" style="width:100%;justify-content:center;padding:14px;font-size:15px">Entrar</button>
-      <div style="margin:20px 0;display:flex;align-items:center;gap:12px">
+      <div style="text-align:right;margin-top:10px">
+        <button onclick="showForgotPassword()" style="background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;font-family:var(--font-body);">Esqueci a password</button>
+      </div>
+      <div style="margin:16px 0;display:flex;align-items:center;gap:12px">
         <div style="flex:1;height:1px;background:var(--border)"></div>
         <span style="font-size:12px;color:var(--text3)">ou</span>
         <div style="flex:1;height:1px;background:var(--border)"></div>
       </div>
       <button class="btn-ghost" onclick="showRegister()" style="width:100%;justify-content:center;padding:12px">Criar conta nova</button>
+    </div>
+    <!-- RECUPERAÇÃO DE PASSWORD -->
+    <div id="auth-forgot-form" style="display:none">
+      <div class="field" style="margin-bottom:20px;text-align:left">
+        <label style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Email da conta</label>
+        <input type="email" id="auth-forgot-email" placeholder="o.teu@email.com" onkeydown="if(event.key==='Enter')authForgotPassword()">
+      </div>
+      <button class="btn-primary" id="btn-forgot" onclick="authForgotPassword()" style="width:100%;justify-content:center;padding:14px;font-size:15px">Enviar link de recuperação</button>
+      <div style="margin-top:16px">
+        <button class="btn-ghost" onclick="showLogin()" style="width:100%;justify-content:center;padding:12px">← Voltar ao login</button>
+      </div>
+    </div>
+    <!-- NOVA PASSWORD (após clicar no link do email) -->
+    <div id="auth-newpass-form" style="display:none">
+      <div style="font-size:13px;color:var(--accent);margin-bottom:16px;padding:10px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);border:1px solid rgba(0,229,160,0.3)">
+        🔑 Define a tua nova password
+      </div>
+      <div class="field" style="margin-bottom:12px;text-align:left">
+        <label style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Nova Password</label>
+        <input type="password" id="auth-newpass" placeholder="Mínimo 6 caracteres" onkeydown="if(event.key==='Enter')authUpdatePassword()">
+      </div>
+      <div class="field" style="margin-bottom:20px;text-align:left">
+        <label style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Confirmar Password</label>
+        <input type="password" id="auth-newpass2" placeholder="Repetir password" onkeydown="if(event.key==='Enter')authUpdatePassword()">
+      </div>
+      <button class="btn-primary" id="btn-newpass" onclick="authUpdatePassword()" style="width:100%;justify-content:center;padding:14px;font-size:15px">Guardar Nova Password</button>
     </div>
     <!-- REGISTO -->
     <div id="auth-register-form" style="display:none">
@@ -1589,11 +1618,16 @@ let _authHandled = false; // evita duplo trigger do onAuthStateChange
 
 // ─── AUTH STATE ───────────────────────────────
 sb.auth.onAuthStateChange(async (event, session) => {
+  // Link de recuperação de password clicado → mostrar formulário de nova password
+  if (event === 'PASSWORD_RECOVERY') {
+    showNewPassword();
+    return;
+  }
   // SIGNED_OUT explícito → logout
   if (event === 'SIGNED_OUT') { onUserLoggedOut(); return; }
-  // Com sessão válida → login
+  // Com sessão válida → login (mas não durante recuperação de password)
   if (session?.user) { await onUserLoggedIn(session.user); return; }
-  // Sem sessão e não é SIGNED_OUT → mostrar login (primeira visita)
+  // Sem sessão → login
   if (!_authHandled) { _authHandled = true; onUserLoggedOut(); }
 });
 
@@ -1703,14 +1737,72 @@ async function authLogout() {
 function showRegister() {
   document.getElementById('auth-login-form').style.display = 'none';
   document.getElementById('auth-register-form').style.display = 'block';
+  document.getElementById('auth-forgot-form').style.display = 'none';
+  document.getElementById('auth-newpass-form').style.display = 'none';
   document.getElementById('auth-sub').textContent = 'Cria a tua conta gratuita.';
   hideAuthError();
 }
 function showLogin() {
   document.getElementById('auth-login-form').style.display = 'block';
   document.getElementById('auth-register-form').style.display = 'none';
+  document.getElementById('auth-forgot-form').style.display = 'none';
+  document.getElementById('auth-newpass-form').style.display = 'none';
   document.getElementById('auth-sub').textContent = 'Sistema de scouting profissional.';
   hideAuthError();
+}
+function showForgotPassword() {
+  document.getElementById('auth-login-form').style.display = 'none';
+  document.getElementById('auth-register-form').style.display = 'none';
+  document.getElementById('auth-forgot-form').style.display = 'block';
+  document.getElementById('auth-newpass-form').style.display = 'none';
+  document.getElementById('auth-sub').textContent = 'Recuperar acesso à conta.';
+  hideAuthError();
+}
+function showNewPassword() {
+  document.getElementById('auth-login-form').style.display = 'none';
+  document.getElementById('auth-register-form').style.display = 'none';
+  document.getElementById('auth-forgot-form').style.display = 'none';
+  document.getElementById('auth-newpass-form').style.display = 'block';
+  document.getElementById('auth-sub').textContent = 'Quase lá — define a nova password.';
+  document.getElementById('auth-screen').style.display = 'flex';
+  hideSplash();
+  hideAuthError();
+}
+
+// ─── RECUPERAÇÃO DE PASSWORD ──────────────────
+async function authForgotPassword() {
+  const email = document.getElementById('auth-forgot-email').value.trim();
+  if (!email) { showAuthError('Insere o teu email.'); return; }
+  const btn = document.getElementById('btn-forgot');
+  btn.disabled = true; btn.textContent = 'A enviar…';
+  hideAuthError();
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.href.split('?')[0].split('#')[0]
+  });
+  btn.disabled = false; btn.textContent = 'Enviar link de recuperação';
+  if (error) {
+    showAuthError(translateAuthError(error.message));
+  } else {
+    showAuthError('✅ Email enviado! Verifica a tua caixa de correio e clica no link.', 'ok');
+  }
+}
+
+async function authUpdatePassword() {
+  const pass1 = document.getElementById('auth-newpass').value;
+  const pass2 = document.getElementById('auth-newpass2').value;
+  if (!pass1 || pass1.length < 6) { showAuthError('A password deve ter pelo menos 6 caracteres.'); return; }
+  if (pass1 !== pass2) { showAuthError('As passwords não coincidem.'); return; }
+  const btn = document.getElementById('btn-newpass');
+  btn.disabled = true; btn.textContent = 'A guardar…';
+  hideAuthError();
+  const { error } = await sb.auth.updateUser({ password: pass1 });
+  btn.disabled = false; btn.textContent = 'Guardar Nova Password';
+  if (error) {
+    showAuthError(translateAuthError(error.message));
+  } else {
+    showAuthError('✅ Password alterada com sucesso! A entrar…', 'ok');
+    setTimeout(() => showLogin(), 2000);
+  }
 }
 function showAuthError(msg, type='error') {
   const el = document.getElementById('auth-error');
@@ -1753,36 +1845,51 @@ window.addEventListener('offline', () => { isOnline = false; setSyncStatus('offl
 
 // ─── CLOUD LOAD ───────────────────────────────
 async function loadFromCloud() {
-  if (!isOnline || !currentUser) return;
+  if (!currentUser) return;
+  if (!isOnline) { setSyncStatus('offline'); return; }
   setSyncStatus('syncing');
   try {
     const { data, error } = await sb.from('atletas').select('id, data');
     if (error) throw error;
-    if (data?.length) {
-      const localMap = {};
-      players.forEach(p => localMap[p.id] = p);
-      data.forEach(row => {
-        const cTs = row.data?._ts || 0;
-        const lTs = localMap[row.id]?._ts || 0;
-        if (!localMap[row.id] || cTs > lTs) localMap[row.id] = row.data;
-      });
-      players = Object.values(localMap);
+
+    if (data && data.length > 0) {
+      // Cloud tem dados — substituir locais por cloud (cloud é a fonte de verdade)
+      players = data.map(row => row.data).filter(Boolean);
       save();
+      setSyncStatus('ok');
+      renderGrid();
+      toast(`☁️ ${players.length} atleta${players.length !== 1 ? 's' : ''} carregado${players.length !== 1 ? 's' : ''} da cloud`);
+    } else {
+      // Cloud vazia — se tiver dados locais, faz upload deles
+      setSyncStatus('ok');
+      renderGrid();
+      if (players.length > 0) {
+        toast('Cloud vazia — a sincronizar dados locais…');
+        await syncAllToCloud();
+      }
     }
-    setSyncStatus('ok');
-    renderGrid();
-  } catch(e) { console.warn('load error:', e.message); setSyncStatus('error'); }
+  } catch(e) {
+    console.warn('loadFromCloud error:', e.message);
+    setSyncStatus('error');
+    toast('Erro ao carregar da cloud: ' + e.message, 'error');
+  }
 }
 
 // ─── CLOUD SAVE ───────────────────────────────
 async function syncPlayerToCloud(player) {
-  if (!isOnline || !currentUser) { syncPending = true; setSyncStatus('pending'); return; }
+  if (!currentUser) return;
+  if (!isOnline) { syncPending = true; setSyncStatus('pending'); return; }
   setSyncStatus('syncing');
   try {
     const { error } = await sb.from('atletas').upsert({ id: player.id, data: player });
     if (error) throw error;
-    setSyncStatus('ok'); syncPending = false;
-  } catch(e) { console.warn('upsert error:', e.message); setSyncStatus('error'); }
+    setSyncStatus('ok');
+    syncPending = false;
+  } catch(e) {
+    console.warn('syncPlayerToCloud error:', e.message);
+    setSyncStatus('error');
+    toast('Erro ao guardar na cloud: ' + e.message, 'error');
+  }
 }
 
 // ─── CLOUD DELETE ─────────────────────────────
@@ -1793,21 +1900,56 @@ async function deletePlayerFromCloud(id) {
 
 // ─── CLOUD SYNC ALL ───────────────────────────
 async function syncAllToCloud() {
-  if (!isOnline || !currentUser || !players.length) return;
+  if (!currentUser) return;
+  if (!isOnline || !players.length) return;
   setSyncStatus('syncing');
   try {
-    const { error } = await sb.from('atletas').upsert(players.map(p => ({ id: p.id, data: p })));
+    const rows = players.map(p => ({ id: p.id, data: p }));
+    const { error } = await sb.from('atletas').upsert(rows);
     if (error) throw error;
-    setSyncStatus('ok'); syncPending = false;
-  } catch(e) { console.warn('sync error:', e.message); setSyncStatus('error'); }
+    setSyncStatus('ok');
+    syncPending = false;
+  } catch(e) {
+    console.warn('syncAllToCloud error:', e.message);
+    setSyncStatus('error');
+    toast('Erro ao sincronizar: ' + e.message, 'error');
+  }
 }
 
 async function manualSync() {
   if (!isOnline) { toast('Sem ligação à internet', 'error'); return; }
+  if (!currentUser) { toast('Precisas de estar autenticado', 'error'); return; }
   setSyncStatus('syncing');
-  await loadFromCloud();
-  await syncAllToCloud();
-  toast('Sincronização completa!');
+
+  // Diagnóstico: testar se consegue ler E escrever na tabela
+  try {
+    // 1. Testar leitura
+    const { data: readTest, error: readErr } = await sb.from('atletas').select('id').limit(1);
+    if (readErr) {
+      toast('❌ Erro de leitura Supabase: ' + readErr.message, 'error');
+      setSyncStatus('error'); return;
+    }
+
+    // 2. Carregar tudo
+    await loadFromCloud();
+
+    // 3. Se há dados locais, testar escrita
+    if (players.length > 0) {
+      const testPlayer = players[0];
+      const { error: writeErr } = await sb.from('atletas').upsert({ id: testPlayer.id, data: testPlayer });
+      if (writeErr) {
+        toast('❌ Erro de escrita Supabase: ' + writeErr.message, 'error');
+        setSyncStatus('error'); return;
+      }
+      await syncAllToCloud();
+    }
+
+    setSyncStatus('ok');
+    toast('✅ Sincronização completa! ' + players.length + ' atleta(s)');
+  } catch(e) {
+    setSyncStatus('error');
+    toast('❌ Erro: ' + e.message, 'error');
+  }
 }
 
 // ─── EQUIPA ───────────────────────────────────
