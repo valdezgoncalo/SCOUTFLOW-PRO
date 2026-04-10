@@ -1901,23 +1901,36 @@ async function loadFromCloud() {
   if (!isOnline) { setSyncStatus('offline'); return; }
   setSyncStatus('syncing');
   try {
-    const { data, error } = await sb.from('atletas').select('id, data');
+    // Filtrar APENAS os atletas deste scout pelo scout_id dentro do JSON
+    // A RLS do Supabase também bloqueia no servidor, mas filtramos aqui também por segurança
+    const { data, error } = await sb
+      .from('atletas')
+      .select('id, data')
+      .eq('scout_id', currentUser.id);
+
     if (error) throw error;
 
     if (data && data.length > 0) {
-      // Cloud tem dados — substituir locais por cloud (cloud é a fonte de verdade)
       players = data.map(row => row.data).filter(Boolean);
       save();
       setSyncStatus('ok');
       renderGrid();
-      toast(`☁️ ${players.length} atleta${players.length !== 1 ? 's' : ''} carregado${players.length !== 1 ? 's' : ''} da cloud`);
+      toast(`☁️ ${players.length} atleta${players.length !== 1 ? 's' : ''} carregado${players.length !== 1 ? 's' : ''}`);
     } else {
-      // Cloud vazia — se tiver dados locais, faz upload deles
-      setSyncStatus('ok');
-      renderGrid();
-      if (players.length > 0) {
-        toast('Cloud vazia — a sincronizar dados locais…');
+      // Nenhum atleta nesta conta — limpar locais e ver se há para sincronizar
+      const localOwnPlayers = players.filter(p => p.scout_id === currentUser.id);
+      if (localOwnPlayers.length > 0) {
+        // Há atletas locais deste scout — fazer upload
+        toast('A sincronizar atletas locais…');
+        players = localOwnPlayers;
+        save();
         await syncAllToCloud();
+      } else {
+        // Conta nova — sem atletas
+        players = [];
+        save();
+        setSyncStatus('ok');
+        renderGrid();
       }
     }
   } catch(e) {
@@ -1933,7 +1946,12 @@ async function syncPlayerToCloud(player) {
   if (!isOnline) { syncPending = true; setSyncStatus('pending'); return; }
   setSyncStatus('syncing');
   try {
-    const { error } = await sb.from('atletas').upsert({ id: player.id, data: player });
+    // Guardar scout_id como coluna separada para permitir filtragem na RLS
+    const { error } = await sb.from('atletas').upsert({
+      id: player.id,
+      data: player,
+      scout_id: currentUser.id   // coluna separada para RLS e filtragem
+    });
     if (error) throw error;
     setSyncStatus('ok');
     syncPending = false;
@@ -1947,7 +1965,7 @@ async function syncPlayerToCloud(player) {
 // ─── CLOUD DELETE ─────────────────────────────
 async function deletePlayerFromCloud(id) {
   if (!isOnline || !currentUser) return;
-  try { await sb.from('atletas').delete().eq('id', id); } catch(e) {}
+  try { await sb.from('atletas').delete().eq('id', id).eq('scout_id', currentUser.id); } catch(e) {}
 }
 
 // ─── CLOUD SYNC ALL ───────────────────────────
@@ -1956,7 +1974,12 @@ async function syncAllToCloud() {
   if (!isOnline || !players.length) return;
   setSyncStatus('syncing');
   try {
-    const rows = players.map(p => ({ id: p.id, data: p }));
+    // Só sincronizar os atletas deste scout
+    const myPlayers = players.filter(p => !p.scout_id || p.scout_id === currentUser.id);
+    // Garantir que todos têm scout_id correcto
+    myPlayers.forEach(p => { p.scout_id = currentUser.id; });
+    const rows = myPlayers.map(p => ({ id: p.id, data: p, scout_id: currentUser.id }));
+    if (!rows.length) { setSyncStatus('ok'); return; }
     const { error } = await sb.from('atletas').upsert(rows);
     if (error) throw error;
     setSyncStatus('ok');
