@@ -997,6 +997,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
       Exportar PDF
     </button>
+    <button class="btn-ghost" onclick="sendByEmail()" style="color:var(--blue);border-color:rgba(77,159,255,0.3)">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+      Enviar por Email
+    </button>
     <button class="btn-danger" onclick="deletePlayer()">
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
       Eliminar
@@ -2911,116 +2915,626 @@ function importData(){
   inp.click();
 }
 
-function exportPDF(){
-  const p=players.find(x=>x.id===currentId);
+function exportPDF(openEmail=false){
+  const p = players.find(x => x.id === currentId);
   if(!p){ toast('Guarde o atleta primeiro!','error'); return; }
-  const {jsPDF}=window.jspdf;
-  const doc=new jsPDF({unit:'mm',format:'a4'});
-  const W=210, M=16, CW=W-M*2;
-  const PAL={acc:[0,229,160],dark:[10,14,26],text:[232,237,245],muted:[136,150,176],light:[26,34,53],white:[255,255,255],border:[30,45,69]};
-  let y=0;
 
-  // Header
-  doc.setFillColor(...PAL.dark); doc.rect(0,0,W,40,'F');
-  doc.setFillColor(...PAL.acc); doc.roundedRect(M,8,24,24,4,4,'F');
-  doc.setTextColor(...PAL.dark); doc.setFont(undefined,'bold'); doc.setFontSize(14);
-  doc.text('SF',M+12,22,{align:'center'});
-  doc.setTextColor(...PAL.white); doc.setFontSize(20); doc.setFont(undefined,'bold');
-  doc.text((p.name||'Atleta').toUpperCase(),M+30,18);
-  doc.setFontSize(10); doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.muted);
-  doc.text(`${p.club||'Agente Livre'} · ${p.position||'N/A'}`,M+30,26);
-  const r=calcRating(p.metrics||{});
-  doc.setFillColor(...PAL.acc); doc.roundedRect(W-M-28,9,28,22,4,4,'F');
-  doc.setTextColor(...PAL.dark); doc.setFontSize(18); doc.setFont(undefined,'bold');
-  doc.text(String(r),W-M-14,20,{align:'center'});
-  doc.setFontSize(8); doc.text('NOTA',W-M-14,27,{align:'center'});
-  y=50;
-
-  const row=(label,val,x2=M+50)=>{
-    if(!val||val==='—') return;
-    doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.muted); doc.setFontSize(9);
-    doc.text(label+':',M,y);
-    doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.text);
-    doc.text(String(val),x2,y);
-    y+=7;
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF({unit:'mm', format:'a4'});
+  const W=210, M=14, CW=W-M*2;
+  const PAL = {
+    acc:    [0,229,160],
+    acc2:   [0,184,122],
+    dark:   [10,14,26],
+    dark2:  [17,24,39],
+    text:   [232,237,245],
+    muted:  [136,150,176],
+    light:  [26,34,53],
+    light2: [30,45,69],
+    white:  [255,255,255],
+    red:    [255,77,109],
+    amber:  [255,190,11],
+    blue:   [77,159,255],
   };
 
-  const sectionTitle=(t)=>{
-    if(y>265){ doc.addPage(); y=18; }
-    doc.setFillColor(...PAL.light); doc.roundedRect(M,y-4,CW,9,2,2,'F');
-    doc.setTextColor(...PAL.acc); doc.setFont(undefined,'bold'); doc.setFontSize(10);
-    doc.text(t,M+4,y+2); y+=12;
+  const rating = calcRating(p.metrics||{});
+  let y = 0;
+
+  // ── HELPERS ──────────────────────────────────
+  const newPageIfNeeded = (space=20) => {
+    if(y + space > 278){ doc.addPage(); y = 16; return true; }
+    return false;
   };
 
-  sectionTitle('INFORMAÇÃO PESSOAL');
-  row('Idade',p.age?p.age+' anos':'—');
-  row('Altura',p.height?p.height+'cm':'—');
-  row('Peso',p.weight?p.weight+'kg':'—');
-  row('Pé',p.foot||'—');
-  row('Nacionalidade',p.nationality||'—');
-  row('Agente',p.agent||'—');
+  const sectionTitle = (t, icon='') => {
+    newPageIfNeeded(16);
+    y += 4;
+    doc.setFillColor(...PAL.light);
+    doc.roundedRect(M, y-4, CW, 10, 2, 2, 'F');
+    doc.setDrawColor(...PAL.acc); doc.setLineWidth(0.4);
+    doc.line(M, y-4, M, y+6);
+    doc.setTextColor(...PAL.acc);
+    doc.setFont(undefined,'bold'); doc.setFontSize(9);
+    doc.text((icon+' '+t).trim().toUpperCase(), M+4, y+2);
+    y += 12;
+  };
 
-  sectionTitle('CONTRATO & MERCADO');
-  row('Fim de Contrato',p.contractEnd?fmt(p.contractEnd):'—');
-  row('Cláusula',p.releaseClause||'—');
-  row('Valor Mercado',p.marketValue||'—');
-  row('Status',p.tag||'—');
-
-  sectionTitle('ESTATÍSTICAS DA ÉPOCA');
-  row('Jogos',p.games||0); row('Minutos',p.minutes||0);
-  row('Golos',p.goals||0); row('Assistências',p.assists||0);
-  row('Cartões Amarelos',p.yellowCards||0); row('Cartões Vermelhos',p.redCards||0);
-
-  sectionTitle('AVALIAÇÃO TÉCNICA');
-  Object.entries(p.metrics||{}).forEach(([m,v])=>{
-    if(y>265){ doc.addPage(); y=18; }
-    doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.muted); doc.setFontSize(9);
-    doc.text(m,M,y);
-    doc.setTextColor(...PAL.acc); doc.text(String(v),M+80,y);
-    doc.setFillColor(...PAL.light); doc.roundedRect(M+90,y-4,CW-90,5,2,2,'F');
-    doc.setFillColor(...PAL.acc); doc.roundedRect(M+90,y-4,(v/10)*(CW-90),5,2,2,'F');
-    y+=8;
-  });
-
-  if(p.strengths||p.weaknesses||p.notes){
-    sectionTitle('ANÁLISE DO SCOUT');
-    if(p.strengths){ row('Pontos Fortes',p.strengths,M+35); y+=2; }
-    if(p.weaknesses){ row('A Melhorar',p.weaknesses,M+35); y+=2; }
-    if(p.notes){
-      if(y>255){ doc.addPage(); y=18; }
-      doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.muted); doc.setFontSize(9);
-      doc.text('Notas:',M,y); y+=5;
-      doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.text);
-      const lines=doc.splitTextToSize(p.notes,CW);
-      doc.text(lines,M,y); y+=lines.length*5+4;
+  const row2col = (l1,v1,l2,v2) => {
+    newPageIfNeeded(8);
+    const half = CW/2 - 4;
+    doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.muted); doc.setFontSize(8);
+    doc.text(l1+':', M, y);
+    doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.text); doc.setFontSize(8.5);
+    doc.text(String(v1||'—'), M+28, y);
+    if(l2){
+      doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.muted); doc.setFontSize(8);
+      doc.text(l2+':', M+half, y);
+      doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.text); doc.setFontSize(8.5);
+      doc.text(String(v2||'—'), M+half+28, y);
     }
+    y += 6.5;
+  };
+
+  const textBlock = (label, content) => {
+    if(!content) return;
+    newPageIfNeeded(20);
+    doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.muted); doc.setFontSize(8);
+    doc.text(label+':', M, y); y += 5;
+    doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.text); doc.setFontSize(8.5);
+    const lines = doc.splitTextToSize(content, CW);
+    lines.forEach(line => {
+      newPageIfNeeded(6);
+      doc.text(line, M, y); y += 5.2;
+    });
+    y += 2;
+  };
+
+  const statBox = (x, bw, label, value, color) => {
+    doc.setFillColor(...PAL.light);
+    doc.roundedRect(x, y, bw, 16, 2, 2, 'F');
+    doc.setFont(undefined,'bold'); doc.setTextColor(...(color||PAL.acc)); doc.setFontSize(14);
+    doc.text(String(value), x+bw/2, y+9.5, {align:'center'});
+    doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.muted); doc.setFontSize(7);
+    doc.text(label.toUpperCase(), x+bw/2, y+14.5, {align:'center'});
+  };
+
+  // ── PÁGINA 1: CABEÇALHO ──────────────────────
+  // Fundo header gradiente simulado
+  doc.setFillColor(...PAL.dark); doc.rect(0,0,W,52,'F');
+  doc.setFillColor(...PAL.dark2); doc.rect(0,36,W,16,'F');
+
+  // Foto do atleta (se existir)
+  let photoX = M;
+  if(p.photo){
+    try {
+      const fmt = p.photo.startsWith('data:image/png')?'PNG':'JPEG';
+      doc.addImage(p.photo, fmt, M, 7, 32, 38, undefined, 'FAST');
+      doc.setDrawColor(...PAL.acc); doc.setLineWidth(0.8);
+      doc.rect(M, 7, 32, 38);
+      photoX = M + 36;
+    } catch(e){ photoX = M; }
   }
 
-  if(p.reports&&p.reports.length){
-    sectionTitle(`RELATÓRIOS DE JOGO (${p.reports.length})`);
-    [...p.reports].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5).forEach(r=>{
-      if(y>262){ doc.addPage(); y=18; }
-      doc.setFillColor(...PAL.light); doc.roundedRect(M,y-3,CW,12,2,2,'F');
+  // Nome e info básica
+  doc.setTextColor(...PAL.acc); doc.setFont(undefined,'bold'); doc.setFontSize(7);
+  doc.text('RELATÓRIO DE SCOUTING', photoX+2, 13);
+  doc.setTextColor(...PAL.white); doc.setFont(undefined,'bold'); doc.setFontSize(22);
+  doc.text((p.name||'Atleta').toUpperCase(), photoX+2, 23);
+  doc.setFont(undefined,'normal'); doc.setFontSize(10); doc.setTextColor(...PAL.muted);
+  doc.text(`${p.club||'Agente Livre'}`, photoX+2, 30);
+
+  // Pills de info rápida
+  const pills = [
+    p.position && p.position,
+    p.age && `${p.age} anos`,
+    p.height && `${p.height} cm`,
+    p.foot && `Pé ${p.foot}`,
+    p.nationality,
+  ].filter(Boolean);
+  let px = photoX+2;
+  pills.forEach(pill => {
+    const tw = doc.getTextWidth(pill) + 6;
+    doc.setFillColor(...PAL.light2);
+    doc.roundedRect(px, 33, tw, 6, 1.5, 1.5, 'F');
+    doc.setTextColor(...PAL.text); doc.setFontSize(7); doc.setFont(undefined,'normal');
+    doc.text(pill, px+3, 37.5);
+    px += tw + 3;
+  });
+
+  // Rating badge
+  const rColor = rating>=7.5?PAL.acc : rating>=5?PAL.amber : PAL.muted;
+  doc.setFillColor(...rColor); doc.roundedRect(W-M-24, 8, 24, 30, 3, 3, 'F');
+  doc.setTextColor(...PAL.dark); doc.setFont(undefined,'bold'); doc.setFontSize(22);
+  doc.text(String(rating), W-M-12, 24, {align:'center'});
+  doc.setFontSize(7); doc.text('NOTA', W-M-12, 30, {align:'center'});
+
+  // Scout info no sub-header
+  doc.setTextColor(...PAL.muted); doc.setFontSize(7.5);
+  const scoutInfo = `Scout: ${p.scout_nome||currentUser?.nome||'—'}  ·  Data: ${new Date().toLocaleDateString('pt-PT')}  ·  ScoutFlow Pro`;
+  doc.text(scoutInfo, M, 47);
+
+  y = 58;
+
+  // ── SECÇÃO: DADOS BIOGRÁFICOS ────────────────
+  sectionTitle('Dados Biográficos');
+  row2col('Idade', p.age?`${p.age} anos`:'—', 'Altura', p.height?`${p.height} cm`:'—');
+  row2col('Peso', p.weight?`${p.weight} kg`:'—', 'Pé Preferencial', p.foot||'—');
+  row2col('Nacionalidade', p.nationality||'—', 'Posição Principal', p.position||'—');
+  if(p.position2) row2col('Posição Secundária', p.position2, 'Agente', p.agent||'—');
+  else row2col('Agente', p.agent||'—', 'Contacto', p.contact||'—');
+  if(p.playstyle || p.system) row2col('Estilo de Jogo', p.playstyle||'—', 'Sistema Ideal', p.system||'—');
+
+  // ── SECÇÃO: ESTATÍSTICAS ─────────────────────
+  sectionTitle('Estatísticas da Época');
+  const bw = (CW-9)/5;
+  statBox(M,        bw, 'Jogos',     p.games||0,       PAL.blue);
+  statBox(M+bw+2,   bw, 'Minutos',   p.minutes||0,     PAL.muted);
+  statBox(M+bw*2+4, bw, 'Golos',     p.goals||0,       PAL.acc);
+  statBox(M+bw*3+6, bw, 'Assists',   p.assists||0,     PAL.acc2);
+  statBox(M+bw*4+8, bw, 'Cartões',   `${p.yellowCards||0}A ${p.redCards||0}V`, PAL.amber);
+  y += 20;
+
+  // ── SECÇÃO: CONTRATO & MERCADO ───────────────
+  if(p.contractEnd||p.releaseClause||p.marketValue){
+    sectionTitle('Contrato & Mercado');
+    row2col('Fim de Contrato', p.contractEnd?fmt(p.contractEnd):'—', 'Valor de Mercado', p.marketValue||'—');
+    if(p.releaseClause) row2col('Cláusula de Rescisão', p.releaseClause, 'Estado', p.tag||'—');
+    else row2col('Estado de Negociação', p.negotiation||'—', 'Tag', p.tag||'—');
+  }
+
+  // ── SECÇÃO: AVALIAÇÃO TÉCNICA ────────────────
+  sectionTitle('Avaliação Técnica');
+  // Nota geral em destaque
+  doc.setFillColor(...PAL.light);
+  doc.roundedRect(M, y, CW, 10, 2, 2, 'F');
+  doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.muted); doc.setFontSize(8);
+  doc.text('NOTA GERAL', M+4, y+6.5);
+  doc.setTextColor(...rColor); doc.setFontSize(11);
+  doc.text(String(rating)+'/10', M+40, y+6.5);
+  // Barra de nota geral
+  const barW = CW-75;
+  doc.setFillColor(...PAL.light2); doc.roundedRect(M+75, y+3, barW, 4, 2, 2, 'F');
+  doc.setFillColor(...rColor); doc.roundedRect(M+75, y+3, (rating/10)*barW, 4, 2, 2, 'F');
+  y += 14;
+
+  // Métricas individuais em grid 2 colunas
+  const metEntries = Object.entries(p.metrics||{});
+  const mid = Math.ceil(metEntries.length/2);
+  const colW = CW/2 - 3;
+
+  metEntries.forEach(([m,v],i) => {
+    const col = i < mid ? 0 : 1;
+    const row = col===0 ? i : i-mid;
+    const xBase = col===0 ? M : M+colW+6;
+    const yBase = y + row*10;
+
+    newPageIfNeeded(10);
+    doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.muted); doc.setFontSize(7.5);
+    doc.text(m, xBase, yBase+5);
+    doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.acc); doc.setFontSize(8);
+    doc.text(String(v), xBase+colW-8, yBase+5, {align:'right'});
+    // barra
+    doc.setFillColor(...PAL.light); doc.roundedRect(xBase, yBase+6, colW-12, 2.5, 1, 1, 'F');
+    const mColor = v>=7.5?PAL.acc : v>=5?PAL.blue : PAL.red;
+    doc.setFillColor(...mColor); doc.roundedRect(xBase, yBase+6, (v/10)*(colW-12), 2.5, 1, 1, 'F');
+  });
+  y += Math.ceil(metEntries.length/2) * 10 + 4;
+
+  // ── SECÇÃO: ANÁLISE TÁTICA ───────────────────
+  if(p.strengths||p.weaknesses||p.tacticalNotes){
+    sectionTitle('Análise Tática');
+    textBlock('Pontos Fortes', p.strengths);
+    textBlock('Pontos a Melhorar', p.weaknesses);
+    textBlock('Notas Táticas', p.tacticalNotes);
+  }
+
+  // ── SECÇÃO: OBSERVAÇÕES DO SCOUT ────────────
+  if(p.notes){
+    sectionTitle('Observações do Scout');
+    textBlock('', p.notes);
+  }
+
+  // ── SECÇÃO: HISTÓRICO DE LESÕES ─────────────
+  if(p.injuries){
+    sectionTitle('Histórico de Lesões');
+    textBlock('', p.injuries);
+  }
+
+  // ── SECÇÃO: RELATÓRIOS DE JOGO ──────────────
+  if(p.reports && p.reports.length){
+    const sorted = [...p.reports].sort((a,b)=>new Date(b.date)-new Date(a.date));
+    sectionTitle(`Relatórios de Jogo (${sorted.length} observações)`);
+
+    // Tendência de notas
+    if(sorted.length >= 2){
+      const last5 = sorted.slice(0,5).reverse();
+      const chartW = CW;
+      const chartH = 20;
+      const xStep = chartW / (last5.length-1||1);
+      // eixo
+      doc.setDrawColor(...PAL.light2); doc.setLineWidth(0.3);
+      doc.line(M, y+chartH, M+chartW, y+chartH);
+      // linha de tendência
+      doc.setDrawColor(...PAL.acc); doc.setLineWidth(0.8);
+      last5.forEach((r,i) => {
+        const rx = M + i*xStep;
+        const ry = y + chartH - ((r.rating||0)/10)*chartH;
+        if(i>0){
+          const prev = last5[i-1];
+          const px2 = M + (i-1)*xStep;
+          const py2 = y + chartH - ((prev.rating||0)/10)*chartH;
+          doc.line(px2, py2, rx, ry);
+        }
+        doc.setFillColor(...PAL.acc); doc.circle(rx, ry, 1, 'F');
+        doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.acc); doc.setFontSize(7);
+        doc.text(String(r.rating||'—'), rx, ry-2, {align:'center'});
+        doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.muted); doc.setFontSize(6);
+        doc.text(r.date?r.date.slice(5):'', rx, y+chartH+4, {align:'center'});
+      });
+      y += chartH + 10;
+    }
+
+    // Detalhe de cada relatório
+    sorted.forEach((r,i) => {
+      newPageIfNeeded(36);
+      const rRating = r.rating||0;
+      const rColor2 = rRating>=7.5?PAL.acc : rRating>=5?PAL.blue : PAL.muted;
+
+      // Box do relatório
+      doc.setFillColor(...PAL.light);
+      doc.roundedRect(M, y, CW, 30, 2, 2, 'F');
+      doc.setDrawColor(...PAL.light2); doc.setLineWidth(0.3);
+      doc.roundedRect(M, y, CW, 30, 2, 2, 'S');
+
+      // Lado esquerdo — info do jogo
+      doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.acc); doc.setFontSize(7);
+      doc.text((r.competition||'Observação').toUpperCase(), M+4, y+6);
       doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.text); doc.setFontSize(9);
-      doc.text(`${fmt(r.date)} · ${r.homeTeam||'?'} vs ${r.awayTeam||'?'}`,M+3,y+3);
-      doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.muted);
-      doc.text(`Nota: ${r.rating||'—'} · Golos: ${r.goals||0} · Assist: ${r.assists||0}`,M+3,y+8);
-      y+=16;
+      doc.text(`${r.homeTeam||'?'} vs ${r.awayTeam||'?'}`, M+4, y+12);
+      doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.muted); doc.setFontSize(8);
+      const matchInfo = [
+        r.date?fmt(r.date):'',
+        r.score?`${r.score}`:'',
+        r.minutes?`${r.minutes}'`:'',
+      ].filter(Boolean).join('  ·  ');
+      doc.text(matchInfo, M+4, y+18);
+
+      // Stats do relatório
+      const statY = y+23;
+      const items = [
+        ['Nota',`${r.rating||'—'}/10`],
+        ['Golos',r.goals||0],
+        ['Assists',r.assists||0],
+        ['Físico',r.physical||'—'],
+        ['Mental',r.mental||'—'],
+      ];
+      items.forEach((item,si) => {
+        const sx = M+4 + si*(CW/items.length);
+        doc.setFont(undefined,'bold'); doc.setTextColor(...(si===0?rColor2:PAL.muted)); doc.setFontSize(si===0?9:8);
+        doc.text(String(item[1]), sx, statY);
+        doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.muted); doc.setFontSize(6.5);
+        doc.text(item[0].toUpperCase(), sx, statY+4);
+      });
+
+      // Badge de nota
+      doc.setFillColor(...rColor2);
+      doc.circle(M+CW-8, y+12, 7, 'F');
+      doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.dark); doc.setFontSize(9);
+      doc.text(String(r.rating||'—'), M+CW-8, y+14.5, {align:'center'});
+
+      y += 34;
+
+      // Detalhes em texto se existirem
+      if(r.strengths||r.weaknesses||r.notes){
+        newPageIfNeeded(20);
+        if(r.strengths){
+          doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.acc); doc.setFontSize(7.5);
+          doc.text('▸ Pontos Fortes:', M, y);
+          doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.text); doc.setFontSize(8);
+          const sl = doc.splitTextToSize(r.strengths, CW-30);
+          doc.text(sl, M+35, y);
+          y += sl.length*4.5+2;
+        }
+        if(r.weaknesses){
+          newPageIfNeeded(12);
+          doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.red); doc.setFontSize(7.5);
+          doc.text('▸ A Melhorar:', M, y);
+          doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.text); doc.setFontSize(8);
+          const wl = doc.splitTextToSize(r.weaknesses, CW-28);
+          doc.text(wl, M+28, y);
+          y += wl.length*4.5+2;
+        }
+        if(r.notes){
+          newPageIfNeeded(12);
+          doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.muted); doc.setFontSize(7.5);
+          doc.text('▸ Notas:', M, y);
+          doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.text); doc.setFontSize(8);
+          const nl = doc.splitTextToSize(r.notes, CW-20);
+          doc.text(nl, M+20, y);
+          y += nl.length*4.5+2;
+        }
+        y += 4;
+      }
     });
   }
 
-  // Footer
-  const pages=doc.internal.getNumberOfPages();
-  for(let i=1;i<=pages;i++){
-    doc.setPage(i);
-    doc.setDrawColor(...PAL.border); doc.line(M,290,W-M,290);
-    doc.setFontSize(8); doc.setTextColor(...PAL.muted);
-    doc.text(`ScoutFlow Pro · ${new Date().toLocaleDateString('pt-PT')}`,M,294);
-    doc.text(`${i}/${pages}`,W-M,294,{align:'right'});
+  // ── VÍDEOS ───────────────────────────────────
+  if(p.videos && p.videos.length){
+    sectionTitle('Vídeos & Links');
+    p.videos.forEach(v => {
+      newPageIfNeeded(8);
+      doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.blue); doc.setFontSize(8);
+      doc.text(`▸ ${v.desc||'Vídeo'}`, M, y);
+      doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.muted); doc.setFontSize(7);
+      doc.text(v.url, M+3, y+4);
+      y += 9;
+    });
   }
 
-  doc.save(`${(p.name||'atleta').replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.pdf`);
-  toast('PDF exportado!');
+  // ── RODAPÉ EM TODAS AS PÁGINAS ───────────────
+  const totalPages = doc.internal.getNumberOfPages();
+  for(let i=1; i<=totalPages; i++){
+    doc.setPage(i);
+    // Linha rodapé
+    doc.setDrawColor(...PAL.light2); doc.setLineWidth(0.3);
+    doc.line(M, 288, W-M, 288);
+    // Lado esquerdo
+    doc.setFillColor(...PAL.acc); doc.roundedRect(M, 290, 18, 5, 1, 1, 'F');
+    doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.dark); doc.setFontSize(6);
+    doc.text('SCOUTFLOW', M+9, 293.5, {align:'center'});
+    // Info central
+    doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.muted); doc.setFontSize(7);
+    doc.text(`${p.name||'Atleta'} · ${p.position||''} · ${p.club||''}`, W/2, 293.5, {align:'center'});
+    // Paginação
+    doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.muted); doc.setFontSize(7);
+    doc.text(`${i} / ${totalPages}`, W-M, 293.5, {align:'right'});
+  }
+
+  const fileName = `${(p.name||'atleta').replace(/\s+/g,'_')}_ScoutFlow_${new Date().toISOString().slice(0,10)}.pdf`;
+
+  if(openEmail){
+    // Para envio por email: gerar blob e abrir modal
+    const pdfBlob = doc.output('blob');
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    openEmailModal(p, pdfUrl, fileName, doc);
+  } else {
+    doc.save(fileName);
+    toast('PDF exportado!');
+  }
+}
+
+// ── MODAL DE ENVIO POR EMAIL ──────────────────
+function openEmailModal(player, pdfUrl, fileName, doc) {
+  // Remover modal anterior para recriar sempre atualizado
+  const old = document.getElementById('email-modal');
+  if(old) old.remove();
+
+  const reports = [...(player.reports||[])].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const rating  = calcRating(player.metrics||{});
+  const topMetrics = Object.entries(player.metrics||{})
+    .sort((a,b)=>b[1]-a[1]).slice(0,3)
+    .map(([k,v])=>`${k} (${v}/10)`).join(', ');
+
+  // Opções de relatório em destaque
+  const reportOpts = reports.map((r,i) =>
+    `<option value="${i}">${fmt(r.date)} · ${r.homeTeam||'?'} vs ${r.awayTeam||'?'} · Nota: ${r.rating||'—'}</option>`
+  ).join('');
+
+  const modal = document.createElement('div');
+  modal.id = 'email-modal';
+  modal.className = 'modal-bg';
+  modal.onclick = e => { if(e.target===modal) modal.style.display='none'; };
+  modal.innerHTML = `
+    <div class="modal" style="max-width:560px;width:100%">
+      <h2>📧 Enviar Relatório por Email</h2>
+      <div style="display:flex;flex-direction:column;gap:12px">
+
+        <!-- DESTINATÁRIOS -->
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Para *</label>
+          <div id="email-chips" style="display:flex;flex-wrap:wrap;gap:6px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:6px 8px;min-height:38px;cursor:text" onclick="document.getElementById('email-chip-input').focus()"></div>
+          <div style="display:flex;gap:6px;margin-top:6px">
+            <input type="email" id="email-chip-input" placeholder="Adicionar email e pressionar Enter…" style="flex:1" onkeydown="handleEmailChip(event)">
+            <button class="btn-ghost" onclick="addEmailChip()" style="padding:8px 12px;font-size:12px">+ Adicionar</button>
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">Pressiona Enter ou vírgula para adicionar. Podes adicionar múltiplos destinatários.</div>
+        </div>
+
+        <!-- CC -->
+        <div class="field">
+          <label style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">CC (opcional)</label>
+          <input type="email" id="email-cc" placeholder="copia@email.pt, outro@email.pt">
+        </div>
+
+        <!-- ASSUNTO -->
+        <div class="field">
+          <label style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Assunto</label>
+          <input type="text" id="email-subject">
+        </div>
+
+        ${reports.length > 0 ? `
+        <!-- RELATÓRIO EM DESTAQUE -->
+        <div class="field">
+          <label style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Jogo em Destaque no Email</label>
+          <select id="email-featured-report" onchange="updateEmailBody()">
+            <option value="-1">— Usar última observação automaticamente</option>
+            ${reportOpts}
+          </select>
+        </div>` : ''}
+
+        <!-- MENSAGEM -->
+        <div class="field">
+          <label style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Mensagem</label>
+          <textarea id="email-body" style="height:160px;resize:vertical"></textarea>
+        </div>
+
+        <!-- PDF ANEXO -->
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;display:flex;align-items:center;gap:10px">
+          <svg width="20" height="20" fill="none" stroke="var(--red)" stroke-width="1.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:600;color:var(--text)">${fileName}</div>
+            <div style="font-size:11px;color:var(--text3)">Relatório completo em PDF · descarregado automaticamente ao clicar em enviar</div>
+          </div>
+        </div>
+
+        <!-- AVISO -->
+        <div style="background:var(--blue-dim);border:1px solid rgba(77,159,255,0.2);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--blue)">
+          💡 O botão <strong>Gmail</strong> abre o Gmail web com tudo pré-preenchido (melhor no Android).<br>
+          O botão <strong>Email</strong> abre o cliente de email padrão do dispositivo.
+        </div>
+
+        <!-- BOTÕES -->
+        <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+          <button class="btn-ghost" onclick="document.getElementById('email-modal').style.display='none'">Cancelar</button>
+          <button class="btn-ghost" id="email-download-btn">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Só PDF
+          </button>
+          <button class="btn-ghost" id="email-mailto-btn" style="color:var(--blue);border-color:rgba(77,159,255,0.3)">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Abrir Email
+          </button>
+          <button class="btn-primary" id="email-gmail-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zm-2 0l-8 5-8-5h16zm0 12H4V8l8 5 8-5v10z"/></svg>
+            Abrir no Gmail
+          </button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+
+  // Estado dos chips de destinatários
+  const emailChips = [];
+
+  window.handleEmailChip = (e) => {
+    if(e.key === 'Enter' || e.key === ',') { e.preventDefault(); addEmailChip(); }
+  };
+  window.addEmailChip = () => {
+    const inp = document.getElementById('email-chip-input');
+    const val = inp.value.trim().replace(/,$/,'');
+    if(!val) return;
+    if(emailChips.includes(val)) { inp.value=''; return; }
+    emailChips.push(val);
+    const chip = document.createElement('div');
+    chip.style.cssText = 'display:flex;align-items:center;gap:4px;background:var(--accent-dim);color:var(--accent);border:1px solid rgba(0,229,160,0.3);border-radius:12px;padding:3px 10px;font-size:12px;font-weight:600';
+    chip.innerHTML = `${val} <button onclick="removeEmailChip(this,'${val}')" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:14px;line-height:1;padding:0 0 0 2px">×</button>`;
+    document.getElementById('email-chips').appendChild(chip);
+    inp.value = '';
+  };
+  window.removeEmailChip = (btn, val) => {
+    const i = emailChips.indexOf(val);
+    if(i>-1) emailChips.splice(i,1);
+    btn.parentElement.remove();
+  };
+
+  // Pré-adicionar contacto do atleta se existir
+  if(player.contact && player.contact.includes('@')){
+    document.getElementById('email-chip-input').value = player.contact;
+    addEmailChip();
+  }
+
+  // Gerar corpo do email
+  window.updateEmailBody = () => {
+    const selIdx = parseInt(document.getElementById('email-featured-report')?.value ?? '-1');
+    const featured = selIdx >= 0 ? reports[selIdx] : (reports[0]||null);
+
+    document.getElementById('email-body').value =
+`Olá,
+
+Segue em anexo o relatório completo de scouting do atleta ${player.name}.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FICHA DO ATLETA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Nome: ${player.name}
+Posição: ${player.position||'N/A'}${player.position2?' / '+player.position2:''}
+Clube: ${player.club||'Agente Livre'}
+Idade: ${player.age?player.age+' anos':'—'}${player.height?' · '+player.height+' cm':''}${player.nationality?' · '+player.nationality:''}
+Pé Preferencial: ${player.foot||'—'}
+Nota Geral: ${rating}/10
+
+Destaques Técnicos: ${topMetrics||'—'}
+${player.strengths?'Pontos Fortes: '+player.strengths:''}
+${player.weaknesses?'A Melhorar: '+player.weaknesses:''}
+${player.playstyle?'Estilo de Jogo: '+player.playstyle:''}
+${player.system?'Sistema Ideal: '+player.system:''}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ESTATÍSTICAS DA ÉPOCA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Jogos: ${player.games||0}  ·  Minutos: ${player.minutes||0}  ·  Golos: ${player.goals||0}  ·  Assistências: ${player.assists||0}
+${featured?`
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+JOGO EM DESTAQUE${featured.competition?' — '+featured.competition:''}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Data: ${fmt(featured.date)}
+Jogo: ${featured.homeTeam||'?'} vs ${featured.awayTeam||'?'}${featured.score?' ('+featured.score+')':''}
+Minutos jogados: ${featured.minutes||'—'}
+Nota do scout: ${featured.rating||'—'}/10
+Golos: ${featured.goals||0}  ·  Assistências: ${featured.assists||0}
+Desempenho Físico: ${featured.physical||'—'}  ·  Mental: ${featured.mental||'—'}
+${featured.strengths?'Pontos Fortes: '+featured.strengths:''}
+${featured.weaknesses?'A Melhorar: '+featured.weaknesses:''}
+${featured.notes?'Notas: '+featured.notes:''}
+`:''}${reports.length>1?`Total de ${reports.length} observações registadas.\n`:''}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Relatório completo com métricas e análise tática em anexo (PDF).
+
+Com os melhores cumprimentos,
+${currentUser?.nome||'Scout'}
+ScoutFlow Pro`;
+  };
+
+  // Preencher campos iniciais
+  document.getElementById('email-subject').value =
+    `Relatório de Scouting — ${player.name} · ${player.position||'N/A'} · ${player.club||'Agente Livre'}`;
+  updateEmailBody();
+
+  // Botões
+  document.getElementById('email-download-btn').onclick = () => {
+    doc.save(fileName);
+    toast('PDF descarregado!');
+  };
+
+  const getEmailData = () => {
+    const to      = emailChips.join(',');
+    const cc      = document.getElementById('email-cc').value.trim();
+    const subject = document.getElementById('email-subject').value;
+    const body    = document.getElementById('email-body').value;
+    return { to, cc, subject, body };
+  };
+
+  // Botão mailto (cliente nativo)
+  document.getElementById('email-mailto-btn').onclick = () => {
+    const {to,cc,subject,body} = getEmailData();
+    const cc_part = cc ? `&cc=${encodeURIComponent(cc)}` : '';
+    const mailto = `mailto:${encodeURIComponent(to)}?${cc_part}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailto;
+    setTimeout(() => doc.save(fileName), 600);
+    toast('A abrir cliente de email…');
+  };
+
+  // Botão Gmail web (melhor no Android Chrome)
+  document.getElementById('email-gmail-btn').onclick = () => {
+    const {to,cc,subject,body} = getEmailData();
+    const params = new URLSearchParams({
+      to, su: subject, body,
+      ...(cc ? {cc} : {})
+    });
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&${params.toString()}`;
+    window.open(gmailUrl, '_blank');
+    setTimeout(() => doc.save(fileName), 600);
+    toast('A abrir Gmail…');
+  };
+
+  modal.style.display = 'flex';
+}
+
+function sendByEmail(){
+  const p = players.find(x => x.id === currentId);
+  if(!p){ toast('Guarde o atleta primeiro!','error'); return; }
+  exportPDF(true);
 }
 
 
