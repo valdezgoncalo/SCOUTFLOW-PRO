@@ -1601,13 +1601,28 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
 // ═══════════════════════════════════════════════
 const SB_URL = 'https://macdfqkbwanwzmkrdpuq.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hY2RmcWtid2Fud3pta3JkcHVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1MTQ2MDksImV4cCI6MjA5MDA5MDYwOX0.YYoMHrEgVlIOlV1sgjNFNVJFqeiLRa6FjzorHqY9_Ys';
+
+// ─── DETETAR RECOVERY ANTES DE TUDO ──────────
+// Verificar URL ANTES de criar o cliente Supabase
+// O link de recuperação chega como: URL?code=XXXX
+// Quando há ?code= na URL, é SEMPRE um link de recovery (é o único caso onde o Supabase usa ?code=)
+const _hasRecoveryCode = !!new URLSearchParams(window.location.search).get('code');
+const _hasRecoveryHash = window.location.hash.includes('type=recovery') ||
+                         window.location.hash.includes('access_token');
+
+// Guardar em sessionStorage para sobreviver ao redirect interno do Supabase
+if (_hasRecoveryCode || _hasRecoveryHash) {
+  sessionStorage.setItem('sf_recovery', '1');
+}
+const _isRecoveryFlow = sessionStorage.getItem('sf_recovery') === '1';
+
 const sb = supabase.createClient(SB_URL, SB_KEY, {
   auth: {
     persistSession: true,
     storageKey: 'scoutflow_auth',
     storage: window.localStorage,
     autoRefreshToken: true,
-    detectSessionInUrl: true,  // necessário para links de recuperação de password
+    detectSessionInUrl: true,
   }
 });
 
@@ -1618,8 +1633,14 @@ let _authHandled = false; // evita duplo trigger do onAuthStateChange
 
 // ─── AUTH STATE ───────────────────────────────
 sb.auth.onAuthStateChange(async (event, session) => {
-  // Link de recuperação → mostrar formulário de nova password IMEDIATAMENTE
+  // Recovery explícito (hash antigo)
   if (event === 'PASSWORD_RECOVERY') {
+    _authHandled = true;
+    showNewPassword();
+    return;
+  }
+  // SIGNED_IN durante recovery flow (PKCE) — NÃO entrar na app
+  if (event === 'SIGNED_IN' && _isRecoveryFlow) {
     _authHandled = true;
     showNewPassword();
     return;
@@ -1630,21 +1651,13 @@ sb.auth.onAuthStateChange(async (event, session) => {
     onUserLoggedOut();
     return;
   }
-  // Sessão válida — mas NÃO entrar na app se estamos em modo de recuperação de password
-  if (session?.user) {
-    // Verificar se há token de recovery na URL (hash)
-    const hash = window.location.hash;
-    if (hash.includes('type=recovery')) {
-      // Estamos a processar um link de recovery — não fazer login normal
-      _authHandled = true;
-      showNewPassword();
-      return;
-    }
+  // Sessão válida — login normal (só se não estamos em recovery)
+  if (session?.user && !_isRecoveryFlow) {
     await onUserLoggedIn(session.user);
     return;
   }
   // Sem sessão
-  if (!_authHandled) {
+  if (!_authHandled && !_isRecoveryFlow) {
     _authHandled = true;
     onUserLoggedOut();
   }
@@ -1815,16 +1828,26 @@ async function authUpdatePassword() {
   const pass2 = document.getElementById('auth-newpass2').value;
   if (!pass1 || pass1.length < 6) { showAuthError('A password deve ter pelo menos 6 caracteres.'); return; }
   if (pass1 !== pass2) { showAuthError('As passwords não coincidem.'); return; }
+
   const btn = document.getElementById('btn-newpass');
   btn.disabled = true; btn.textContent = 'A guardar…';
   hideAuthError();
+
   const { error } = await sb.auth.updateUser({ password: pass1 });
+
   btn.disabled = false; btn.textContent = 'Guardar Nova Password';
+
   if (error) {
-    showAuthError(translateAuthError(error.message));
+    // Mostrar o erro exacto do Supabase para diagnóstico
+    showAuthError('Erro: ' + (translateAuthError(error.message) || error.message));
+    console.error('updateUser error:', error);
   } else {
-    showAuthError('✅ Password alterada com sucesso! A entrar…', 'ok');
-    setTimeout(() => showLogin(), 2000);
+    // Limpar flag de recovery — fluxo concluído
+    sessionStorage.removeItem('sf_recovery');
+    // Fazer logout para forçar novo login com a nova password
+    await sb.auth.signOut();
+    showAuthError('✅ Password alterada! Entra com a nova password.', 'ok');
+    setTimeout(() => showLogin(), 2500);
   }
 }
 function showAuthError(msg, type='error') {
@@ -3337,67 +3360,23 @@ document.addEventListener('keydown', e => {
 renderGrid();
 if (!isOnline) setSyncStatus('offline');
 
-// ─── Detetar link de recuperação de password ───
-// Supabase envia: URL?code=XXXX  (PKCE flow - padrão actual)
-// ou: URL#access_token=XXX&type=recovery  (flow legado)
-const _hash   = window.location.hash;
-const _search = window.location.search;
-const _isRecovery = _hash.includes('type=recovery') ||
-                    (_search.includes('code=') && (
-                      _hash.includes('type=recovery') ||
-                      sessionStorage.getItem('sf_recovery') === '1'
-                    ));
-
-// Com PKCE o Supabase redireciona de volta sem o type=recovery mas com ?code=
-// Guardamos flag para sobreviver ao redirect
-if (_search.includes('code=')) {
-  sessionStorage.setItem('sf_recovery', '1');
-}
-
-const _hasCode     = _search.includes('code=');
-const _hasRecovery = _isRecovery || (_hasCode && sessionStorage.getItem('sf_recovery') === '1');
-
-if (_hasRecovery || _hasCode) {
-  // É um link de recuperação — bloquear fluxo normal
+if (_isRecoveryFlow) {
+  // ─── MODO RECOVERY ───────────────────────────
+  // A flag sf_recovery está activa — estamos a processar um link de recuperação
+  // O onAuthStateChange vai apanhar PASSWORD_RECOVERY ou SIGNED_IN e mostrar o form
   _authHandled = true;
-  setSplashStatus('A processar recuperação…');
+  setSplashStatus('A processar recuperação de password…');
 
-  // com detectSessionInUrl: true, o SDK processa o ?code= automaticamente
-  // e dispara PASSWORD_RECOVERY no onAuthStateChange.
-  // Mas adicionamos fallback manual por segurança:
-  setTimeout(async () => {
-    // Se onAuthStateChange já mostrou o form, não fazer nada
-    const nf = document.getElementById('auth-newpass-form');
-    if (nf && nf.style.display !== 'none') return;
-
-    // Tentar processar o código manualmente
-    if (_hasCode) {
-      try {
-        const { error } = await sb.auth.exchangeCodeForSession(_search);
-        if (error) throw error;
-        // exchangeCodeForSession bem sucedido → onAuthStateChange dispara PASSWORD_RECOVERY
-      } catch(e) {
-        console.warn('exchangeCode error:', e.message);
-        showNewPassword(); // mostrar form mesmo assim
-      }
-    } else {
-      showNewPassword();
-    }
-  }, 800);
-
-  // Hard timeout: se em 5s ainda não apareceu o form → mostrar forçado
+  // Fallback: se o onAuthStateChange não mostrou o form em 3s, forçar
   setTimeout(() => {
     const nf = document.getElementById('auth-newpass-form');
     if (nf && nf.style.display === 'none') {
-      console.warn('Recovery timeout — forçando form');
       showNewPassword();
     }
-  }, 5000);
+  }, 3000);
 
 } else {
-  // Fluxo normal de login
-  sessionStorage.removeItem('sf_recovery'); // limpar flag se existir
-
+  // ─── FLUXO NORMAL ────────────────────────────
   // Fallback 1 — após 1.5s tenta getSession() se onAuthStateChange não disparou
   setTimeout(async () => {
     if (_authHandled) return;
@@ -3425,10 +3404,10 @@ if (_hasRecovery || _hasCode) {
     if (btn) btn.style.display = 'block';
   }, 4000);
 
-  // Fallback 3 — hard timeout 8s: força ecrã de login automaticamente
+  // Fallback 3 — hard timeout 8s
   setTimeout(() => {
     if (_authHandled) return;
-    console.warn('Auth hard timeout — forçando ecrã de login');
+    console.warn('Auth hard timeout');
     onUserLoggedOut();
   }, 8000);
 }
