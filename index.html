@@ -1607,7 +1607,7 @@ const sb = supabase.createClient(SB_URL, SB_KEY, {
     storageKey: 'scoutflow_auth',
     storage: window.localStorage,
     autoRefreshToken: true,
-    detectSessionInUrl: false,
+    detectSessionInUrl: true,  // necessário para links de recuperação de password
   }
 });
 
@@ -1618,17 +1618,36 @@ let _authHandled = false; // evita duplo trigger do onAuthStateChange
 
 // ─── AUTH STATE ───────────────────────────────
 sb.auth.onAuthStateChange(async (event, session) => {
-  // Link de recuperação de password clicado → mostrar formulário de nova password
+  // Link de recuperação → mostrar formulário de nova password IMEDIATAMENTE
   if (event === 'PASSWORD_RECOVERY') {
+    _authHandled = true;
     showNewPassword();
     return;
   }
-  // SIGNED_OUT explícito → logout
-  if (event === 'SIGNED_OUT') { onUserLoggedOut(); return; }
-  // Com sessão válida → login (mas não durante recuperação de password)
-  if (session?.user) { await onUserLoggedIn(session.user); return; }
-  // Sem sessão → login
-  if (!_authHandled) { _authHandled = true; onUserLoggedOut(); }
+  // Logout explícito
+  if (event === 'SIGNED_OUT') {
+    _authHandled = true;
+    onUserLoggedOut();
+    return;
+  }
+  // Sessão válida — mas NÃO entrar na app se estamos em modo de recuperação de password
+  if (session?.user) {
+    // Verificar se há token de recovery na URL (hash)
+    const hash = window.location.hash;
+    if (hash.includes('type=recovery')) {
+      // Estamos a processar um link de recovery — não fazer login normal
+      _authHandled = true;
+      showNewPassword();
+      return;
+    }
+    await onUserLoggedIn(session.user);
+    return;
+  }
+  // Sem sessão
+  if (!_authHandled) {
+    _authHandled = true;
+    onUserLoggedOut();
+  }
 });
 
 function setSplashStatus(msg) {
@@ -1759,6 +1778,10 @@ function showForgotPassword() {
   hideAuthError();
 }
 function showNewPassword() {
+  // Limpar o hash da URL para não re-processar o token ao recarregar
+  if (window.location.hash) {
+    history.replaceState(null, '', window.location.pathname);
+  }
   document.getElementById('auth-login-form').style.display = 'none';
   document.getElementById('auth-register-form').style.display = 'none';
   document.getElementById('auth-forgot-form').style.display = 'none';
@@ -3314,39 +3337,101 @@ document.addEventListener('keydown', e => {
 renderGrid();
 if (!isOnline) setSyncStatus('offline');
 
-// Fallback 1 — após 1.5s tenta getSession() se onAuthStateChange não disparou
-setTimeout(async () => {
-  if (_authHandled) return;
-  setSplashStatus('A recuperar sessão…');
-  try {
-    const { data: { session }, error } = await sb.auth.getSession();
-    if (_authHandled) return;
-    if (error) throw error;
-    if (session?.user) {
-      await onUserLoggedIn(session.user);
+// ─── Detetar link de recuperação de password ───
+// Supabase envia: URL?code=XXXX  (PKCE flow - padrão actual)
+// ou: URL#access_token=XXX&type=recovery  (flow legado)
+const _hash   = window.location.hash;
+const _search = window.location.search;
+const _isRecovery = _hash.includes('type=recovery') ||
+                    (_search.includes('code=') && (
+                      _hash.includes('type=recovery') ||
+                      sessionStorage.getItem('sf_recovery') === '1'
+                    ));
+
+// Com PKCE o Supabase redireciona de volta sem o type=recovery mas com ?code=
+// Guardamos flag para sobreviver ao redirect
+if (_search.includes('code=')) {
+  sessionStorage.setItem('sf_recovery', '1');
+}
+
+const _hasCode     = _search.includes('code=');
+const _hasRecovery = _isRecovery || (_hasCode && sessionStorage.getItem('sf_recovery') === '1');
+
+if (_hasRecovery || _hasCode) {
+  // É um link de recuperação — bloquear fluxo normal
+  _authHandled = true;
+  setSplashStatus('A processar recuperação…');
+
+  // com detectSessionInUrl: true, o SDK processa o ?code= automaticamente
+  // e dispara PASSWORD_RECOVERY no onAuthStateChange.
+  // Mas adicionamos fallback manual por segurança:
+  setTimeout(async () => {
+    // Se onAuthStateChange já mostrou o form, não fazer nada
+    const nf = document.getElementById('auth-newpass-form');
+    if (nf && nf.style.display !== 'none') return;
+
+    // Tentar processar o código manualmente
+    if (_hasCode) {
+      try {
+        const { error } = await sb.auth.exchangeCodeForSession(_search);
+        if (error) throw error;
+        // exchangeCodeForSession bem sucedido → onAuthStateChange dispara PASSWORD_RECOVERY
+      } catch(e) {
+        console.warn('exchangeCode error:', e.message);
+        showNewPassword(); // mostrar form mesmo assim
+      }
     } else {
-      onUserLoggedOut();
+      showNewPassword();
     }
-  } catch(e) {
-    console.warn('getSession fallback:', e.message);
-    if (!_authHandled) onUserLoggedOut();
-  }
-}, 1500);
+  }, 800);
 
-// Fallback 2 — após 4s mostra botão de escape manual
-setTimeout(() => {
-  if (_authHandled) return;
-  setSplashStatus('Ligação lenta — podes continuar manualmente');
-  const btn = document.getElementById('splash-escape');
-  if (btn) btn.style.display = 'block';
-}, 4000);
+  // Hard timeout: se em 5s ainda não apareceu o form → mostrar forçado
+  setTimeout(() => {
+    const nf = document.getElementById('auth-newpass-form');
+    if (nf && nf.style.display === 'none') {
+      console.warn('Recovery timeout — forçando form');
+      showNewPassword();
+    }
+  }, 5000);
 
-// Fallback 3 — hard timeout 8s: força ecrã de login automaticamente
-setTimeout(() => {
-  if (_authHandled) return;
-  console.warn('Auth hard timeout — forçando ecrã de login');
-  onUserLoggedOut();
-}, 8000);
+} else {
+  // Fluxo normal de login
+  sessionStorage.removeItem('sf_recovery'); // limpar flag se existir
+
+  // Fallback 1 — após 1.5s tenta getSession() se onAuthStateChange não disparou
+  setTimeout(async () => {
+    if (_authHandled) return;
+    setSplashStatus('A recuperar sessão…');
+    try {
+      const { data: { session }, error } = await sb.auth.getSession();
+      if (_authHandled) return;
+      if (error) throw error;
+      if (session?.user) {
+        await onUserLoggedIn(session.user);
+      } else {
+        onUserLoggedOut();
+      }
+    } catch(e) {
+      console.warn('getSession fallback:', e.message);
+      if (!_authHandled) onUserLoggedOut();
+    }
+  }, 1500);
+
+  // Fallback 2 — após 4s mostra botão de escape manual
+  setTimeout(() => {
+    if (_authHandled) return;
+    setSplashStatus('Ligação lenta — podes continuar manualmente');
+    const btn = document.getElementById('splash-escape');
+    if (btn) btn.style.display = 'block';
+  }, 4000);
+
+  // Fallback 3 — hard timeout 8s: força ecrã de login automaticamente
+  setTimeout(() => {
+    if (_authHandled) return;
+    console.warn('Auth hard timeout — forçando ecrã de login');
+    onUserLoggedOut();
+  }, 8000);
+}
 </script>
 </body>
 </html>
