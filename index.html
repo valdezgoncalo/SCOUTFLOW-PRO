@@ -23,6 +23,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 :root {
   --bg: #0a0e1a;
@@ -982,24 +983,24 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
     </button>
     <button class="btn-ghost" id="btn-report" onclick="newReport()">
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
-      + Relatório de Jogo
+      + Relatório
     </button>
     <button class="btn-ghost" onclick="goToEvolution()">
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-      Ver Evolução
-    </button>
-    <button class="btn-ghost" onclick="goToEvolution()">
-      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-      Ver Evolução
+      Evolução
     </button>
     <div style="flex:1"></div>
+    <button class="btn-ghost" onclick="shareAsImage()" style="color:var(--purple);border-color:rgba(176,132,255,0.3)">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      Partilhar
+    </button>
     <button class="btn-ghost" onclick="exportPDF()">
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
-      Exportar PDF
+      PDF
     </button>
     <button class="btn-ghost" onclick="sendByEmail()" style="color:var(--blue);border-color:rgba(77,159,255,0.3)">
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>
-      Enviar por Email
+      Email
     </button>
     <button class="btn-danger" onclick="deletePlayer()">
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
@@ -3531,7 +3532,259 @@ ScoutFlow Pro`;
   modal.style.display = 'flex';
 }
 
-function sendByEmail(){
+// ═══════════════════════════════════════════════
+// PARTILHAR COMO IMAGEM
+// ═══════════════════════════════════════════════
+async function shareAsImage() {
+  const p = players.find(x => x.id === currentId);
+  if (!p) { toast('Guarde o atleta primeiro!', 'error'); return; }
+
+  toast('A gerar imagem…');
+
+  const rating = calcRating(p.metrics || {});
+  const rColor = rating >= 7.5 ? '#00e5a0' : rating >= 5 ? '#ffbe0b' : '#8896b0';
+  const topMetrics = Object.entries(p.metrics || {})
+    .sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const reports = [...(p.reports || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const lastReport = reports[0] || null;
+  const TAG_COLORS = {
+    promessa:   '#ffbe0b', urgente: '#ff4d6d',
+    monitorar:  '#4d9fff', contactado: '#00e5a0', descartado: '#8896b0'
+  };
+  const tagColor = TAG_COLORS[p.tag] || '#8896b0';
+
+  // Criar card HTML para captura
+  const card = document.createElement('div');
+  card.style.cssText = `
+    position:fixed; left:-9999px; top:0; z-index:-1;
+    width:420px; background:#111827;
+    border-radius:20px; overflow:hidden;
+    font-family:'DM Sans',-apple-system,sans-serif;
+    color:#e8edf5; box-shadow:0 0 0 1px rgba(255,255,255,0.08);
+  `;
+
+  card.innerHTML = `
+    <!-- HEADER -->
+    <div style="background:linear-gradient(135deg,#0a0e1a 0%,#1a2235 100%);padding:28px 24px 20px;position:relative;overflow:hidden">
+      <!-- Decoração de fundo -->
+      <div style="position:absolute;top:-40px;right:-40px;width:160px;height:160px;border-radius:50%;background:${rColor};opacity:0.06;"></div>
+      <div style="position:absolute;bottom:-20px;left:-20px;width:100px;height:100px;border-radius:50%;background:${rColor};opacity:0.04;"></div>
+
+      <!-- Logo -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:28px;height:28px;background:#00e5a0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px">⚽</div>
+          <span style="font-size:11px;font-weight:800;letter-spacing:2px;color:#4d607a;text-transform:uppercase">ScoutFlow Pro</span>
+        </div>
+        ${p.tag ? `<span style="background:${tagColor}22;color:${tagColor};font-size:10px;font-weight:700;padding:3px 10px;border-radius:10px;text-transform:uppercase;letter-spacing:0.5px">${p.tag}</span>` : ''}
+      </div>
+
+      <!-- Foto + Info -->
+      <div style="display:flex;gap:18px;align-items:flex-start">
+        ${p.photo
+          ? `<img src="${p.photo}" style="width:80px;height:96px;border-radius:12px;object-fit:cover;border:2px solid rgba(255,255,255,0.1);flex-shrink:0">`
+          : `<div style="width:80px;height:96px;border-radius:12px;background:rgba(255,255,255,0.05);border:2px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:32px">👤</div>`
+        }
+        <div style="flex:1;min-width:0">
+          <div style="font-size:11px;font-weight:700;color:#00e5a0;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">${p.club || 'Agente Livre'}</div>
+          <div style="font-size:24px;font-weight:900;line-height:1.1;margin-bottom:10px;word-break:break-word">${p.name}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px">
+            ${p.position ? `<span style="background:rgba(0,229,160,0.1);color:#00e5a0;font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px">${p.position}</span>` : ''}
+            ${p.age ? `<span style="background:rgba(255,255,255,0.06);color:#8896b0;font-size:10px;font-weight:600;padding:3px 9px;border-radius:8px">${p.age} anos</span>` : ''}
+            ${p.height ? `<span style="background:rgba(255,255,255,0.06);color:#8896b0;font-size:10px;font-weight:600;padding:3px 9px;border-radius:8px">${p.height} cm</span>` : ''}
+            ${p.foot ? `<span style="background:rgba(255,255,255,0.06);color:#8896b0;font-size:10px;font-weight:600;padding:3px 9px;border-radius:8px">Pé ${p.foot}</span>` : ''}
+            ${p.nationality ? `<span style="background:rgba(255,255,255,0.06);color:#8896b0;font-size:10px;font-weight:600;padding:3px 9px;border-radius:8px">${p.nationality}</span>` : ''}
+          </div>
+        </div>
+        <!-- Rating -->
+        <div style="flex-shrink:0;text-align:center;background:${rColor};width:56px;height:56px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center">
+          <div style="font-size:22px;font-weight:900;color:#0a0e1a;line-height:1">${rating}</div>
+          <div style="font-size:8px;font-weight:800;color:#0a0e1a;opacity:0.7;text-transform:uppercase;letter-spacing:0.5px">nota</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MÉTRICAS -->
+    ${topMetrics.length ? `
+    <div style="padding:18px 24px;border-bottom:1px solid rgba(255,255,255,0.06)">
+      <div style="font-size:10px;font-weight:700;color:#4d607a;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px">Avaliação Técnica</div>
+      ${topMetrics.map(([k, v]) => {
+        const pct = (v / 10 * 100).toFixed(0);
+        const barColor = v >= 7.5 ? '#00e5a0' : v >= 5 ? '#4d9fff' : '#ff4d6d';
+        return `<div style="margin-bottom:9px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+            <span style="font-size:11px;font-weight:600;color:#8896b0">${k}</span>
+            <span style="font-size:11px;font-weight:700;color:${barColor}">${v}</span>
+          </div>
+          <div style="height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${barColor};border-radius:2px"></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>` : ''}
+
+    <!-- STATS DA ÉPOCA -->
+    ${(p.games || p.goals || p.assists || p.minutes) ? `
+    <div style="padding:14px 24px;display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,0.06)">
+      ${[
+        ['Jogos', p.games || 0, '#4d9fff'],
+        ['Golos', p.goals || 0, '#00e5a0'],
+        ['Assists', p.assists || 0, '#00b87a'],
+        ['Minutos', p.minutes || 0, '#8896b0'],
+      ].map(([l, v, c], i, arr) => `
+        <div style="flex:1;text-align:center${i < arr.length - 1 ? ';border-right:1px solid rgba(255,255,255,0.06)' : ''}">
+          <div style="font-size:20px;font-weight:900;color:${c}">${v}</div>
+          <div style="font-size:9px;font-weight:700;color:#4d607a;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px">${l}</div>
+        </div>`).join('')}
+    </div>` : ''}
+
+    <!-- ÚLTIMA OBSERVAÇÃO -->
+    ${lastReport ? `
+    <div style="padding:14px 24px;border-bottom:1px solid rgba(255,255,255,0.06)">
+      <div style="font-size:10px;font-weight:700;color:#4d607a;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">Última Observação</div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:12px;font-weight:600;color:#e8edf5">${lastReport.homeTeam || '?'} vs ${lastReport.awayTeam || '?'}</div>
+          <div style="font-size:11px;color:#4d607a;margin-top:2px">${fmt(lastReport.date)}${lastReport.competition ? ' · ' + lastReport.competition : ''}</div>
+          ${lastReport.strengths ? `<div style="font-size:11px;color:#8896b0;margin-top:4px;font-style:italic">"${lastReport.strengths.slice(0, 60)}${lastReport.strengths.length > 60 ? '…' : ''}"</div>` : ''}
+        </div>
+        <div style="background:${lastReport.rating >= 7.5 ? '#00e5a022' : lastReport.rating >= 5 ? '#4d9fff22' : '#8896b022'};border-radius:10px;padding:6px 12px;text-align:center;flex-shrink:0;margin-left:12px">
+          <div style="font-size:18px;font-weight:900;color:${lastReport.rating >= 7.5 ? '#00e5a0' : lastReport.rating >= 5 ? '#4d9fff' : '#8896b0'}">${lastReport.rating || '—'}</div>
+          <div style="font-size:8px;color:#4d607a;text-transform:uppercase">nota</div>
+        </div>
+      </div>
+    </div>` : ''}
+
+    <!-- NOTAS DO SCOUT -->
+    ${p.strengths || p.notes ? `
+    <div style="padding:14px 24px;border-bottom:1px solid rgba(255,255,255,0.06)">
+      ${p.strengths ? `<div style="font-size:11px;color:#8896b0;line-height:1.6"><span style="color:#00e5a0;font-weight:700">▸ Fortes:</span> ${p.strengths.slice(0, 100)}${p.strengths.length > 100 ? '…' : ''}</div>` : ''}
+      ${p.weaknesses ? `<div style="font-size:11px;color:#8896b0;line-height:1.6;margin-top:4px"><span style="color:#ff4d6d;font-weight:700">▸ Melhorar:</span> ${p.weaknesses.slice(0, 80)}${p.weaknesses.length > 80 ? '…' : ''}</div>` : ''}
+    </div>` : ''}
+
+    <!-- RODAPÉ -->
+    <div style="padding:12px 24px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:10px;color:#4d607a">Scout: ${p.scout_nome || currentUser?.nome || '—'}</div>
+      <div style="font-size:10px;color:#4d607a">${new Date().toLocaleDateString('pt-PT')}</div>
+    </div>
+  `;
+
+  document.body.appendChild(card);
+
+  try {
+    // Aguardar que as fontes e imagens carreguem
+    await new Promise(r => setTimeout(r, 200));
+
+    const canvas = await html2canvas(card, {
+      scale: 2,
+      backgroundColor: '#111827',
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      width: 420,
+    });
+
+    document.body.removeChild(card);
+    const imageUrl = canvas.toDataURL('image/png');
+
+    // Abrir modal de partilha
+    openShareModal(imageUrl, p.name);
+
+  } catch (e) {
+    document.body.removeChild(card);
+    console.error('shareAsImage error:', e);
+    toast('Erro ao gerar imagem: ' + e.message, 'error');
+  }
+}
+
+function openShareModal(imageUrl, playerName) {
+  const old = document.getElementById('share-modal');
+  if (old) old.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'share-modal';
+  modal.className = 'modal-bg';
+  modal.onclick = e => { if (e.target === modal) modal.remove(); };
+  modal.innerHTML = `
+    <div class="modal" style="max-width:480px;text-align:center">
+      <h2 style="margin-bottom:16px">📸 Partilhar Perfil</h2>
+      <img id="share-preview" src="${imageUrl}" style="width:100%;border-radius:12px;margin-bottom:16px;box-shadow:0 8px 32px rgba(0,0,0,0.4)">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <button class="btn-primary" onclick="downloadShareImage('${imageUrl}','${playerName.replace(/'/g,'')}')">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          Guardar Imagem
+        </button>
+        <button class="btn-ghost" id="share-native-btn" style="color:var(--purple);border-color:rgba(176,132,255,0.3)">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          Partilhar
+        </button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <button class="btn-ghost" onclick="shareWhatsApp('${playerName.replace(/'/g,'')}')">
+          💬 WhatsApp
+        </button>
+        <button class="btn-ghost" onclick="copyShareImage('${imageUrl}')">
+          📋 Copiar Imagem
+        </button>
+      </div>
+      <button class="btn-ghost" onclick="document.getElementById('share-modal').remove()" style="width:100%;margin-top:10px;justify-content:center">Fechar</button>
+    </div>`;
+
+  document.body.appendChild(modal);
+
+  // Botão de partilha nativa (Web Share API — funciona no Android/iOS)
+  const shareBtn = document.getElementById('share-native-btn');
+  if (navigator.share && navigator.canShare) {
+    shareBtn.onclick = async () => {
+      try {
+        const blob = await (await fetch(imageUrl)).blob();
+        const file = new File([blob], `${playerName}_ScoutFlow.png`, { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: `Perfil de Scouting — ${playerName}`,
+            text: `Relatório de scouting: ${playerName} | ScoutFlow Pro`,
+            files: [file]
+          });
+        } else {
+          downloadShareImage(imageUrl, playerName);
+        }
+      } catch(e) {
+        if (e.name !== 'AbortError') downloadShareImage(imageUrl, playerName);
+      }
+    };
+  } else {
+    shareBtn.textContent = '📥 Descarregar';
+    shareBtn.onclick = () => downloadShareImage(imageUrl, playerName);
+  }
+
+  modal.style.display = 'flex';
+}
+
+function downloadShareImage(imageUrl, playerName) {
+  const a = document.createElement('a');
+  a.href = imageUrl;
+  a.download = `${(playerName||'atleta').replace(/\s+/g,'_')}_ScoutFlow.png`;
+  a.click();
+  toast('Imagem guardada!');
+}
+
+function shareWhatsApp(playerName) {
+  const text = `Relatório de scouting: *${playerName}* via ScoutFlow Pro`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  toast('A abrir WhatsApp — guarda a imagem e envia!');
+}
+
+async function copyShareImage(imageUrl) {
+  try {
+    const blob = await (await fetch(imageUrl)).blob();
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+    toast('Imagem copiada! Cola directamente no WhatsApp ou email.');
+  } catch(e) {
+    toast('Não foi possível copiar — usa "Guardar Imagem"', 'error');
+  }
+}
+
+
   const p = players.find(x => x.id === currentId);
   if(!p){ toast('Guarde o atleta primeiro!','error'); return; }
   exportPDF(true);
