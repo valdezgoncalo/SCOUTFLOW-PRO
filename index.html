@@ -4173,14 +4173,19 @@ if (_isRecoveryFlow) {
 
 } else {
   // ─── FLUXO NORMAL ────────────────────────────
-  // Fallback 1 — após 1.5s tenta getSession() se onAuthStateChange não disparou
+  // Fallback 1 — após 800ms tenta getSession()
   setTimeout(async () => {
     if (_authHandled) return;
-    setSplashStatus('A recuperar sessão…');
+    setSplashStatus('A verificar sessão…');
     try {
       const { data: { session }, error } = await sb.auth.getSession();
       if (_authHandled) return;
-      if (error) throw error;
+      if (error) {
+        console.warn('getSession error:', error.message);
+        setSplashStatus('Erro de ligação — a ir para login…');
+        setTimeout(() => { if (!_authHandled) onUserLoggedOut(); }, 1000);
+        return;
+      }
       if (session?.user) {
         await onUserLoggedIn(session.user);
       } else {
@@ -4190,7 +4195,7 @@ if (_isRecoveryFlow) {
       console.warn('getSession fallback:', e.message);
       if (!_authHandled) onUserLoggedOut();
     }
-  }, 1500);
+  }, 800);
 
   // Fallback 2 — após 4s mostra botão de escape manual
   setTimeout(() => {
