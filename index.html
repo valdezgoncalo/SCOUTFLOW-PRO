@@ -1599,8 +1599,15 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" onerror="document.getElementById('splash-status').textContent='Erro: SDK não carregou. Verifica a ligação.'"></script>
 <script>
+// Verificar se o SDK carregou correctamente
+if (typeof supabase === 'undefined') {
+  document.addEventListener('DOMContentLoaded', () => {
+    const el = document.getElementById('splash-status');
+    if (el) el.textContent = 'Erro ao carregar SDK. Recarrega a página.';
+  });
+}
 // ═══════════════════════════════════════════════
 // SUPABASE + AUTH
 // ═══════════════════════════════════════════════
@@ -1634,7 +1641,13 @@ const sb = supabase.createClient(SB_URL, SB_KEY, {
 let currentUser = null;
 let isOnline = navigator.onLine;
 let syncPending = false;
-let _authHandled = false; // evita duplo trigger do onAuthStateChange
+let _authHandled = false;
+
+// Diagnóstico imediato — mostrar no splash
+setSplashStatus(isOnline ? 'A ligar ao servidor…' : 'Sem ligação à internet');
+if (!isOnline) {
+  setTimeout(() => { if (!_authHandled) onUserLoggedOut(); }, 500);
+}
 
 // ─── AUTH STATE ───────────────────────────────
 sb.auth.onAuthStateChange(async (event, session) => {
@@ -4173,42 +4186,40 @@ if (_isRecoveryFlow) {
 
 } else {
   // ─── FLUXO NORMAL ────────────────────────────
-  // Fallback 1 — após 800ms tenta getSession()
-  setTimeout(async () => {
-    if (_authHandled) return;
+  // Chamar getSession() IMEDIATAMENTE — sem esperar pelo onAuthStateChange
+  // O onAuthStateChange pode não disparar em domínios novos sem sessão guardada
+  (async () => {
     setSplashStatus('A verificar sessão…');
     try {
-      const { data: { session }, error } = await sb.auth.getSession();
+      const sessionResult = await Promise.race([
+        sb.auth.getSession(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
+      ]);
       if (_authHandled) return;
-      if (error) {
-        console.warn('getSession error:', error.message);
-        setSplashStatus('Erro de ligação — a ir para login…');
-        setTimeout(() => { if (!_authHandled) onUserLoggedOut(); }, 1000);
-        return;
-      }
+      const { data: { session }, error } = sessionResult;
+      if (error) throw error;
       if (session?.user) {
         await onUserLoggedIn(session.user);
       } else {
         onUserLoggedOut();
       }
     } catch(e) {
-      console.warn('getSession fallback:', e.message);
+      console.warn('getSession:', e.message);
       if (!_authHandled) onUserLoggedOut();
     }
-  }, 800);
+  })();
 
-  // Fallback 2 — após 4s mostra botão de escape manual
+  // Segurança extra — se getSession() demorar mais de 5s, forçar login
   setTimeout(() => {
     if (_authHandled) return;
-    setSplashStatus('Ligação lenta — podes continuar manualmente');
+    setSplashStatus('Ligação lenta — clica para continuar');
     const btn = document.getElementById('splash-escape');
     if (btn) btn.style.display = 'block';
-  }, 4000);
+  }, 5000);
 
-  // Fallback 3 — hard timeout 8s
   setTimeout(() => {
     if (_authHandled) return;
-    console.warn('Auth hard timeout');
+    console.warn('Auth hard timeout → login');
     onUserLoggedOut();
   }, 8000);
 }
