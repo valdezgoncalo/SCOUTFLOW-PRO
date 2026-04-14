@@ -967,7 +967,6 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
       <button class="chip" id="chip-high" onclick="toggleChip('high')">Nota ≥ 7.5</button>
       <button class="chip" id="chip-free" onclick="toggleChip('free')">Agente Livre</button>
       <button class="chip" id="chip-expiring" onclick="toggleChip('expiring')" style="color:var(--red)">📋 Contrato a Expirar</button>
-      <button class="chip" id="chip-expiring" onclick="toggleChip('expiring')" style="color:var(--red)">📋 Contrato a Expirar</button>
     </div>
   </div>
 
@@ -4186,42 +4185,31 @@ if (_isRecoveryFlow) {
 
 } else {
   // ─── FLUXO NORMAL ────────────────────────────
-  // Chamar getSession() IMEDIATAMENTE — sem esperar pelo onAuthStateChange
-  // O onAuthStateChange pode não disparar em domínios novos sem sessão guardada
+  // Estratégia: mostrar login em 3s se não houver resposta,
+  // mas tentar sessão em paralelo (se existir, entra automaticamente)
+  let _sessionTimeout = setTimeout(() => {
+    if (!_authHandled) {
+      console.warn('getSession timeout — a mostrar login');
+      onUserLoggedOut();
+    }
+  }, 3000);
+
   (async () => {
-    setSplashStatus('A verificar sessão…');
     try {
-      const sessionResult = await Promise.race([
-        sb.auth.getSession(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
-      ]);
+      const { data: { session }, error } = await sb.auth.getSession();
+      clearTimeout(_sessionTimeout);
       if (_authHandled) return;
-      const { data: { session }, error } = sessionResult;
-      if (error) throw error;
       if (session?.user) {
         await onUserLoggedIn(session.user);
       } else {
         onUserLoggedOut();
       }
     } catch(e) {
-      console.warn('getSession:', e.message);
+      clearTimeout(_sessionTimeout);
+      console.warn('getSession error:', e.message);
       if (!_authHandled) onUserLoggedOut();
     }
   })();
-
-  // Segurança extra — se getSession() demorar mais de 5s, forçar login
-  setTimeout(() => {
-    if (_authHandled) return;
-    setSplashStatus('Ligação lenta — clica para continuar');
-    const btn = document.getElementById('splash-escape');
-    if (btn) btn.style.display = 'block';
-  }, 5000);
-
-  setTimeout(() => {
-    if (_authHandled) return;
-    console.warn('Auth hard timeout → login');
-    onUserLoggedOut();
-  }, 8000);
 }
 </script>
 </body>
