@@ -3797,6 +3797,7 @@ async function copyShareImage(imageUrl) {
 }
 
 
+function sendByEmail(){
   const p = players.find(x => x.id === currentId);
   if(!p){ toast('Guarde o atleta primeiro!','error'); return; }
   exportPDF(true);
