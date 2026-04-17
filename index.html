@@ -899,6 +899,13 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
           Ver Equipa
         </button>
+        <div id="admin-menu-item" style="display:none">
+          <div class="scout-menu-divider"></div>
+          <button class="scout-menu-item" onclick="showView('admin');closeScoutMenu()" style="color:var(--accent)">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Painel Admin
+          </button>
+        </div>
         <div class="scout-menu-divider"></div>
         <button class="scout-menu-item danger" onclick="authLogout()">
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
@@ -1642,6 +1649,121 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
   </div>
 </div>
 
+<!-- ═══════════════ PAINEL ADMIN ═══════════════ -->
+<div class="view" id="view-admin">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;">
+    <div>
+      <div class="page-title">PAINEL <span>ADMIN</span></div>
+      <div class="page-sub">Gestão de acessos e códigos de activação · só visível para ti</div>
+    </div>
+    <button class="btn-primary" onclick="openGenerateCode()">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      Gerar Código
+    </button>
+  </div>
+
+  <!-- Stats rápidas -->
+  <div class="stats-row" style="margin-bottom:20px">
+    <div class="stat-box"><div class="stat-val green" id="admin-stat-active">0</div><div class="stat-lbl">Activos</div></div>
+    <div class="stat-box"><div class="stat-val amber" id="admin-stat-unused">0</div><div class="stat-lbl">Por usar</div></div>
+    <div class="stat-box"><div class="stat-val red" id="admin-stat-expired">0</div><div class="stat-lbl">Expirados</div></div>
+    <div class="stat-box"><div class="stat-val blue" id="admin-stat-total">0</div><div class="stat-lbl">Total gerados</div></div>
+  </div>
+
+  <!-- Lista de códigos -->
+  <div class="card card-inner">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="section-title" style="margin:0;padding:0">Códigos de Acesso</div>
+      <div style="display:flex;gap:8px">
+        <select id="admin-filter" onchange="loadAdminCodes()" style="font-size:12px;padding:6px 10px;width:auto">
+          <option value="all">Todos</option>
+          <option value="unused">Por usar</option>
+          <option value="active">Activos</option>
+          <option value="expired">Expirados</option>
+        </select>
+        <button class="btn-ghost" onclick="loadAdminCodes()" style="font-size:12px;padding:6px 12px">↻ Actualizar</button>
+      </div>
+    </div>
+    <div id="admin-codes-list">
+      <p style="color:var(--text3);text-align:center;padding:30px">A carregar...</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ ACTIVAR ACESSO ═══════════════ -->
+<div id="activation-screen" style="position:fixed;inset:0;z-index:490;background:var(--bg);display:none;align-items:center;justify-content:center;padding:20px;">
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(0,229,160,0.08) 0%,transparent 60%);pointer-events:none;"></div>
+  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:24px;padding:48px 40px;width:100%;max-width:440px;text-align:center;position:relative;z-index:1;box-shadow:0 24px 80px rgba(0,0,0,0.5)">
+    <div style="width:64px;height:64px;background:var(--accent);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 20px;box-shadow:var(--accent-glow)">🔑</div>
+    <div style="font-family:var(--font-display);font-size:30px;letter-spacing:2px;margin-bottom:8px">ACTIVAR ACESSO</div>
+    <div id="activation-sub" style="font-size:13px;color:var(--text2);margin-bottom:28px;line-height:1.6">
+      O teu período de trial terminou.<br>Insere o teu código de acesso para continuar.
+    </div>
+
+    <!-- Countdown trial -->
+    <div id="trial-countdown" style="display:none;background:var(--accent-dim);border:1px solid rgba(0,229,160,0.2);border-radius:var(--radius-sm);padding:10px 16px;margin-bottom:20px;font-size:13px;color:var(--accent);font-weight:600"></div>
+
+    <div class="field" style="margin-bottom:16px;text-align:left">
+      <label style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Código de Activação</label>
+      <input type="text" id="activation-code-input" placeholder="SFP-XXXX-XXXX"
+        style="text-transform:uppercase;letter-spacing:2px;font-family:var(--font-mono);font-size:16px;text-align:center"
+        oninput="this.value=this.value.toUpperCase()"
+        onkeydown="if(event.key==='Enter')submitActivationCode()">
+    </div>
+    <div id="activation-error" style="display:none;margin-bottom:14px;background:var(--red-dim);border:1px solid rgba(255,77,109,0.3);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;color:var(--red)"></div>
+    <button class="btn-primary" onclick="submitActivationCode()" id="btn-activate" style="width:100%;justify-content:center;padding:14px;font-size:15px">
+      Activar
+    </button>
+    <button onclick="authLogout()" style="margin-top:12px;background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;font-family:var(--font-body)">
+      Terminar sessão
+    </button>
+  </div>
+</div>
+
+<!-- MODAL: gerar código -->
+<div id="gen-code-modal" style="display:none" class="modal-bg" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal" style="max-width:460px">
+    <h2>🔑 Gerar Código de Acesso</h2>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="form-row">
+        <div class="field">
+          <label>Plano</label>
+          <select id="gen-plan">
+            <option value="scout">Scout — €99/ano</option>
+            <option value="clube">Clube — €249/ano</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Duração</label>
+          <select id="gen-duration">
+            <option value="30">30 dias</option>
+            <option value="90">90 dias</option>
+            <option value="365" selected>365 dias (anual)</option>
+            <option value="730">730 dias (2 anos)</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Notas (cliente, valor pago, data)</label>
+        <input type="text" id="gen-notes" placeholder="Ex: João Silva — €99 pago via MB Way — 16/04/2026">
+      </div>
+      <div id="gen-result" style="display:none;background:var(--accent-dim);border:1px solid rgba(0,229,160,0.25);border-radius:var(--radius-sm);padding:16px;text-align:center">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Código gerado</div>
+        <div id="gen-code-display" style="font-family:var(--font-mono);font-size:22px;font-weight:700;color:var(--accent);letter-spacing:3px;margin-bottom:12px"></div>
+        <button class="btn-primary" onclick="copyGeneratedCode()" style="font-size:12px;padding:8px 16px">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          Copiar Código
+        </button>
+        <div style="font-size:11px;color:var(--text3);margin-top:8px">Envia este código ao cliente por WhatsApp ou email</div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn-ghost" onclick="document.getElementById('gen-code-modal').style.display='none'">Fechar</button>
+        <button class="btn-primary" id="btn-gen-code" onclick="generateCode()">Gerar Código</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </main>
 </div>
 
@@ -1894,15 +2016,13 @@ async function onUserLoggedIn(user) {
   document.getElementById('main-app').style.display = 'flex';
   hideSplash();
 
-  // Tudo o que vai à rede fica em background, depois de a app estar visível
-  setTimeout(() => {
-    // Registar scout na tabela (não bloqueia nada)
-    sb.from('scouts').upsert(
-      { id: currentUser.id, email: currentUser.email, nome: currentUser.nome },
-      { onConflict: 'id' }
-    ).catch(e => console.warn('scouts upsert:', e.message));
-
-    // Carregar dados
+  // Verificar acesso (trial / pago / expirado) em background
+  setTimeout(async () => {
+    const hasAccess = await checkAccess(user);
+    if (!hasAccess) {
+      document.getElementById('main-app').style.display = 'none';
+    }
+    // Carregar dados em background
     setSyncStatus('syncing');
     loadFromCloud().catch(e => { console.warn('loadFromCloud:', e.message); setSyncStatus('error'); });
   }, 100);
@@ -2353,6 +2473,316 @@ async function changePassword() {
   }
 }
 
+// ═══════════════════════════════════════════════
+// SISTEMA DE ACESSO & SUBSCRIÇÕES
+// ═══════════════════════════════════════════════
+
+// Email do admin (só este email vê o painel admin)
+const ADMIN_EMAIL = 'valdezgoncalo@gmail.com';
+
+// ─── Verificar acesso após login ─────────────
+async function checkAccess(user) {
+  // Admin tem sempre acesso
+  if (user.email === ADMIN_EMAIL) {
+    showAdminMenu();
+    return true;
+  }
+  try {
+    // Verificar subscrição
+    let { data: sub } = await sb.from('subscriptions').select('*').eq('user_id', user.id).single();
+
+    if (!sub) {
+      // Primeira vez — criar trial de 14 dias
+      const trialEnd = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: newSub } = await sb.from('subscriptions')
+        .insert({ user_id: user.id, status: 'trial', trial_end: trialEnd })
+        .select().single();
+      sub = newSub;
+    }
+
+    // Verificar estado
+    if (sub.status === 'active' && sub.paid_until) {
+      if (new Date(sub.paid_until) > new Date()) return true; // pago e válido
+      // Expirou — actualizar estado
+      await sb.from('subscriptions').update({ status: 'expired' }).eq('user_id', user.id);
+    }
+
+    if (sub.status === 'trial') {
+      const daysLeft = Math.ceil((new Date(sub.trial_end) - new Date()) / (1000 * 60 * 60 * 24));
+      if (daysLeft > 0) {
+        // Trial ainda válido — mostrar contador
+        showTrialBanner(daysLeft);
+        return true;
+      }
+      // Trial expirado
+      await sb.from('subscriptions').update({ status: 'expired' }).eq('user_id', user.id);
+    }
+
+    // Sem acesso — mostrar ecrã de activação
+    showActivationScreen(sub.status);
+    return false;
+
+  } catch(e) {
+    console.warn('checkAccess error:', e.message);
+    return true; // em caso de erro, não bloquear
+  }
+}
+
+function showAdminMenu() {
+  const el = document.getElementById('admin-menu-item');
+  if (el) el.style.display = 'block';
+}
+
+function showTrialBanner(daysLeft) {
+  // Banner não intrusivo no topo
+  const existing = document.getElementById('trial-banner');
+  if (existing) return;
+  const banner = document.createElement('div');
+  banner.id = 'trial-banner';
+  banner.style.cssText = `
+    position:fixed;bottom:70px;left:50%;transform:translateX(-50%);
+    background:var(--amber-dim);border:1px solid rgba(255,190,11,0.3);
+    border-radius:var(--radius-sm);padding:8px 16px;
+    font-size:12px;color:var(--amber);font-weight:600;
+    z-index:300;display:flex;align-items:center;gap:10px;
+    box-shadow:0 4px 20px rgba(0,0,0,0.3);white-space:nowrap;
+  `;
+  banner.innerHTML = `
+    ⏳ Trial: ${daysLeft} dia${daysLeft !== 1 ? 's' : ''} restante${daysLeft !== 1 ? 's' : ''}
+    <button onclick="showActivationScreen('trial')"
+      style="background:var(--amber);color:#1a1200;border:none;border-radius:6px;
+      padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font-body)">
+      Activar
+    </button>
+    <button onclick="document.getElementById('trial-banner').remove()"
+      style="background:none;border:none;color:var(--amber);cursor:pointer;font-size:16px;padding:0 0 0 4px">×</button>
+  `;
+  document.body.appendChild(banner);
+}
+
+function showActivationScreen(status) {
+  const screen = document.getElementById('activation-screen');
+  const sub_el = document.getElementById('activation-sub');
+  if (!screen) return;
+  if (status === 'trial') {
+    sub_el.innerHTML = 'Já tens um código? Insere abaixo para activar o acesso completo.';
+    document.getElementById('trial-countdown').style.display = 'none';
+  } else {
+    sub_el.innerHTML = 'O teu período de acesso terminou.<br>Insere o teu código de activação para continuar.';
+  }
+  screen.style.display = 'flex';
+  // Esconder app se expirado
+  if (status === 'expired') {
+    document.getElementById('main-app').style.display = 'none';
+  }
+}
+
+// ─── Activar código ───────────────────────────
+async function submitActivationCode() {
+  const code = document.getElementById('activation-code-input').value.trim().toUpperCase();
+  const errEl = document.getElementById('activation-error');
+  errEl.style.display = 'none';
+
+  if (!code || code.length < 8) {
+    errEl.textContent = 'Insere um código válido.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('btn-activate');
+  btn.disabled = true; btn.textContent = 'A verificar…';
+
+  try {
+    // Buscar o código
+    const { data: codeData, error } = await sb
+      .from('access_codes')
+      .select('*')
+      .eq('code', code)
+      .single();
+
+    if (error || !codeData) {
+      errEl.textContent = 'Código inválido ou inexistente.';
+      errEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Activar';
+      return;
+    }
+
+    if (codeData.used_by) {
+      errEl.textContent = 'Este código já foi utilizado.';
+      errEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Activar';
+      return;
+    }
+
+    // Calcular data de expiração
+    const paidUntil = new Date(Date.now() + codeData.duration_days * 24 * 60 * 60 * 1000).toISOString();
+
+    // Marcar código como usado
+    await sb.from('access_codes').update({
+      used_by: currentUser.id,
+      used_at: new Date().toISOString(),
+      expires_at: paidUntil
+    }).eq('code', code);
+
+    // Actualizar/criar subscrição
+    await sb.from('subscriptions').upsert({
+      user_id: currentUser.id,
+      status: 'active',
+      plan: codeData.plan,
+      paid_until: paidUntil
+    }, { onConflict: 'user_id' });
+
+    // Esconder ecrã de activação, mostrar app
+    document.getElementById('activation-screen').style.display = 'none';
+    document.getElementById('main-app').style.display = 'flex';
+    const banner = document.getElementById('trial-banner');
+    if (banner) banner.remove();
+
+    const dias = codeData.duration_days;
+    toast(`✅ Acesso activado! Válido por ${dias} dias — até ${new Date(paidUntil).toLocaleDateString('pt-PT')}`);
+
+  } catch(e) {
+    errEl.textContent = 'Erro ao verificar código: ' + e.message;
+    errEl.style.display = 'block';
+  }
+  btn.disabled = false; btn.textContent = 'Activar';
+}
+
+// ─── Painel Admin ─────────────────────────────
+function genCodeString() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sem caracteres ambíguos
+  const seg = () => Array.from({length:4}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
+  return `SFP-${seg()}-${seg()}`;
+}
+
+function openGenerateCode() {
+  document.getElementById('gen-result').style.display = 'none';
+  document.getElementById('gen-notes').value = '';
+  document.getElementById('gen-code-modal').style.display = 'flex';
+}
+
+async function generateCode() {
+  const plan     = document.getElementById('gen-plan').value;
+  const duration = parseInt(document.getElementById('gen-duration').value);
+  const notes    = document.getElementById('gen-notes').value.trim();
+  const code     = genCodeString();
+  const btn      = document.getElementById('btn-gen-code');
+
+  btn.disabled = true; btn.textContent = 'A gerar…';
+
+  try {
+    const { error } = await sb.from('access_codes').insert({
+      code, plan, duration_days: duration, notes: notes || null
+    });
+    if (error) throw error;
+
+    document.getElementById('gen-code-display').textContent = code;
+    document.getElementById('gen-result').style.display = 'block';
+    toast('Código gerado com sucesso!');
+    loadAdminCodes(); // actualizar lista
+
+  } catch(e) {
+    toast('Erro ao gerar código: ' + e.message, 'error');
+  }
+  btn.disabled = false; btn.textContent = 'Gerar Código';
+}
+
+function copyGeneratedCode() {
+  const code = document.getElementById('gen-code-display').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    toast('Código copiado! Cola no WhatsApp ou email.');
+  }).catch(() => {
+    // fallback
+    const el = document.getElementById('gen-code-display');
+    const range = document.createRange();
+    range.selectNode(el);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.execCommand('copy');
+    toast('Código copiado!');
+  });
+}
+
+async function loadAdminCodes() {
+  const list   = document.getElementById('admin-codes-list');
+  const filter = document.getElementById('admin-filter')?.value || 'all';
+  if (!list) return;
+
+  list.innerHTML = '<p style="color:var(--text3);text-align:center;padding:20px">A carregar…</p>';
+
+  try {
+    let query = sb.from('access_codes').select('*').order('created_at', { ascending: false });
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    const now = new Date();
+
+    // Calcular stats
+    let active=0, unused=0, expired=0;
+    data.forEach(c => {
+      if (!c.used_by) unused++;
+      else if (c.expires_at && new Date(c.expires_at) > now) active++;
+      else expired++;
+    });
+    document.getElementById('admin-stat-active').textContent  = active;
+    document.getElementById('admin-stat-unused').textContent  = unused;
+    document.getElementById('admin-stat-expired').textContent = expired;
+    document.getElementById('admin-stat-total').textContent   = data.length;
+
+    // Filtrar
+    const filtered = data.filter(c => {
+      if (filter === 'unused')  return !c.used_by;
+      if (filter === 'active')  return c.used_by && c.expires_at && new Date(c.expires_at) > now;
+      if (filter === 'expired') return c.used_by && (!c.expires_at || new Date(c.expires_at) <= now);
+      return true;
+    });
+
+    if (!filtered.length) {
+      list.innerHTML = '<p style="color:var(--text3);text-align:center;padding:30px">Nenhum código encontrado.</p>';
+      return;
+    }
+
+    const PLAN_LABELS = { scout: '👤 Scout', clube: '🏟 Clube' };
+
+    list.innerHTML = filtered.map(c => {
+      const isUsed    = !!c.used_by;
+      const isActive  = isUsed && c.expires_at && new Date(c.expires_at) > now;
+      const isExpired = isUsed && (!c.expires_at || new Date(c.expires_at) <= now);
+
+      const statusColor = !isUsed ? 'var(--amber)' : isActive ? 'var(--accent)' : 'var(--text3)';
+      const statusLabel = !isUsed ? 'Por usar' : isActive ? 'Activo' : 'Expirado';
+      const expiryText  = isUsed && c.expires_at
+        ? `até ${new Date(c.expires_at).toLocaleDateString('pt-PT')}` : '';
+
+      return `<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+            <span style="font-family:var(--font-mono);font-size:14px;font-weight:700;color:var(--text);letter-spacing:1px">${c.code}</span>
+            <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;background:${statusColor}22;color:${statusColor}">${statusLabel}</span>
+            <span style="font-size:10px;color:var(--text3)">${PLAN_LABELS[c.plan]||c.plan} · ${c.duration_days}d ${expiryText}</span>
+          </div>
+          ${c.notes ? `<div style="font-size:11px;color:var(--text3)">${c.notes}</div>` : ''}
+          <div style="font-size:10px;color:var(--text3);margin-top:2px">Criado: ${new Date(c.created_at).toLocaleDateString('pt-PT')}</div>
+        </div>
+        <button onclick="copyCode('${c.code}')" title="Copiar código"
+          style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:6px 10px;cursor:pointer;color:var(--text2);font-family:var(--font-body);font-size:11px;flex-shrink:0">
+          📋 Copiar
+        </button>
+      </div>`;
+    }).join('');
+
+  } catch(e) {
+    list.innerHTML = `<p style="color:var(--red);text-align:center;padding:20px">Erro: ${e.message}</p>`;
+  }
+}
+
+function copyCode(code) {
+  navigator.clipboard.writeText(code)
+    .then(() => toast('Código copiado!'))
+    .catch(() => toast('Erro ao copiar', 'error'));
+}
+
 async function loadTeam() {
   const c = document.getElementById('team-list');
   if (!c) return;
@@ -2570,6 +3000,7 @@ function showView(name){
   if(name==='evolution') initEvolution();
   if(name==='team')      loadTeam();
   if(name==='profile')   loadProfile();
+  if(name==='admin')     loadAdminCodes();
 }
 
 function goHome(){ showView('home'); window.scrollTo(0,0); }
