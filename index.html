@@ -5487,33 +5487,52 @@ if (_isRecoveryFlow) {
 
 } else {
   // ─── FLUXO NORMAL ────────────────────────────
-  // Estratégia: mostrar login em 3s se não houver resposta,
-  // mas tentar sessão em paralelo (se existir, entra automaticamente)
-  let _sessionTimeout = setTimeout(() => {
-    if (!_authHandled) {
-      console.warn('getSession timeout — a mostrar login');
-      onUserLoggedOut();
-    }
-  }, 3000);
 
-  (async () => {
-    try {
-      const { data: { session }, error } = await sb.auth.getSession();
-      clearTimeout(_sessionTimeout);
-      if (_authHandled) return;
-      if (session?.user) {
-        await onUserLoggedIn(session.user);
-      } else {
+  // PASSO 1: Verificar localStorage IMEDIATAMENTE (sem rede)
+  // Se não há sessão guardada, ir directamente para o login
+  const _savedSession = localStorage.getItem('scoutflow_auth');
+  if (!_savedSession || _savedSession === 'null') {
+    // Sem sessão guardada — login imediato, sem esperar pelo Supabase
+    onUserLoggedOut();
+  } else {
+    // Há sessão guardada — tentar validar com o Supabase (com timeout)
+    setSplashStatus('A verificar sessão…');
+    (async () => {
+      try {
+        const result = await Promise.race([
+          sb.auth.getSession(),
+          new Promise(resolve => setTimeout(() => resolve({ data: { session: null }, _timeout: true }), 3000))
+        ]);
+
+        if (_authHandled) return;
+
+        if (result._timeout) {
+          console.warn('getSession timeout — forçando login');
+          onUserLoggedOut();
+          return;
+        }
+
+        const { data: { session }, error } = result;
+        if (error || !session?.user) {
+          onUserLoggedOut();
+        } else {
+          await onUserLoggedIn(session.user);
+        }
+      } catch(e) {
+        console.warn('getSession error:', e.message);
+        if (!_authHandled) onUserLoggedOut();
+      }
+    })();
+
+    // Segurança absoluta — 5s força login independentemente de tudo
+    setTimeout(() => {
+      if (!_authHandled) {
+        console.warn('Auth absolute timeout');
         onUserLoggedOut();
       }
-    } catch(e) {
-      clearTimeout(_sessionTimeout);
-      console.warn('getSession error:', e.message);
-      if (!_authHandled) onUserLoggedOut();
-    }
-  })();
+    }, 5000);
+  }
 }
 </script>
 </body>
 </html>
-
