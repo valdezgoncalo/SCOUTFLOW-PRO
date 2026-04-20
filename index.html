@@ -871,6 +871,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
   </a>
   <div class="nav-links">
     <button class="nav-link active" id="nl-home" onclick="showView('home')">Atletas</button>
+    <button class="nav-link" id="nl-shadow" onclick="showView('shadow')">⚡ Shadow Team</button>
     <button class="nav-link" id="nl-kanban" onclick="showView('kanban')">Pipeline</button>
     <button class="nav-link" id="nl-calendar" onclick="showView('calendar')">Calendário</button>
     <button class="nav-link" id="nl-evolution" onclick="showView('evolution')">Evolução</button>
@@ -942,6 +943,13 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
   </div>
 
   <div class="toolbar">
+    <!-- Filtro de género — rápido e visual -->
+    <div style="display:flex;gap:6px;align-items:center;width:100%;margin-bottom:4px;padding-bottom:10px;border-bottom:1px solid var(--border)">
+      <span style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;white-space:nowrap">Secção:</span>
+      <button id="gender-all" onclick="setGender('')" class="chip on" style="padding:5px 14px">⚽ Todos</button>
+      <button id="gender-m" onclick="setGender('M')" class="chip">♂ Masculino</button>
+      <button id="gender-f" onclick="setGender('F')" class="chip">♀ Feminino</button>
+    </div>
     <div class="search-wrap">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
       <input type="text" id="search" placeholder="Pesquisar atleta, clube, agente..." oninput="renderGrid()">
@@ -1146,6 +1154,15 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
             </select>
           </div>
           <div class="field"><label>Nacionalidade</label><input type="text" id="p-nation" placeholder="Ex: Portuguesa"></div>
+        </div>
+        <div class="form-row" style="margin-bottom:12px">
+          <div class="field">
+            <label>Género</label>
+            <select id="p-gender">
+              <option value="M">♂ Masculino</option>
+              <option value="F">♀ Feminino</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -1729,23 +1746,23 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
         <div class="field">
           <label>Plano</label>
           <select id="gen-plan">
-            <option value="scout">Scout — €99/ano</option>
-            <option value="clube">Clube — €249/ano</option>
+            <option value="scout">Scout — €3,99/mês ou €35/ano</option>
+            <option value="clube">Clube — €12,99/mês ou €129,99/ano (até 5 scouts)</option>
           </select>
         </div>
         <div class="field">
           <label>Duração</label>
           <select id="gen-duration">
-            <option value="30">30 dias</option>
-            <option value="90">90 dias</option>
-            <option value="365" selected>365 dias (anual)</option>
-            <option value="730">730 dias (2 anos)</option>
+            <option value="30">30 dias — mensal</option>
+            <option value="90">90 dias — trimestral</option>
+            <option value="365" selected>365 dias — anual</option>
+            <option value="730">730 dias — 2 anos</option>
           </select>
         </div>
       </div>
       <div class="field">
         <label>Notas (cliente, valor pago, data)</label>
-        <input type="text" id="gen-notes" placeholder="Ex: João Silva — €99 pago via MB Way — 16/04/2026">
+        <input type="text" id="gen-notes" placeholder="Ex: João Silva — Scout €35 anual pago via MB Way — 16/04/2026">
       </div>
       <div id="gen-result" style="display:none;background:var(--accent-dim);border:1px solid rgba(0,229,160,0.25);border-radius:var(--radius-sm);padding:16px;text-align:center">
         <div style="font-size:11px;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Código gerado</div>
@@ -1761,6 +1778,85 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
         <button class="btn-primary" id="btn-gen-code" onclick="generateCode()">Gerar Código</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ═══════════════ SHADOW TEAM ═══════════════ -->
+<div class="view" id="view-shadow">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;">
+    <div>
+      <div class="page-title">SHADOW <span>TEAM</span></div>
+      <div class="page-sub">Define o teu onze ideal com atletas da tua base de dados</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <select id="shadow-formation" onchange="renderShadowPitch()" style="width:130px">
+        <option value="433">4-3-3</option>
+        <option value="442">4-4-2</option>
+        <option value="4231">4-2-3-1</option>
+        <option value="352">3-5-2</option>
+        <option value="343">3-4-3</option>
+        <option value="532">5-3-2</option>
+      </select>
+      <button class="btn-ghost" onclick="clearShadowTeam()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+        Limpar
+      </button>
+      <button class="btn-primary" onclick="saveShadowTeam()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+        Guardar
+      </button>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 340px;gap:20px" id="shadow-layout">
+
+    <!-- Campo de futebol -->
+    <div class="card" style="overflow:hidden">
+      <div id="shadow-pitch" style="position:relative;background:linear-gradient(180deg,#1a2e1a 0%,#1f361f 50%,#1a2e1a 100%);min-height:560px;padding:20px">
+        <!-- Linhas do campo desenhadas via JS -->
+        <canvas id="shadow-field-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></canvas>
+        <!-- Slots das posições preenchidos via JS -->
+        <div id="shadow-slots" style="position:relative;z-index:2;height:520px"></div>
+      </div>
+      <div style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border)">
+        <div style="font-size:12px;color:var(--text3)">Clica numa posição para seleccionar o atleta</div>
+        <div id="shadow-completeness" style="font-size:12px;font-weight:700;color:var(--accent)">0 / 11</div>
+      </div>
+    </div>
+
+    <!-- Painel lateral: lista de posições + atleta seleccionado -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+
+      <!-- Resumo do onze -->
+      <div class="card card-inner">
+        <div class="section-title">Onze Titular</div>
+        <div id="shadow-lineup-list" style="display:flex;flex-direction:column;gap:6px">
+          <p style="color:var(--text3);font-size:12px;text-align:center;padding:10px">Selecciona atletas no campo</p>
+        </div>
+      </div>
+
+      <!-- Rating médio do onze -->
+      <div class="card card-inner" style="text-align:center">
+        <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Nota Média do Onze</div>
+        <div id="shadow-avg-rating" style="font-family:var(--font-display);font-size:48px;color:var(--accent);line-height:1">—</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px">baseado nas notas dos atletas seleccionados</div>
+      </div>
+
+      <!-- Notas -->
+      <div class="card card-inner">
+        <div class="section-title">Notas Táticas</div>
+        <textarea id="shadow-notes" placeholder="Observações sobre o sistema, variantes táticas, instruções específicas…" style="height:100px;resize:none"></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: seleccionar atleta para posição -->
+<div id="shadow-select-modal" style="display:none" class="modal-bg" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal" style="max-width:500px">
+    <h2 id="shadow-modal-title">Seleccionar Atleta</h2>
+    <input type="text" id="shadow-search" placeholder="Pesquisar por nome…" oninput="renderShadowAthleteList()" style="margin-bottom:14px">
+    <div id="shadow-athlete-list" style="max-height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:6px"></div>
   </div>
 </div>
 
@@ -1818,17 +1914,17 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
       <div class="mnav-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg></div>
       Atletas
     </button>
-    <button class="mnav-btn" id="mnl-kanban" onclick="showView('kanban')">
-      <div class="mnav-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/><rect x="17" y="3" width="5" height="15" rx="1"/></svg></div>
-      Pipeline
+    <button class="mnav-btn" id="mnl-shadow" onclick="showView('shadow')">
+      <div class="mnav-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
+      Shadow
     </button>
     <button class="mnav-btn" onclick="newPlayer()" style="color:var(--bg)">
       <div class="mnav-icon" style="background:var(--accent);border-radius:14px;padding:8px;margin-bottom:2px"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></div>
       Novo
     </button>
-    <button class="mnav-btn" id="mnl-calendar" onclick="showView('calendar')">
-      <div class="mnav-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
-      Agenda
+    <button class="mnav-btn" id="mnl-kanban" onclick="showView('kanban')">
+      <div class="mnav-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/><rect x="17" y="3" width="5" height="15" rx="1"/></svg></div>
+      Pipeline
     </button>
     <button class="mnav-btn" id="mnl-analytics" onclick="showView('analytics')">
       <div class="mnav-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></div>
@@ -2479,6 +2575,77 @@ async function changePassword() {
 
 // Email do admin (só este email vê o painel admin)
 const ADMIN_EMAIL = 'valdezgoncalo@gmail.com';
+const MAX_CLUB_DEVICES = 5;
+
+// ─── Device ID ────────────────────────────────
+// Gera um ID único e persistente para este browser/dispositivo
+function getDeviceId() {
+  const KEY = 'scoutflow_device_id';
+  let id = localStorage.getItem(KEY);
+  if (!id) {
+    id = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9);
+    localStorage.setItem(KEY, id);
+  }
+  return id;
+}
+
+function getDeviceName() {
+  const ua = navigator.userAgent;
+  if (/iPhone/i.test(ua))  return 'iPhone';
+  if (/iPad/i.test(ua))    return 'iPad';
+  if (/Android/i.test(ua)) return /Mobile/i.test(ua) ? 'Android (telemóvel)' : 'Android (tablet)';
+  if (/Mac/i.test(ua))     return 'Mac';
+  if (/Windows/i.test(ua)) return 'Windows';
+  return 'Outro dispositivo';
+}
+
+// ─── Registar dispositivo ─────────────────────
+async function registerDevice(userId) {
+  const deviceId   = getDeviceId();
+  const deviceName = getDeviceName();
+  try {
+    await sb.from('club_devices').upsert({
+      user_id:     userId,
+      device_id:   deviceId,
+      device_name: deviceName,
+      last_seen:   new Date().toISOString(),
+    }, { onConflict: 'user_id,device_id' });
+  } catch(e) { console.warn('registerDevice:', e.message); }
+}
+
+// ─── Verificar limite de dispositivos ─────────
+async function checkDeviceLimit(userId, plan) {
+  // Só aplica ao plano 'clube'
+  if (plan !== 'clube') return { allowed: true };
+
+  const deviceId = getDeviceId();
+  try {
+    const { data: devices } = await sb
+      .from('club_devices')
+      .select('device_id, device_name, last_seen')
+      .eq('user_id', userId)
+      .order('last_seen', { ascending: false });
+
+    if (!devices || devices.length === 0) return { allowed: true };
+
+    // Este dispositivo já está registado?
+    const isRegistered = devices.some(d => d.device_id === deviceId);
+    if (isRegistered) return { allowed: true };
+
+    // Novo dispositivo — verificar se há espaço
+    if (devices.length < MAX_CLUB_DEVICES) return { allowed: true };
+
+    // Limite atingido
+    return {
+      allowed: false,
+      devices,
+      count: devices.length
+    };
+  } catch(e) {
+    console.warn('checkDeviceLimit:', e.message);
+    return { allowed: true }; // em caso de erro não bloquear
+  }
+}
 
 // ─── Verificar acesso após login ─────────────
 async function checkAccess(user) {
@@ -2502,7 +2669,17 @@ async function checkAccess(user) {
 
     // Verificar estado
     if (sub.status === 'active' && sub.paid_until) {
-      if (new Date(sub.paid_until) > new Date()) return true; // pago e válido
+      if (new Date(sub.paid_until) > new Date()) {
+        // Pago e válido — verificar limite de dispositivos se for clube
+        const deviceCheck = await checkDeviceLimit(user.id, sub.plan);
+        if (!deviceCheck.allowed) {
+          showDeviceLimitScreen(deviceCheck.devices);
+          return false;
+        }
+        // Registar este dispositivo
+        await registerDevice(user.id);
+        return true;
+      }
       // Expirou — actualizar estado
       await sb.from('subscriptions').update({ status: 'expired' }).eq('user_id', user.id);
     }
@@ -2510,7 +2687,6 @@ async function checkAccess(user) {
     if (sub.status === 'trial') {
       const daysLeft = Math.ceil((new Date(sub.trial_end) - new Date()) / (1000 * 60 * 60 * 24));
       if (daysLeft > 0) {
-        // Trial ainda válido — mostrar contador
         showTrialBanner(daysLeft);
         return true;
       }
@@ -2526,6 +2702,47 @@ async function checkAccess(user) {
     console.warn('checkAccess error:', e.message);
     return true; // em caso de erro, não bloquear
   }
+}
+
+// ─── Ecrã de limite de dispositivos ──────────
+function showDeviceLimitScreen(devices) {
+  // Remover ecrã existente se houver
+  const old = document.getElementById('device-limit-screen');
+  if (old) old.remove();
+
+  const fmt_date = d => new Date(d).toLocaleDateString('pt-PT', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+
+  const screen = document.createElement('div');
+  screen.id = 'device-limit-screen';
+  screen.style.cssText = 'position:fixed;inset:0;z-index:510;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px;';
+  screen.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:24px;padding:40px;width:100%;max-width:440px;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,0.5)">
+      <div style="width:64px;height:64px;background:var(--red-dim);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 20px;border:1px solid rgba(255,77,109,0.3)">🔒</div>
+      <div style="font-family:var(--font-display);font-size:26px;letter-spacing:2px;margin-bottom:8px">LIMITE ATINGIDO</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:24px;line-height:1.6">
+        Esta conta Clube já tem <strong style="color:var(--red)">${MAX_CLUB_DEVICES} dispositivos</strong> registados.<br>
+        O gestor do clube precisa de remover um dispositivo para dar acesso a este.
+      </div>
+
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:20px;text-align:left">
+        <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Dispositivos activos</div>
+        ${devices.map((d,i) => `
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;${i < devices.length-1 ? 'border-bottom:1px solid var(--border)' : ''}">
+            <div style="width:32px;height:32px;background:var(--bg2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">
+              ${/iPhone|iPad/.test(d.device_name) ? '📱' : /Android.*tel/.test(d.device_name) ? '📱' : /Android.*tab/.test(d.device_name) ? '📱' : '💻'}
+            </div>
+            <div style="flex:1;text-align:left">
+              <div style="font-size:12px;font-weight:600">${d.device_name || 'Dispositivo'}</div>
+              <div style="font-size:10px;color:var(--text3)">Último acesso: ${fmt_date(d.last_seen)}</div>
+            </div>
+          </div>`).join('')}
+      </div>
+
+      <button onclick="authLogout()" style="width:100%;padding:12px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text2);cursor:pointer;font-family:var(--font-body);font-size:13px">
+        Terminar Sessão
+      </button>
+    </div>`;
+  document.body.appendChild(screen);
 }
 
 function showAdminMenu() {
@@ -2743,7 +2960,7 @@ async function loadAdminCodes() {
       return;
     }
 
-    const PLAN_LABELS = { scout: '👤 Scout', clube: '🏟 Clube' };
+    const PLAN_LABELS = { scout: '👤 Scout', clube: '🏟 Clube (5 scouts)' };
 
     list.innerHTML = filtered.map(c => {
       const isUsed    = !!c.used_by;
@@ -2765,10 +2982,18 @@ async function loadAdminCodes() {
           ${c.notes ? `<div style="font-size:11px;color:var(--text3)">${c.notes}</div>` : ''}
           <div style="font-size:10px;color:var(--text3);margin-top:2px">Criado: ${new Date(c.created_at).toLocaleDateString('pt-PT')}</div>
         </div>
-        <button onclick="copyCode('${c.code}')" title="Copiar código"
-          style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:6px 10px;cursor:pointer;color:var(--text2);font-family:var(--font-body);font-size:11px;flex-shrink:0">
-          📋 Copiar
-        </button>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          ${c.plan === 'clube' && c.used_by ? `
+            <button onclick="showDevicesForAccount('${c.used_by}','${c.notes||'clube'}')"
+              title="Ver dispositivos" class="btn-ghost"
+              style="font-size:11px;padding:6px 10px;color:var(--blue);border-color:rgba(77,159,255,0.3)">
+              📱 Dispositivos
+            </button>` : ''}
+          <button onclick="copyCode('${c.code}')" title="Copiar código"
+            style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:6px 10px;cursor:pointer;color:var(--text2);font-family:var(--font-body);font-size:11px">
+            📋 Copiar
+          </button>
+        </div>
       </div>`;
     }).join('');
 
@@ -2781,6 +3006,80 @@ function copyCode(code) {
   navigator.clipboard.writeText(code)
     .then(() => toast('Código copiado!'))
     .catch(() => toast('Erro ao copiar', 'error'));
+}
+
+// ─── Admin: ver dispositivos de uma conta ─────
+async function showDevicesForAccount(userId, userEmail) {
+  try {
+    const { data: devices, error } = await sb
+      .from('club_devices')
+      .select('*')
+      .eq('user_id', userId)
+      .order('last_seen', { ascending: false });
+
+    if (error) throw error;
+
+    const fmt = d => new Date(d).toLocaleDateString('pt-PT', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    const deviceIcon = name => /iPhone|iPad/.test(name) ? '📱' : /Android.*tel/.test(name) ? '📱' : '💻';
+
+    const old = document.getElementById('devices-modal');
+    if (old) old.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'devices-modal';
+    modal.className = 'modal-bg';
+    modal.onclick = e => { if (e.target === modal) modal.remove(); };
+    modal.innerHTML = `
+      <div class="modal" style="max-width:480px">
+        <h2>📱 Dispositivos — ${userEmail}</h2>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:16px">${devices?.length || 0} / ${MAX_CLUB_DEVICES} dispositivos registados</div>
+        ${!devices?.length
+          ? '<p style="color:var(--text3);text-align:center;padding:20px">Nenhum dispositivo registado</p>'
+          : devices.map(d => `
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">
+              <div style="font-size:24px;flex-shrink:0">${deviceIcon(d.device_name||'')}</div>
+              <div style="flex:1">
+                <div style="font-size:13px;font-weight:600">${d.device_name || 'Dispositivo desconhecido'}</div>
+                <div style="font-size:11px;color:var(--text3)">Registado: ${fmt(d.created_at)}</div>
+                <div style="font-size:11px;color:var(--text3)">Último acesso: ${fmt(d.last_seen)}</div>
+                <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">${d.device_id}</div>
+              </div>
+              <button onclick="revokeDevice('${d.id}','${d.device_name||'este dispositivo'}')"
+                class="btn-danger" style="font-size:11px;padding:6px 10px;flex-shrink:0">
+                Revogar
+              </button>
+            </div>`).join('')
+        }
+        <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
+          ${devices?.length ? `<button class="btn-danger" onclick="revokeAllDevices('${userId}')" style="font-size:12px">Revogar Todos</button>` : ''}
+          <button class="btn-ghost" onclick="document.getElementById('devices-modal').remove()">Fechar</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.style.display = 'flex';
+  } catch(e) {
+    toast('Erro ao carregar dispositivos: ' + e.message, 'error');
+  }
+}
+
+async function revokeDevice(deviceRowId, deviceName) {
+  if (!confirm(`Revogar acesso de "${deviceName}"?`)) return;
+  try {
+    const { error } = await sb.from('club_devices').delete().eq('id', deviceRowId);
+    if (error) throw error;
+    toast('Dispositivo revogado');
+    document.getElementById('devices-modal')?.remove();
+  } catch(e) { toast('Erro: ' + e.message, 'error'); }
+}
+
+async function revokeAllDevices(userId) {
+  if (!confirm('Revogar TODOS os dispositivos desta conta? Todos terão de fazer login novamente.')) return;
+  try {
+    const { error } = await sb.from('club_devices').delete().eq('user_id', userId);
+    if (error) throw error;
+    toast('Todos os dispositivos revogados');
+    document.getElementById('devices-modal')?.remove();
+  } catch(e) { toast('Erro: ' + e.message, 'error'); }
 }
 
 async function loadTeam() {
@@ -2824,6 +3123,17 @@ let editingReportIdx = -1;
 let radarChartInst = null;
 let customMetrics = [];
 let activeChips = new Set();
+let activeGender = ''; // '' = todos, 'M' = masculino, 'F' = feminino
+
+function setGender(g) {
+  activeGender = g;
+  ['gender-all','gender-m','gender-f'].forEach(id => {
+    document.getElementById(id)?.classList.remove('on');
+  });
+  const map = { '':'gender-all', 'M':'gender-m', 'F':'gender-f' };
+  document.getElementById(map[g])?.classList.add('on');
+  renderGrid();
+}
 let analyticsCharts = {};
 
 // ═══════════════════════════════════════════════
@@ -3001,6 +3311,7 @@ function showView(name){
   if(name==='team')      loadTeam();
   if(name==='profile')   loadProfile();
   if(name==='admin')     loadAdminCodes();
+  if(name==='shadow')    loadShadowTeam();
 }
 
 function goHome(){ showView('home'); window.scrollTo(0,0); }
@@ -3014,6 +3325,7 @@ function getFiltered(){
   const pos = document.getElementById('f-pos')?.value||'';
   const tag = document.getElementById('f-tag')?.value||'';
   const sort = document.getElementById('f-sort')?.value||'recent';
+  if(activeGender) list = list.filter(p => (p.gender||'M') === activeGender);
   if(q) list = list.filter(p=>(p.name||'').toLowerCase().includes(q)||(p.club||'').toLowerCase().includes(q)||(p.agent||'').toLowerCase().includes(q));
   if(pos) list = list.filter(p=>p.position===pos||p.position2===pos);
   if(tag) list = list.filter(p=>p.tag===tag);
@@ -3101,7 +3413,7 @@ function clearForm(){
   ['p-name','p-club','p-age','p-height','p-weight','p-pos','p-pos2','p-foot','p-nation',
    'p-tag','p-neg','p-contract','p-clause','p-market','p-games','p-mins','p-goals',
    'p-assists','p-yellow','p-red','p-style','p-system','p-strengths','p-weak',
-   'p-injuries','p-agent','p-contact','p-notes','p-tactical-notes'].forEach(id=>{
+   'p-injuries','p-agent','p-contact','p-notes','p-tactical-notes','p-gender'].forEach(id=>{
     const el=document.getElementById(id);
     if(el) el.value='';
   });
@@ -3133,6 +3445,7 @@ function editPlayer(id){
   set('p-strengths',p.strengths); set('p-weak',p.weaknesses);
   set('p-injuries',p.injuries); set('p-agent',p.agent); set('p-contact',p.contact);
   set('p-notes',p.notes); set('p-tactical-notes',p.tacticalNotes);
+  set('p-gender', p.gender||'M');
   if(tempPhoto){
     document.getElementById('photo-zone').innerHTML=`<img src="${tempPhoto}" alt="">`;
   } else {
@@ -3186,6 +3499,7 @@ function savePlayer(){
     contact:document.getElementById('p-contact').value,
     notes:document.getElementById('p-notes').value,
     tacticalNotes:document.getElementById('p-tactical-notes').value,
+    gender: document.getElementById('p-gender')?.value || 'M',
     scout_id:   currentUser?.id   || null,
     scout_nome: currentUser?.nome || null,
     metrics,
@@ -4876,6 +5190,253 @@ function renderEvolution() {
 // ═══════════════════════════════════════════════
 // EVOLUÇÃO — navegação a partir do editor
 // ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════
+// SHADOW TEAM
+// ═══════════════════════════════════════════════
+const SHADOW_KEY = 'scoutflow_shadow';
+let shadowTeam = JSON.parse(localStorage.getItem(SHADOW_KEY) || '{}');
+// Estrutura: { formation: '433', positions: { GR: playerId, DC1: playerId, ... }, notes: '' }
+
+const FORMATIONS = {
+  '433':  ['GR','DC1','DC2','LD','LE','MC1','MC2','MC3','EXT1','PL','EXT2'],
+  '442':  ['GR','DC1','DC2','LD','LE','MD1','MD2','EXT1','EXT2','PL1','PL2'],
+  '4231': ['GR','DC1','DC2','LD','LE','MD1','MD2','MO1','MO2','MO3','PL'],
+  '352':  ['GR','DC1','DC2','DC3','MC1','MC2','MC3','EXT1','EXT2','PL1','PL2'],
+  '343':  ['GR','DC1','DC2','DC3','EXT1','MC1','MC2','EXT2','PL1','PL2','PL3'],
+  '532':  ['GR','DC1','DC2','DC3','LE','LD','MC1','MC2','MC3','PL1','PL2'],
+};
+
+// Coordenadas Y por linha (% da altura) e X por coluna
+const FORMATION_LAYOUTS = {
+  '433':  [{slot:'GR',x:50,y:88},{slot:'DC1',x:20,y:70},{slot:'DC2',x:40,y:70},{slot:'LD',x:60,y:70},{slot:'LE',x:80,y:70},{slot:'MC1',x:25,y:50},{slot:'MC2',x:50,y:50},{slot:'MC3',x:75,y:50},{slot:'EXT1',x:20,y:25},{slot:'PL',x:50,y:20},{slot:'EXT2',x:80,y:25}],
+  '442':  [{slot:'GR',x:50,y:88},{slot:'DC1',x:20,y:70},{slot:'DC2',x:40,y:70},{slot:'LD',x:60,y:70},{slot:'LE',x:80,y:70},{slot:'MD1',x:25,y:52},{slot:'MD2',x:50,y:52},{slot:'EXT1',x:20,y:30},{slot:'EXT2',x:80,y:30},{slot:'PL1',x:35,y:18},{slot:'PL2',x:65,y:18}],
+  '4231': [{slot:'GR',x:50,y:88},{slot:'DC1',x:20,y:70},{slot:'DC2',x:40,y:70},{slot:'LD',x:60,y:70},{slot:'LE',x:80,y:70},{slot:'MD1',x:35,y:55},{slot:'MD2',x:65,y:55},{slot:'MO1',x:20,y:38},{slot:'MO2',x:50,y:35},{slot:'MO3',x:80,y:38},{slot:'PL',x:50,y:18}],
+  '352':  [{slot:'GR',x:50,y:88},{slot:'DC1',x:25,y:72},{slot:'DC2',x:50,y:72},{slot:'DC3',x:75,y:72},{slot:'MC1',x:20,y:52},{slot:'MC2',x:50,y:52},{slot:'MC3',x:80,y:52},{slot:'EXT1',x:15,y:30},{slot:'EXT2',x:85,y:30},{slot:'PL1',x:35,y:18},{slot:'PL2',x:65,y:18}],
+  '343':  [{slot:'GR',x:50,y:88},{slot:'DC1',x:25,y:72},{slot:'DC2',x:50,y:72},{slot:'DC3',x:75,y:72},{slot:'EXT1',x:15,y:48},{slot:'MC1',x:38,y:50},{slot:'MC2',x:62,y:50},{slot:'EXT2',x:85,y:48},{slot:'PL1',x:25,y:22},{slot:'PL2',x:50,y:18},{slot:'PL3',x:75,y:22}],
+  '532':  [{slot:'GR',x:50,y:88},{slot:'DC1',x:20,y:72},{slot:'DC2',x:38,y:72},{slot:'DC3',x:56,y:72},{slot:'LE',x:75,y:68},{slot:'LD',x:88,y:58},{slot:'MC1',x:25,y:48},{slot:'MC2',x:50,y:48},{slot:'MC3',x:75,y:48},{slot:'PL1',x:35,y:20},{slot:'PL2',x:65,y:20}],
+};
+
+const SLOT_LABELS = {
+  GR:'GR',DC1:'DC',DC2:'DC',DC3:'DC',LD:'LD',LE:'LE',
+  MC1:'MC',MC2:'MC',MC3:'MC',MD1:'MD',MD2:'MD',
+  MO1:'MO',MO2:'MO',MO3:'MO',EXT1:'EXT',EXT2:'EXT',
+  PL:'PL',PL1:'PL',PL2:'PL',PL3:'PL'
+};
+
+let _shadowSlotTarget = null;
+
+function initShadow() {
+  const formation = document.getElementById('shadow-formation')?.value || '433';
+  shadowTeam.formation = shadowTeam.formation || formation;
+  shadowTeam.positions = shadowTeam.positions || {};
+  shadowTeam.notes = shadowTeam.notes || '';
+  document.getElementById('shadow-formation').value = shadowTeam.formation;
+  document.getElementById('shadow-notes').value = shadowTeam.notes;
+  renderShadowPitch();
+}
+
+function renderShadowPitch() {
+  const formation = document.getElementById('shadow-formation')?.value || '433';
+  const layout    = FORMATION_LAYOUTS[formation] || FORMATION_LAYOUTS['433'];
+  const container = document.getElementById('shadow-slots');
+  const positions = shadowTeam.positions || {};
+
+  container.innerHTML = '';
+
+  let filled = 0;
+  layout.forEach(({ slot, x, y }) => {
+    const playerId = positions[slot];
+    const player   = playerId ? players.find(p => p.id === playerId) : null;
+    const rating   = player ? calcRating(player.metrics || {}) : 0;
+    const rColor   = rating >= 7.5 ? '#00e5a0' : rating >= 5 ? '#ffbe0b' : '#8896b0';
+    if (player) filled++;
+
+    const div = document.createElement('div');
+    div.style.cssText = `
+      position:absolute;
+      left:${x}%;top:${y}%;
+      transform:translate(-50%,-50%);
+      text-align:center;cursor:pointer;
+      z-index:3;width:70px;
+    `;
+    div.onclick = () => openShadowSelect(slot);
+
+    if (player) {
+      div.innerHTML = `
+        <div style="position:relative;display:inline-block">
+          <div style="width:48px;height:48px;border-radius:50%;background:${rColor};border:3px solid rgba(255,255,255,0.2);overflow:hidden;margin:0 auto;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,0.4)">
+            ${player.photo
+              ? `<img src="${player.photo}" style="width:100%;height:100%;object-fit:cover">`
+              : `<span style="font-size:16px;font-weight:900;color:#0a0e1a">${(player.name||'?').slice(0,2).toUpperCase()}</span>`
+            }
+          </div>
+          <div style="position:absolute;top:-4px;right:-4px;background:${rColor};color:#0a0e1a;font-size:9px;font-weight:900;border-radius:8px;padding:1px 5px;border:1px solid rgba(0,0,0,0.2)">${rating}</div>
+        </div>
+        <div style="font-size:10px;font-weight:700;color:#fff;margin-top:4px;text-shadow:0 1px 4px rgba(0,0,0,0.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70px">${player.name.split(' ')[0]}</div>
+        <div style="font-size:9px;color:${rColor};font-weight:700;letter-spacing:0.5px">${SLOT_LABELS[slot]||slot}</div>`;
+    } else {
+      div.innerHTML = `
+        <div style="width:48px;height:48px;border-radius:50%;border:2px dashed rgba(255,255,255,0.25);margin:0 auto;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.2);transition:all 0.2s"
+          onmouseover="this.style.borderColor='rgba(0,229,160,0.6)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.25)'">
+          <svg width="18" height="18" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        </div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.5);margin-top:4px;font-weight:700">${SLOT_LABELS[slot]||slot}</div>`;
+    }
+    container.appendChild(div);
+  });
+
+  // Completude
+  document.getElementById('shadow-completeness').textContent = `${filled} / 11`;
+
+  // Rating médio
+  const ratings = Object.values(positions)
+    .map(id => players.find(p => p.id === id))
+    .filter(Boolean)
+    .map(p => calcRating(p.metrics || {}))
+    .filter(r => r > 0);
+  const avg = ratings.length ? round1(ratings.reduce((a,b) => a+b, 0) / ratings.length) : null;
+  const avgEl = document.getElementById('shadow-avg-rating');
+  if (avgEl) {
+    avgEl.textContent = avg || '—';
+    avgEl.style.color = avg >= 7.5 ? 'var(--accent)' : avg >= 5 ? 'var(--amber)' : 'var(--text3)';
+  }
+
+  // Lista lateral
+  renderShadowLineup(layout, positions);
+}
+
+function renderShadowLineup(layout, positions) {
+  const el = document.getElementById('shadow-lineup-list');
+  if (!el) return;
+  const filled = layout.filter(({slot}) => positions[slot]);
+  if (!filled.length) {
+    el.innerHTML = '<p style="color:var(--text3);font-size:12px;text-align:center;padding:10px">Selecciona atletas no campo</p>';
+    return;
+  }
+  el.innerHTML = filled.map(({slot}) => {
+    const p = players.find(x => x.id === positions[slot]);
+    if (!p) return '';
+    const r = calcRating(p.metrics || {});
+    const rc = r >= 7.5 ? 'var(--accent)' : r >= 5 ? 'var(--amber)' : 'var(--text3)';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:10px;font-weight:700;color:var(--accent);width:28px;flex-shrink:0">${SLOT_LABELS[slot]||slot}</span>
+      ${p.photo ? `<img src="${p.photo}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0">` : `<div style="width:28px;height:28px;border-radius:50%;background:var(--bg3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">${(p.name||'?').slice(0,2).toUpperCase()}</div>`}
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div>
+        <div style="font-size:10px;color:var(--text3)">${p.club||'Agente Livre'}</div>
+      </div>
+      <span style="font-size:13px;font-weight:700;color:${rc};flex-shrink:0">${r}</span>
+      <button onclick="removeShadowSlot('${slot}')" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:2px;flex-shrink:0" title="Remover">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>`;
+  }).join('');
+}
+
+function openShadowSelect(slot) {
+  _shadowSlotTarget = slot;
+  document.getElementById('shadow-modal-title').textContent = `Seleccionar ${SLOT_LABELS[slot]||slot} para posição ${slot}`;
+  document.getElementById('shadow-search').value = '';
+  document.getElementById('shadow-select-modal').style.display = 'flex';
+  renderShadowAthleteList();
+}
+
+function renderShadowAthleteList() {
+  const q     = document.getElementById('shadow-search')?.value.toLowerCase() || '';
+  const slot  = _shadowSlotTarget;
+  const pos   = SLOT_LABELS[slot] || '';
+  const list  = document.getElementById('shadow-athlete-list');
+
+  // Filtrar: posição compatível primeiro, depois todos
+  let filtered = [...players].filter(p => p.name);
+  if (q) filtered = filtered.filter(p => (p.name||'').toLowerCase().includes(q) || (p.club||'').toLowerCase().includes(q));
+  filtered.sort((a, b) => {
+    const aMatch = a.position === pos || a.position2 === pos ? 1 : 0;
+    const bMatch = b.position === pos || b.position2 === pos ? 1 : 0;
+    if (bMatch !== aMatch) return bMatch - aMatch;
+    return calcRating(b.metrics||{}) - calcRating(a.metrics||{});
+  });
+
+  if (!filtered.length) {
+    list.innerHTML = '<p style="color:var(--text3);text-align:center;padding:20px;font-size:13px">Nenhum atleta encontrado</p>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(p => {
+    const r   = calcRating(p.metrics || {});
+    const rc  = r >= 7.5 ? 'var(--accent)' : r >= 5 ? 'var(--amber)' : 'var(--text3)';
+    const match = p.position === pos || p.position2 === pos;
+    const isSelected = shadowTeam.positions?.[slot] === p.id;
+    return `<div onclick="selectShadowPlayer('${p.id}')"
+      style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-sm);cursor:pointer;
+      background:${isSelected ? 'var(--accent-dim)' : 'var(--bg3)'};
+      border:1px solid ${isSelected ? 'rgba(0,229,160,0.3)' : 'var(--border)'};margin-bottom:4px;transition:all 0.15s"
+      onmouseover="this.style.borderColor='var(--border2)'" onmouseout="this.style.borderColor='${isSelected ? 'rgba(0,229,160,0.3)' : 'var(--border)'}'">
+      ${p.photo ? `<img src="${p.photo}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0">` : `<div style="width:36px;height:36px;border-radius:50%;background:var(--bg2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--text2)">${(p.name||'?').slice(0,2).toUpperCase()}</div>`}
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600">${p.name}</div>
+        <div style="font-size:11px;color:var(--text3)">${p.club||'Agente Livre'} ${match ? `· <span style="color:var(--accent)">${p.position}</span>` : `· ${p.position||'—'}`}</div>
+      </div>
+      <span style="font-size:16px;font-weight:700;color:${rc};flex-shrink:0">${r||'—'}</span>
+    </div>`;
+  }).join('');
+}
+
+function selectShadowPlayer(playerId) {
+  if (!shadowTeam.positions) shadowTeam.positions = {};
+  shadowTeam.positions[_shadowSlotTarget] = playerId;
+  document.getElementById('shadow-select-modal').style.display = 'none';
+  renderShadowPitch();
+}
+
+function removeShadowSlot(slot) {
+  if (shadowTeam.positions) delete shadowTeam.positions[slot];
+  renderShadowPitch();
+}
+
+function clearShadowTeam() {
+  if (!confirm('Limpar toda a Shadow Team?')) return;
+  shadowTeam.positions = {};
+  renderShadowPitch();
+}
+
+async function saveShadowTeam() {
+  shadowTeam.formation = document.getElementById('shadow-formation')?.value || '433';
+  shadowTeam.notes     = document.getElementById('shadow-notes')?.value || '';
+  // Guardar localmente
+  localStorage.setItem(SHADOW_KEY, JSON.stringify(shadowTeam));
+  // Guardar no Supabase se autenticado
+  if (currentUser) {
+    try {
+      await sb.from('shadow_teams').upsert({
+        user_id:   currentUser.id,
+        formacao:  shadowTeam.formation,
+        posicoes:  shadowTeam.positions,
+        notas:     shadowTeam.notes,
+      }, { onConflict: 'user_id' });
+    } catch(e) { console.warn('shadow save:', e.message); }
+  }
+  toast('✅ Shadow Team guardada!');
+}
+
+async function loadShadowTeam() {
+  // Tentar carregar do Supabase
+  if (currentUser) {
+    try {
+      const { data } = await sb.from('shadow_teams').select('*').eq('user_id', currentUser.id).single();
+      if (data) {
+        shadowTeam = {
+          formation: data.formacao || '433',
+          positions: data.posicoes || {},
+          notes:     data.notas    || '',
+        };
+        localStorage.setItem(SHADOW_KEY, JSON.stringify(shadowTeam));
+      }
+    } catch(e) { /* sem dados ainda */ }
+  }
+  initShadow();
+}
+
 function goToEvolution() {
   const prevId = currentId;
   showView('evolution');
