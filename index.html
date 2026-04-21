@@ -5189,14 +5189,6 @@ const SHADOW_KEY = 'scoutflow_shadow';
 let shadowTeam = JSON.parse(localStorage.getItem(SHADOW_KEY) || '{}');
 // Estrutura: { formation: '433', positions: { GR: playerId, DC1: playerId, ... }, notes: '' }
 
-const FORMATIONS = {
-  '433':  ['GR','DC1','DC2','LD','LE','MC1','MC2','MC3','EXT1','PL','EXT2'],
-  '442':  ['GR','DC1','DC2','LD','LE','MD1','MD2','EXT1','EXT2','PL1','PL2'],
-  '4231': ['GR','DC1','DC2','LD','LE','MD1','MD2','MO1','MO2','MO3','PL'],
-  '352':  ['GR','DC1','DC2','DC3','MC1','MC2','MC3','EXT1','EXT2','PL1','PL2'],
-  '343':  ['GR','DC1','DC2','DC3','EXT1','MC1','MC2','EXT2','PL1','PL2','PL3'],
-  '532':  ['GR','DC1','DC2','DC3','LE','LD','MC1','MC2','MC3','PL1','PL2'],
-};
 
 // Coordenadas Y por linha (% da altura) e X por coluna
 const FORMATION_LAYOUTS = {
