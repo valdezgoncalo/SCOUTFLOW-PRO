@@ -2126,40 +2126,6 @@ sb.auth.onAuthStateChange(async (event, session) => {
   }
 });
 
-  currentUser = {
-    id:       user.id,
-    email:    user.email,
-    nome:     user.user_metadata?.full_name || user.user_metadata?.nome || user.email.split('@')[0],
-    initials: ''
-  };
-  currentUser.initials = currentUser.nome.slice(0,2).toUpperCase();
-
-  // Atualizar UI nav
-  const btn = document.getElementById('nav-scout-btn');
-  if (btn) {
-    btn.style.display = 'flex';
-    document.getElementById('nav-scout-name').textContent = currentUser.nome.split(' ')[0];
-    document.getElementById('nav-avatar-inner').textContent = currentUser.initials;
-    document.getElementById('menu-email').textContent = currentUser.email;
-  }
-
-  // Mostrar app IMEDIATAMENTE — sem aguardar nada de rede
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('main-app').style.display = 'flex';
-  hideSplash();
-
-  // Verificar acesso (trial / pago / expirado) em background
-  setTimeout(async () => {
-    const hasAccess = await checkAccess(user);
-    if (!hasAccess) {
-      document.getElementById('main-app').style.display = 'none';
-    }
-    // Carregar dados em background
-    setSyncStatus('syncing');
-    loadFromCloud().catch(e => { console.warn('loadFromCloud:', e.message); setSyncStatus('error'); });
-  }, 100);
-}
-
 // ─── LOGIN ────────────────────────────────────
 async function authLogin() {
   const email = document.getElementById('auth-email').value.trim();
