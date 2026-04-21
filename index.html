@@ -536,7 +536,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
 #auth-screen {
   position: fixed; inset: 0; z-index: 500;
   background: var(--bg);
-  display: flex; align-items: center; justify-content: center;
+  align-items: center; justify-content: center;
   padding: 20px;
 }
 #auth-screen::before {
@@ -2046,7 +2046,7 @@ function setSplashStatus(msg) {
 
 function hideSplash() {
   const s = document.getElementById('splash-screen');
-  if (s) { s.style.opacity = '0'; s.style.transition = 'opacity 0.3s'; setTimeout(() => s.remove(), 300); }
+  if (s) s.remove(); // remover imediatamente sem animação
 }
 
 function onUserLoggedOut() {
