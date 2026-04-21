@@ -2038,44 +2038,7 @@ let isOnline = navigator.onLine;
 let syncPending = false;
 let _authHandled = false;
 
-// Diagnóstico imediato — mostrar no splash
-setSplashStatus(isOnline ? 'A ligar ao servidor…' : 'Sem ligação à internet');
-if (!isOnline) {
-  setTimeout(() => { if (!_authHandled) onUserLoggedOut(); }, 500);
-}
-
-// ─── AUTH STATE ───────────────────────────────
-sb.auth.onAuthStateChange(async (event, session) => {
-  // Recovery explícito (hash antigo)
-  if (event === 'PASSWORD_RECOVERY') {
-    _authHandled = true;
-    showNewPassword();
-    return;
-  }
-  // SIGNED_IN durante recovery flow (PKCE) — NÃO entrar na app
-  if (event === 'SIGNED_IN' && _isRecoveryFlow) {
-    _authHandled = true;
-    showNewPassword();
-    return;
-  }
-  // Logout explícito
-  if (event === 'SIGNED_OUT') {
-    _authHandled = true;
-    onUserLoggedOut();
-    return;
-  }
-  // Sessão válida — login normal (só se não estamos em recovery)
-  if (session?.user && !_isRecoveryFlow) {
-    await onUserLoggedIn(session.user);
-    return;
-  }
-  // Sem sessão
-  if (!_authHandled && !_isRecoveryFlow) {
-    _authHandled = true;
-    onUserLoggedOut();
-  }
-});
-
+// ─── FUNÇÕES CRÍTICAS — definidas ANTES do onAuthStateChange ──
 function setSplashStatus(msg) {
   const el = document.getElementById('splash-status');
   if (el) el.textContent = msg;
@@ -2086,9 +2049,82 @@ function hideSplash() {
   if (s) { s.style.opacity = '0'; s.style.transition = 'opacity 0.3s'; setTimeout(() => s.remove(), 300); }
 }
 
+function onUserLoggedOut() {
+  _authHandled = true;
+  currentUser = null;
+  const authScreen = document.getElementById('auth-screen');
+  const mainApp    = document.getElementById('main-app');
+  if (authScreen) authScreen.style.display = 'flex';
+  if (mainApp)    mainApp.style.display = 'none';
+  const btn = document.getElementById('nav-scout-btn');
+  if (btn) btn.style.display = 'none';
+  hideSplash();
+}
+
 async function onUserLoggedIn(user) {
   _authHandled = true;
   setSplashStatus('A entrar…');
+
+  currentUser = {
+    id:       user.id,
+    email:    user.email,
+    nome:     user.user_metadata?.full_name || user.user_metadata?.nome || user.email.split('@')[0],
+    initials: ''
+  };
+  currentUser.initials = currentUser.nome.slice(0,2).toUpperCase();
+
+  const btn = document.getElementById('nav-scout-btn');
+  if (btn) {
+    btn.style.display = 'flex';
+    document.getElementById('nav-scout-name').textContent = currentUser.nome.split(' ')[0];
+    document.getElementById('nav-avatar-inner').textContent = currentUser.initials;
+    document.getElementById('menu-email').textContent = currentUser.email;
+  }
+
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'flex';
+  hideSplash();
+
+  setTimeout(async () => {
+    const hasAccess = await checkAccess(user);
+    if (!hasAccess) {
+      document.getElementById('main-app').style.display = 'none';
+    }
+    setSyncStatus('syncing');
+    loadFromCloud().catch(e => { console.warn('loadFromCloud:', e.message); setSyncStatus('error'); });
+  }, 100);
+}
+
+if (!isOnline) {
+  setTimeout(() => { if (!_authHandled) onUserLoggedOut(); }, 500);
+}
+
+// ─── AUTH STATE ───────────────────────────────
+sb.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'PASSWORD_RECOVERY') {
+    _authHandled = true;
+    showNewPassword();
+    return;
+  }
+  if (event === 'SIGNED_IN' && _isRecoveryFlow) {
+    _authHandled = true;
+    showNewPassword();
+    return;
+  }
+  if (event === 'SIGNED_OUT') {
+    _authHandled = true;
+    onUserLoggedOut();
+    return;
+  }
+  if (session?.user && !_isRecoveryFlow) {
+    await onUserLoggedIn(session.user);
+    return;
+  }
+  if (!_authHandled && !_isRecoveryFlow) {
+    _authHandled = true;
+    onUserLoggedOut();
+  }
+});
 
   currentUser = {
     id:       user.id,
@@ -2122,16 +2158,6 @@ async function onUserLoggedIn(user) {
     setSyncStatus('syncing');
     loadFromCloud().catch(e => { console.warn('loadFromCloud:', e.message); setSyncStatus('error'); });
   }, 100);
-}
-
-function onUserLoggedOut() {
-  _authHandled = true;
-  currentUser = null;
-  document.getElementById('auth-screen').style.display = 'flex';
-  document.getElementById('main-app').style.display = 'none';
-  const btn = document.getElementById('nav-scout-btn');
-  if (btn) btn.style.display = 'none';
-  hideSplash();
 }
 
 // ─── LOGIN ────────────────────────────────────
@@ -5487,51 +5513,15 @@ if (_isRecoveryFlow) {
 
 } else {
   // ─── FLUXO NORMAL ────────────────────────────
+  // Estratégia simples: mostrar login imediatamente após 1.5s
+  // Se onAuthStateChange disparar com sessão válida antes disso, entra automaticamente
+  // Se não disparar, o utilizador faz login manualmente
 
-  // PASSO 1: Verificar localStorage IMEDIATAMENTE (sem rede)
-  // Se não há sessão guardada, ir directamente para o login
-  const _savedSession = localStorage.getItem('scoutflow_auth');
-  if (!_savedSession || _savedSession === 'null') {
-    // Sem sessão guardada — login imediato, sem esperar pelo Supabase
-    onUserLoggedOut();
-  } else {
-    // Há sessão guardada — tentar validar com o Supabase (com timeout)
-    setSplashStatus('A verificar sessão…');
-    (async () => {
-      try {
-        const result = await Promise.race([
-          sb.auth.getSession(),
-          new Promise(resolve => setTimeout(() => resolve({ data: { session: null }, _timeout: true }), 3000))
-        ]);
-
-        if (_authHandled) return;
-
-        if (result._timeout) {
-          console.warn('getSession timeout — forçando login');
-          onUserLoggedOut();
-          return;
-        }
-
-        const { data: { session }, error } = result;
-        if (error || !session?.user) {
-          onUserLoggedOut();
-        } else {
-          await onUserLoggedIn(session.user);
-        }
-      } catch(e) {
-        console.warn('getSession error:', e.message);
-        if (!_authHandled) onUserLoggedOut();
-      }
-    })();
-
-    // Segurança absoluta — 5s força login independentemente de tudo
-    setTimeout(() => {
-      if (!_authHandled) {
-        console.warn('Auth absolute timeout');
-        onUserLoggedOut();
-      }
-    }, 5000);
-  }
+  setTimeout(() => {
+    if (!_authHandled) {
+      onUserLoggedOut();
+    }
+  }, 1500);
 }
 </script>
 </body>
