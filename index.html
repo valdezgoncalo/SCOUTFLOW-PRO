@@ -2126,6 +2126,40 @@ sb.auth.onAuthStateChange(async (event, session) => {
   }
 });
 
+  currentUser = {
+    id:       user.id,
+    email:    user.email,
+    nome:     user.user_metadata?.full_name || user.user_metadata?.nome || user.email.split('@')[0],
+    initials: ''
+  };
+  currentUser.initials = currentUser.nome.slice(0,2).toUpperCase();
+
+  // Atualizar UI nav
+  const btn = document.getElementById('nav-scout-btn');
+  if (btn) {
+    btn.style.display = 'flex';
+    document.getElementById('nav-scout-name').textContent = currentUser.nome.split(' ')[0];
+    document.getElementById('nav-avatar-inner').textContent = currentUser.initials;
+    document.getElementById('menu-email').textContent = currentUser.email;
+  }
+
+  // Mostrar app IMEDIATAMENTE — sem aguardar nada de rede
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'flex';
+  hideSplash();
+
+  // Verificar acesso (trial / pago / expirado) em background
+  setTimeout(async () => {
+    const hasAccess = await checkAccess(user);
+    if (!hasAccess) {
+      document.getElementById('main-app').style.display = 'none';
+    }
+    // Carregar dados em background
+    setSyncStatus('syncing');
+    loadFromCloud().catch(e => { console.warn('loadFromCloud:', e.message); setSyncStatus('error'); });
+  }, 100);
+}
+
 // ─── LOGIN ────────────────────────────────────
 async function authLogin() {
   const email = document.getElementById('auth-email').value.trim();
@@ -3981,386 +4015,402 @@ function exportPDF(openEmail=false){
   const {jsPDF} = window.jspdf;
   const doc = new jsPDF({unit:'mm', format:'a4'});
   const W=210, M=14, CW=W-M*2;
-  const PAL = {
-    acc:    [0,229,160],
-    acc2:   [0,184,122],
-    dark:   [10,14,26],
-    dark2:  [17,24,39],
-    text:   [232,237,245],
-    muted:  [136,150,176],
-    light:  [26,34,53],
-    light2: [30,45,69],
-    white:  [255,255,255],
-    red:    [255,77,109],
-    amber:  [255,190,11],
-    blue:   [77,159,255],
+
+  // ── PALETA PARA PAPEL (fundo branco, texto escuro) ──
+  const C = {
+    // Cores base
+    white:    [255,255,255],
+    black:    [15, 15, 20],
+    // Marca
+    green:    [0, 160, 110],       // verde ScoutFlow mais sóbrio para impressão
+    greenDim: [230, 247, 241],     // verde muito claro para fundos
+    greenMid: [0, 120, 82],        // verde escuro para texto sobre claro
+    // Texto
+    textDark: [20, 25, 35],        // quase preto para títulos
+    textBody: [55, 65, 80],        // cinza escuro para corpo
+    textMute: [120, 135, 155],     // cinza médio para labels
+    textLight:[180, 190, 205],     // cinza claro para detalhes
+    // Fundos
+    bgLight:  [248, 249, 251],     // fundo muito claro para secções
+    bgMid:    [238, 241, 246],     // fundo médio para headers de secção
+    bgDark:   [225, 230, 238],     // fundo para barras, separadores
+    // Semânticas
+    red:      [210, 55, 75],
+    amber:    [200, 140, 10],
+    blue:     [40, 110, 200],
+    purple:   [110, 75, 195],
   };
 
-  const rating = calcRating(p.metrics||{});
+  const rating  = calcRating(p.metrics||{});
+  const rColor  = rating>=7.5 ? C.green : rating>=5 ? C.amber : C.textMute;
   let y = 0;
 
-  // ── HELPERS ──────────────────────────────────
-  const newPageIfNeeded = (space=20) => {
-    if(y + space > 278){ doc.addPage(); y = 16; return true; }
+  // ── HELPERS ──────────────────────────────────────────
+
+  const np = (space=20) => {
+    if(y+space > 278){ doc.addPage(); y=16; drawPageBg(); return true; }
     return false;
   };
 
-  const sectionTitle = (t, icon='') => {
-    newPageIfNeeded(16);
-    y += 4;
-    doc.setFillColor(...PAL.light);
-    doc.roundedRect(M, y-4, CW, 10, 2, 2, 'F');
-    doc.setDrawColor(...PAL.acc); doc.setLineWidth(0.4);
-    doc.line(M, y-4, M, y+6);
-    doc.setTextColor(...PAL.acc);
-    doc.setFont(undefined,'bold'); doc.setFontSize(9);
-    doc.text((icon+' '+t).trim().toUpperCase(), M+4, y+2);
-    y += 12;
+  const drawPageBg = () => {
+    // Fundo branco limpo — sem decoração para não poluir
+    doc.setFillColor(...C.white);
+    doc.rect(0,0,W,297,'F');
   };
 
-  const row2col = (l1,v1,l2,v2) => {
-    newPageIfNeeded(8);
-    const half = CW/2 - 4;
-    doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.muted); doc.setFontSize(8);
-    doc.text(l1+':', M, y);
-    doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.text); doc.setFontSize(8.5);
-    doc.text(String(v1||'—'), M+28, y);
-    if(l2){
-      doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.muted); doc.setFontSize(8);
-      doc.text(l2+':', M+half, y);
-      doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.text); doc.setFontSize(8.5);
-      doc.text(String(v2||'—'), M+half+28, y);
+  const secHeader = (title) => {
+    np(18); y+=3;
+    doc.setFillColor(...C.bgMid);
+    doc.rect(M, y-3, CW, 8, 'F');
+    doc.setFillColor(...C.green);
+    doc.rect(M, y-3, 3, 8, 'F');
+    doc.setFont(undefined,'bold'); doc.setFontSize(8);
+    doc.setTextColor(...C.greenMid);
+    doc.text(title.toUpperCase(), M+6, y+2);
+    y += 9;
+  };
+
+  const field2 = (l1,v1,l2,v2) => {
+    np(8);
+    const half = CW/2-2;
+    // Col 1
+    doc.setFont(undefined,'bold'); doc.setFontSize(7); doc.setTextColor(...C.textMute);
+    doc.text(l1.toUpperCase(), M, y);
+    doc.setFont(undefined,'normal'); doc.setFontSize(8.5); doc.setTextColor(...C.textDark);
+    doc.text(String(v1||'—'), M, y+4.5);
+    // Col 2
+    if(l2!==undefined){
+      doc.setFont(undefined,'bold'); doc.setFontSize(7); doc.setTextColor(...C.textMute);
+      doc.text(l2.toUpperCase(), M+half+4, y);
+      doc.setFont(undefined,'normal'); doc.setFontSize(8.5); doc.setTextColor(...C.textDark);
+      doc.text(String(v2||'—'), M+half+4, y+4.5);
     }
-    y += 6.5;
+    y += 11;
   };
 
-  const textBlock = (label, content) => {
+  const textSection = (label, content, color) => {
     if(!content) return;
-    newPageIfNeeded(20);
-    doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.muted); doc.setFontSize(8);
-    doc.text(label+':', M, y); y += 5;
-    doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.text); doc.setFontSize(8.5);
+    np(22);
+    doc.setFont(undefined,'bold'); doc.setFontSize(7.5);
+    doc.setTextColor(...(color||C.textMute));
+    doc.text(label.toUpperCase(), M, y); y+=5;
+    doc.setFont(undefined,'normal'); doc.setFontSize(8.5); doc.setTextColor(...C.textBody);
     const lines = doc.splitTextToSize(content, CW);
-    lines.forEach(line => {
-      newPageIfNeeded(6);
-      doc.text(line, M, y); y += 5.2;
-    });
-    y += 2;
+    lines.forEach(line=>{ np(6); doc.text(line, M, y); y+=5; });
+    y+=3;
   };
 
-  const statBox = (x, bw, label, value, color) => {
-    doc.setFillColor(...PAL.light);
-    doc.roundedRect(x, y, bw, 16, 2, 2, 'F');
-    doc.setFont(undefined,'bold'); doc.setTextColor(...(color||PAL.acc)); doc.setFontSize(14);
-    doc.text(String(value), x+bw/2, y+9.5, {align:'center'});
-    doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.muted); doc.setFontSize(7);
-    doc.text(label.toUpperCase(), x+bw/2, y+14.5, {align:'center'});
+  const divider = () => {
+    doc.setDrawColor(...C.bgDark); doc.setLineWidth(0.3);
+    doc.line(M, y, M+CW, y); y+=4;
   };
 
-  // ── PÁGINA 1: CABEÇALHO ──────────────────────
-  // Fundo header gradiente simulado
-  doc.setFillColor(...PAL.dark); doc.rect(0,0,W,52,'F');
-  doc.setFillColor(...PAL.dark2); doc.rect(0,36,W,16,'F');
+  // ── FUNDO INICIAL ─────────────────────────────────────
+  drawPageBg();
 
-  // Foto do atleta (se existir)
-  let photoX = M;
+  // ── CABEÇALHO ─────────────────────────────────────────
+  // Barra verde no topo
+  doc.setFillColor(...C.green);
+  doc.rect(0, 0, W, 38, 'F');
+
+  // Foto do atleta
+  let photoEndX = M;
   if(p.photo){
-    try {
-      const fmt = p.photo.startsWith('data:image/png')?'PNG':'JPEG';
-      doc.addImage(p.photo, fmt, M, 7, 32, 38, undefined, 'FAST');
-      doc.setDrawColor(...PAL.acc); doc.setLineWidth(0.8);
-      doc.rect(M, 7, 32, 38);
-      photoX = M + 36;
-    } catch(e){ photoX = M; }
+    try{
+      const imgFmt = p.photo.startsWith('data:image/png')?'PNG':'JPEG';
+      doc.addImage(p.photo, imgFmt, M, 4, 30, 30, undefined,'FAST');
+      // Borda branca à volta da foto
+      doc.setDrawColor(...C.white); doc.setLineWidth(1.2);
+      doc.rect(M, 4, 30, 30);
+      photoEndX = M+33;
+    }catch(e){ photoEndX = M; }
   }
 
-  // Nome e info básica
-  doc.setTextColor(...PAL.acc); doc.setFont(undefined,'bold'); doc.setFontSize(7);
-  doc.text('RELATÓRIO DE SCOUTING', photoX+2, 13);
-  doc.setTextColor(...PAL.white); doc.setFont(undefined,'bold'); doc.setFontSize(22);
-  doc.text((p.name||'Atleta').toUpperCase(), photoX+2, 23);
-  doc.setFont(undefined,'normal'); doc.setFontSize(10); doc.setTextColor(...PAL.muted);
-  doc.text(`${p.club||'Agente Livre'}`, photoX+2, 30);
+  // Label "RELATÓRIO DE SCOUTING"
+  doc.setFont(undefined,'bold'); doc.setFontSize(6.5);
+  doc.setTextColor(200,240,225);
+  doc.text('RELATÓRIO DE SCOUTING  ·  SCOUTFLOW PRO', photoEndX+2, 9);
 
-  // Pills de info rápida
-  const pills = [
-    p.position && p.position,
-    p.age && `${p.age} anos`,
-    p.height && `${p.height} cm`,
-    p.foot && `Pé ${p.foot}`,
-    p.nationality,
-  ].filter(Boolean);
-  let px = photoX+2;
-  pills.forEach(pill => {
-    const tw = doc.getTextWidth(pill) + 6;
-    doc.setFillColor(...PAL.light2);
-    doc.roundedRect(px, 33, tw, 6, 1.5, 1.5, 'F');
-    doc.setTextColor(...PAL.text); doc.setFontSize(7); doc.setFont(undefined,'normal');
-    doc.text(pill, px+3, 37.5);
-    px += tw + 3;
+  // Nome do atleta
+  doc.setFont(undefined,'bold'); doc.setFontSize(20);
+  doc.setTextColor(...C.white);
+  const nameStr = (p.name||'Atleta').toUpperCase();
+  doc.text(nameStr, photoEndX+2, 20);
+
+  // Clube e posição
+  doc.setFont(undefined,'normal'); doc.setFontSize(9);
+  doc.setTextColor(220, 240, 230);
+  doc.text(`${p.club||'Agente Livre'}  ·  ${p.position||''}${p.position2?' / '+p.position2:''}`, photoEndX+2, 27);
+
+  // Pills de info na barra verde
+  const pills = [p.age&&`${p.age} anos`, p.height&&`${p.height}cm`, p.foot&&`Pé ${p.foot}`, p.nationality].filter(Boolean);
+  let px2 = photoEndX+2;
+  pills.forEach(pill=>{
+    const tw = doc.getTextWidth(pill)+6;
+    doc.setFillColor(0,100,70); doc.setDrawColor(0,0,0,0);
+    doc.roundedRect(px2, 30, tw, 5.5, 1,1,'F');
+    doc.setFont(undefined,'bold'); doc.setFontSize(6.5); doc.setTextColor(...C.white);
+    doc.text(pill, px2+3, 34);
+    px2 += tw+3;
   });
 
-  // Rating badge
-  const rColor = rating>=7.5?PAL.acc : rating>=5?PAL.amber : PAL.muted;
-  doc.setFillColor(...rColor); doc.roundedRect(W-M-24, 8, 24, 30, 3, 3, 'F');
-  doc.setTextColor(...PAL.dark); doc.setFont(undefined,'bold'); doc.setFontSize(22);
-  doc.text(String(rating), W-M-12, 24, {align:'center'});
-  doc.setFontSize(7); doc.text('NOTA', W-M-12, 30, {align:'center'});
+  // Badge de nota — canto superior direito
+  const bx = W-M-22, by = 4;
+  doc.setFillColor(...C.white);
+  doc.roundedRect(bx, by, 22, 30, 3,3,'F');
+  doc.setFont(undefined,'bold'); doc.setFontSize(20);
+  doc.setTextColor(...rColor);
+  doc.text(String(rating), bx+11, by+17, {align:'center'});
+  doc.setFont(undefined,'bold'); doc.setFontSize(6.5);
+  doc.setTextColor(...C.textMute);
+  doc.text('NOTA', bx+11, by+24, {align:'center'});
 
-  // Scout info no sub-header
-  doc.setTextColor(...PAL.muted); doc.setFontSize(7.5);
-  const scoutInfo = `Scout: ${p.scout_nome||currentUser?.nome||'—'}  ·  Data: ${new Date().toLocaleDateString('pt-PT')}  ·  ScoutFlow Pro`;
-  doc.text(scoutInfo, M, 47);
-
-  y = 58;
-
-  // ── SECÇÃO: DADOS BIOGRÁFICOS ────────────────
-  sectionTitle('Dados Biográficos');
-  row2col('Idade', p.age?`${p.age} anos`:'—', 'Altura', p.height?`${p.height} cm`:'—');
-  row2col('Peso', p.weight?`${p.weight} kg`:'—', 'Pé Preferencial', p.foot||'—');
-  row2col('Nacionalidade', p.nationality||'—', 'Posição Principal', p.position||'—');
-  if(p.position2) row2col('Posição Secundária', p.position2, 'Agente', p.agent||'—');
-  else row2col('Agente', p.agent||'—', 'Contacto', p.contact||'—');
-  if(p.playstyle || p.system) row2col('Estilo de Jogo', p.playstyle||'—', 'Sistema Ideal', p.system||'—');
-
-  // ── SECÇÃO: ESTATÍSTICAS ─────────────────────
-  sectionTitle('Estatísticas da Época');
-  const bw = (CW-9)/5;
-  statBox(M,        bw, 'Jogos',     p.games||0,       PAL.blue);
-  statBox(M+bw+2,   bw, 'Minutos',   p.minutes||0,     PAL.muted);
-  statBox(M+bw*2+4, bw, 'Golos',     p.goals||0,       PAL.acc);
-  statBox(M+bw*3+6, bw, 'Assists',   p.assists||0,     PAL.acc2);
-  statBox(M+bw*4+8, bw, 'Cartões',   `${p.yellowCards||0}A ${p.redCards||0}V`, PAL.amber);
-  y += 20;
-
-  // ── SECÇÃO: CONTRATO & MERCADO ───────────────
-  if(p.contractEnd||p.releaseClause||p.marketValue){
-    sectionTitle('Contrato & Mercado');
-    row2col('Fim de Contrato', p.contractEnd?fmt(p.contractEnd):'—', 'Valor de Mercado', p.marketValue||'—');
-    if(p.releaseClause) row2col('Cláusula de Rescisão', p.releaseClause, 'Estado', p.tag||'—');
-    else row2col('Estado de Negociação', p.negotiation||'—', 'Tag', p.tag||'—');
+  // Tag do atleta se existir
+  const TAG_PT = {promessa:'PROMESSA',urgente:'URGENTE',monitorar:'MONITORAR',contactado:'CONTACTADO',descartado:'DESCARTADO'};
+  const TAG_COLORS = {promessa:C.amber, urgente:C.red, monitorar:C.blue, contactado:C.green, descartado:C.textMute};
+  if(p.tag){
+    doc.setFillColor(...(TAG_COLORS[p.tag]||C.textMute));
+    doc.roundedRect(bx-28, by+18, 24, 7, 2,2,'F');
+    doc.setFont(undefined,'bold'); doc.setFontSize(6);
+    doc.setTextColor(...C.white);
+    doc.text(TAG_PT[p.tag]||p.tag.toUpperCase(), bx-16, by+22.5, {align:'center'});
   }
 
-  // ── SECÇÃO: AVALIAÇÃO TÉCNICA ────────────────
-  sectionTitle('Avaliação Técnica');
-  // Nota geral em destaque
-  doc.setFillColor(...PAL.light);
-  doc.roundedRect(M, y, CW, 10, 2, 2, 'F');
-  doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.muted); doc.setFontSize(8);
-  doc.text('NOTA GERAL', M+4, y+6.5);
-  doc.setTextColor(...rColor); doc.setFontSize(11);
-  doc.text(String(rating)+'/10', M+40, y+6.5);
-  // Barra de nota geral
-  const barW = CW-75;
-  doc.setFillColor(...PAL.light2); doc.roundedRect(M+75, y+3, barW, 4, 2, 2, 'F');
-  doc.setFillColor(...rColor); doc.roundedRect(M+75, y+3, (rating/10)*barW, 4, 2, 2, 'F');
-  y += 14;
+  // Sub-barra cinza claro
+  doc.setFillColor(...C.bgLight);
+  doc.rect(0, 38, W, 8, 'F');
+  doc.setFont(undefined,'normal'); doc.setFontSize(7); doc.setTextColor(...C.textMute);
+  const scoutLine = `Scout: ${p.scout_nome||currentUser?.nome||'—'}  ·  Gerado: ${new Date().toLocaleDateString('pt-PT')}  ·  Género: ${p.gender==='F'?'Feminino':'Masculino'}`;
+  doc.text(scoutLine, M, 43.5);
 
-  // Métricas individuais em grid 2 colunas
+  y = 52;
+
+  // ── DADOS BIOGRÁFICOS ─────────────────────────────────
+  secHeader('Dados Biográficos');
+  field2('Idade', p.age?`${p.age} anos`:'—', 'Altura / Peso', [p.height&&`${p.height}cm`, p.weight&&`${p.weight}kg`].filter(Boolean).join(' · ')||'—');
+  field2('Pé Preferencial', p.foot||'—', 'Nacionalidade', p.nationality||'—');
+  field2('Posição Principal', p.position||'—', 'Posição Secundária', p.position2||'—');
+  if(p.playstyle||p.system) field2('Estilo de Jogo', p.playstyle||'—', 'Sistema Ideal', p.system||'—');
+  if(p.agent) field2('Agente', p.agent, 'Contacto', p.contact||'—');
+  divider();
+
+  // ── CONTRATO & MERCADO ────────────────────────────────
+  if(p.contractEnd||p.releaseClause||p.marketValue||p.negotiation){
+    secHeader('Contrato & Mercado');
+    field2('Fim de Contrato', p.contractEnd?fmt(p.contractEnd):'—', 'Valor de Mercado', p.marketValue||'—');
+    field2('Cláusula de Rescisão', p.releaseClause||'—', 'Estado Negociação', p.negotiation||'—');
+    divider();
+  }
+
+  // ── ESTATÍSTICAS DA ÉPOCA ─────────────────────────────
+  secHeader('Estatísticas da Época');
+  const stats = [
+    ['Jogos', p.games||0, C.blue],
+    ['Minutos', p.minutes||0, C.textBody],
+    ['Golos', p.goals||0, C.green],
+    ['Assistências', p.assists||0, C.greenMid],
+    ['Amarelos', p.yellowCards||0, C.amber],
+    ['Vermelhos', p.redCards||0, C.red],
+  ];
+  const sw = CW/stats.length;
+  stats.forEach(([lbl,val,col],i)=>{
+    const sx = M+i*sw;
+    doc.setFillColor(...C.bgLight);
+    doc.roundedRect(sx, y, sw-2, 14, 2,2,'F');
+    doc.setFont(undefined,'bold'); doc.setFontSize(14); doc.setTextColor(...col);
+    doc.text(String(val), sx+sw/2-1, y+9, {align:'center'});
+    doc.setFont(undefined,'normal'); doc.setFontSize(6.5); doc.setTextColor(...C.textMute);
+    doc.text(lbl.toUpperCase(), sx+sw/2-1, y+13, {align:'center'});
+  });
+  y+=18; divider();
+
+  // ── AVALIAÇÃO TÉCNICA ─────────────────────────────────
   const metEntries = Object.entries(p.metrics||{});
-  const mid = Math.ceil(metEntries.length/2);
-  const colW = CW/2 - 3;
+  if(metEntries.length){
+    secHeader('Avaliação Técnica');
 
-  metEntries.forEach(([m,v],i) => {
-    const col = i < mid ? 0 : 1;
-    const row = col===0 ? i : i-mid;
-    const xBase = col===0 ? M : M+colW+6;
-    const yBase = y + row*10;
+    // Nota geral destacada
+    doc.setFillColor(...C.greenDim);
+    doc.roundedRect(M, y, CW, 10, 2,2,'F');
+    doc.setFillColor(...C.green);
+    doc.roundedRect(M, y, 3, 10, 1,1,'F');
+    doc.setFont(undefined,'bold'); doc.setFontSize(8.5); doc.setTextColor(...C.textDark);
+    doc.text('Nota Geral', M+7, y+6.5);
+    doc.setFont(undefined,'bold'); doc.setFontSize(12); doc.setTextColor(...rColor);
+    doc.text(`${rating}/10`, M+45, y+7);
+    // Barra nota geral
+    const barW2 = CW-70;
+    doc.setFillColor(...C.bgDark); doc.roundedRect(M+60, y+3, barW2, 4, 2,2,'F');
+    doc.setFillColor(...rColor); doc.roundedRect(M+60, y+3, (rating/10)*barW2, 4, 2,2,'F');
+    y+=14;
 
-    newPageIfNeeded(10);
-    doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.muted); doc.setFontSize(7.5);
-    doc.text(m, xBase, yBase+5);
-    doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.acc); doc.setFontSize(8);
-    doc.text(String(v), xBase+colW-8, yBase+5, {align:'right'});
-    // barra
-    doc.setFillColor(...PAL.light); doc.roundedRect(xBase, yBase+6, colW-12, 2.5, 1, 1, 'F');
-    const mColor = v>=7.5?PAL.acc : v>=5?PAL.blue : PAL.red;
-    doc.setFillColor(...mColor); doc.roundedRect(xBase, yBase+6, (v/10)*(colW-12), 2.5, 1, 1, 'F');
-  });
-  y += Math.ceil(metEntries.length/2) * 10 + 4;
+    // Métricas em 2 colunas
+    const half2 = CW/2-3;
+    const mid = Math.ceil(metEntries.length/2);
+    metEntries.forEach(([m,v],i)=>{
+      const col = i<mid?0:1;
+      const row = col===0?i:i-mid;
+      const xB = col===0?M:M+half2+6;
+      const yB = y+row*9;
+      np(9);
 
-  // ── SECÇÃO: ANÁLISE TÁTICA ───────────────────
-  if(p.strengths||p.weaknesses||p.tacticalNotes){
-    sectionTitle('Análise Tática');
-    textBlock('Pontos Fortes', p.strengths);
-    textBlock('Pontos a Melhorar', p.weaknesses);
-    textBlock('Notas Táticas', p.tacticalNotes);
+      const mCol = v>=7.5?C.green : v>=5?C.blue : C.red;
+
+      doc.setFont(undefined,'normal'); doc.setFontSize(7.5); doc.setTextColor(...C.textBody);
+      doc.text(m, xB, yB+5);
+      doc.setFont(undefined,'bold'); doc.setFontSize(8); doc.setTextColor(...mCol);
+      doc.text(String(v), xB+half2-5, yB+5, {align:'right'});
+      // Barra de fundo
+      doc.setFillColor(...C.bgDark);
+      doc.roundedRect(xB, yB+5.5, half2-5, 2, 1,1,'F');
+      // Barra de valor
+      doc.setFillColor(...mCol);
+      doc.roundedRect(xB, yB+5.5, (v/10)*(half2-5), 2, 1,1,'F');
+    });
+    y += mid*9+4;
+    divider();
   }
 
-  // ── SECÇÃO: OBSERVAÇÕES DO SCOUT ────────────
-  if(p.notes){
-    sectionTitle('Observações do Scout');
-    textBlock('', p.notes);
+  // ── ANÁLISE TÁCTICA ───────────────────────────────────
+  if(p.strengths||p.weaknesses||p.tacticalNotes||p.notes){
+    secHeader('Análise Tática e Observações');
+    textSection('Pontos Fortes', p.strengths, C.green);
+    textSection('Pontos a Melhorar', p.weaknesses, C.red);
+    textSection('Notas Táticas', p.tacticalNotes, C.blue);
+    textSection('Observações do Scout', p.notes, C.textMute);
+    if(p.injuries) textSection('Histórico de Lesões', p.injuries, C.amber);
+    divider();
   }
 
-  // ── SECÇÃO: HISTÓRICO DE LESÕES ─────────────
-  if(p.injuries){
-    sectionTitle('Histórico de Lesões');
-    textBlock('', p.injuries);
-  }
+  // ── RELATÓRIOS DE JOGO ────────────────────────────────
+  if(p.reports&&p.reports.length){
+    const sorted=[...p.reports].sort((a,b)=>new Date(b.date)-new Date(a.date));
+    secHeader(`Relatórios de Jogo  (${sorted.length} observações)`);
 
-  // ── SECÇÃO: RELATÓRIOS DE JOGO ──────────────
-  if(p.reports && p.reports.length){
-    const sorted = [...p.reports].sort((a,b)=>new Date(b.date)-new Date(a.date));
-    sectionTitle(`Relatórios de Jogo (${sorted.length} observações)`);
-
-    // Tendência de notas
-    if(sorted.length >= 2){
-      const last5 = sorted.slice(0,5).reverse();
-      const chartW = CW;
-      const chartH = 20;
-      const xStep = chartW / (last5.length-1||1);
-      // eixo
-      doc.setDrawColor(...PAL.light2); doc.setLineWidth(0.3);
-      doc.line(M, y+chartH, M+chartW, y+chartH);
-      // linha de tendência
-      doc.setDrawColor(...PAL.acc); doc.setLineWidth(0.8);
-      last5.forEach((r,i) => {
-        const rx = M + i*xStep;
-        const ry = y + chartH - ((r.rating||0)/10)*chartH;
+    // Gráfico de tendência se >= 2 relatórios
+    if(sorted.length>=2){
+      const last5=sorted.slice(0,5).reverse();
+      const cW2=CW, cH=22;
+      doc.setFillColor(...C.bgLight); doc.roundedRect(M,y,cW2,cH+8,2,2,'F');
+      doc.setFont(undefined,'bold'); doc.setFontSize(6.5); doc.setTextColor(...C.textMute);
+      doc.text('EVOLUÇÃO DA NOTA', M+3, y+5);
+      const step=cW2/(last5.length-1||1);
+      doc.setDrawColor(...C.bgDark); doc.setLineWidth(0.2);
+      doc.line(M+3,y+cH,M+cW2-3,y+cH);
+      doc.setDrawColor(...C.green); doc.setLineWidth(1);
+      last5.forEach((r,i)=>{
+        const rx=M+3+i*(step>0?step:cW2-6);
+        const ry=y+6+cH-((r.rating||0)/10)*(cH-4);
         if(i>0){
-          const prev = last5[i-1];
-          const px2 = M + (i-1)*xStep;
-          const py2 = y + chartH - ((prev.rating||0)/10)*chartH;
-          doc.line(px2, py2, rx, ry);
+          const prev=last5[i-1];
+          const px3=M+3+(i-1)*(step>0?step:cW2-6);
+          const py3=y+6+cH-((prev.rating||0)/10)*(cH-4);
+          doc.setDrawColor(...C.green); doc.setLineWidth(0.8);
+          doc.line(px3,py3,rx,ry);
         }
-        doc.setFillColor(...PAL.acc); doc.circle(rx, ry, 1, 'F');
-        doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.acc); doc.setFontSize(7);
-        doc.text(String(r.rating||'—'), rx, ry-2, {align:'center'});
-        doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.muted); doc.setFontSize(6);
-        doc.text(r.date?r.date.slice(5):'', rx, y+chartH+4, {align:'center'});
+        doc.setFillColor(...C.green); doc.circle(rx,ry,1.2,'F');
+        doc.setFont(undefined,'bold'); doc.setFontSize(6.5); doc.setTextColor(...C.greenMid);
+        doc.text(String(r.rating||''), rx, ry-2, {align:'center'});
+        doc.setFont(undefined,'normal'); doc.setFontSize(5.5); doc.setTextColor(...C.textMute);
+        doc.text(r.date?r.date.slice(5):'', rx, y+cH+6, {align:'center'});
       });
-      y += chartH + 10;
+      y+=cH+12;
     }
 
-    // Detalhe de cada relatório
-    sorted.forEach((r,i) => {
-      newPageIfNeeded(36);
-      const rRating = r.rating||0;
-      const rColor2 = rRating>=7.5?PAL.acc : rRating>=5?PAL.blue : PAL.muted;
+    sorted.forEach((r,idx)=>{
+      np(38);
+      const rr=r.rating||0;
+      const rrc=rr>=7.5?C.green:rr>=5?C.blue:C.textMute;
 
-      // Box do relatório
-      doc.setFillColor(...PAL.light);
-      doc.roundedRect(M, y, CW, 30, 2, 2, 'F');
-      doc.setDrawColor(...PAL.light2); doc.setLineWidth(0.3);
-      doc.roundedRect(M, y, CW, 30, 2, 2, 'S');
+      // Box principal do relatório
+      doc.setFillColor(...C.bgLight);
+      doc.roundedRect(M,y,CW,28,2,2,'F');
+      doc.setFillColor(...rrc);
+      doc.roundedRect(M,y,3,28,1,1,'F');
 
-      // Lado esquerdo — info do jogo
-      doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.acc); doc.setFontSize(7);
-      doc.text((r.competition||'Observação').toUpperCase(), M+4, y+6);
-      doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.text); doc.setFontSize(9);
-      doc.text(`${r.homeTeam||'?'} vs ${r.awayTeam||'?'}`, M+4, y+12);
-      doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.muted); doc.setFontSize(8);
-      const matchInfo = [
-        r.date?fmt(r.date):'',
-        r.score?`${r.score}`:'',
-        r.minutes?`${r.minutes}'`:'',
-      ].filter(Boolean).join('  ·  ');
-      doc.text(matchInfo, M+4, y+18);
+      // Header do relatório
+      doc.setFont(undefined,'bold'); doc.setFontSize(7); doc.setTextColor(...rrc);
+      doc.text((r.competition||'Observação').toUpperCase(), M+6, y+5);
+      doc.setFont(undefined,'bold'); doc.setFontSize(10); doc.setTextColor(...C.textDark);
+      doc.text(`${r.homeTeam||'?'} vs ${r.awayTeam||'?'}`, M+6, y+11);
+      doc.setFont(undefined,'normal'); doc.setFontSize(7.5); doc.setTextColor(...C.textMute);
+      const mInfo=[r.date?fmt(r.date):'', r.score&&`Resultado: ${r.score}`, r.minutes&&`${r.minutes} min`].filter(Boolean).join('  ·  ');
+      doc.text(mInfo, M+6, y+17);
 
-      // Stats do relatório
-      const statY = y+23;
-      const items = [
-        ['Nota',`${r.rating||'—'}/10`],
-        ['Golos',r.goals||0],
-        ['Assists',r.assists||0],
-        ['Físico',r.physical||'—'],
-        ['Mental',r.mental||'—'],
-      ];
-      items.forEach((item,si) => {
-        const sx = M+4 + si*(CW/items.length);
-        doc.setFont(undefined,'bold'); doc.setTextColor(...(si===0?rColor2:PAL.muted)); doc.setFontSize(si===0?9:8);
-        doc.text(String(item[1]), sx, statY);
-        doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.muted); doc.setFontSize(6.5);
-        doc.text(item[0].toUpperCase(), sx, statY+4);
+      // Stats da partida em linha
+      const sitems=[['Nota',`${rr}/10`,rrc],['Golos',r.goals||0,C.green],['Assist.',r.assists||0,C.blue],['Físico',r.physical||'—',C.textBody],['Mental',r.mental||'—',C.purple]];
+      const siw=(CW-16)/sitems.length;
+      sitems.forEach(([sl,sv,sc],si)=>{
+        const sx2=M+6+si*siw;
+        doc.setFont(undefined,'bold'); doc.setFontSize(si===0?9:8); doc.setTextColor(...sc);
+        doc.text(String(sv), sx2, y+24);
+        doc.setFont(undefined,'normal'); doc.setFontSize(6); doc.setTextColor(...C.textMute);
+        doc.text(sl.toUpperCase(), sx2, y+27.5);
       });
 
-      // Badge de nota
-      doc.setFillColor(...rColor2);
-      doc.circle(M+CW-8, y+12, 7, 'F');
-      doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.dark); doc.setFontSize(9);
-      doc.text(String(r.rating||'—'), M+CW-8, y+14.5, {align:'center'});
+      y+=32;
 
-      y += 34;
-
-      // Detalhes em texto se existirem
+      // Observações do relatório
       if(r.strengths||r.weaknesses||r.notes){
-        newPageIfNeeded(20);
+        np(16);
+        doc.setFillColor(...C.white);
         if(r.strengths){
-          doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.acc); doc.setFontSize(7.5);
-          doc.text('▸ Pontos Fortes:', M, y);
-          doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.text); doc.setFontSize(8);
-          const sl = doc.splitTextToSize(r.strengths, CW-30);
-          doc.text(sl, M+35, y);
-          y += sl.length*4.5+2;
+          doc.setFont(undefined,'bold'); doc.setFontSize(7); doc.setTextColor(...C.green);
+          doc.text('▸ Fortes:', M+3, y);
+          doc.setFont(undefined,'normal'); doc.setFontSize(7.5); doc.setTextColor(...C.textBody);
+          const sl2=doc.splitTextToSize(r.strengths, CW-22);
+          doc.text(sl2, M+22, y); y+=sl2.length*4.5+1;
         }
         if(r.weaknesses){
-          newPageIfNeeded(12);
-          doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.red); doc.setFontSize(7.5);
-          doc.text('▸ A Melhorar:', M, y);
-          doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.text); doc.setFontSize(8);
-          const wl = doc.splitTextToSize(r.weaknesses, CW-28);
-          doc.text(wl, M+28, y);
-          y += wl.length*4.5+2;
+          np(12); doc.setFont(undefined,'bold'); doc.setFontSize(7); doc.setTextColor(...C.red);
+          doc.text('▸ Melhorar:', M+3, y);
+          doc.setFont(undefined,'normal'); doc.setFontSize(7.5); doc.setTextColor(...C.textBody);
+          const wl2=doc.splitTextToSize(r.weaknesses, CW-26);
+          doc.text(wl2, M+26, y); y+=wl2.length*4.5+1;
         }
         if(r.notes){
-          newPageIfNeeded(12);
-          doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.muted); doc.setFontSize(7.5);
-          doc.text('▸ Notas:', M, y);
-          doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.text); doc.setFontSize(8);
-          const nl = doc.splitTextToSize(r.notes, CW-20);
-          doc.text(nl, M+20, y);
-          y += nl.length*4.5+2;
+          np(12); doc.setFont(undefined,'bold'); doc.setFontSize(7); doc.setTextColor(...C.textMute);
+          doc.text('▸ Notas:', M+3, y);
+          doc.setFont(undefined,'normal'); doc.setFontSize(7.5); doc.setTextColor(...C.textBody);
+          const nl2=doc.splitTextToSize(r.notes, CW-20);
+          doc.text(nl2, M+20, y); y+=nl2.length*4.5+1;
         }
-        y += 4;
+        y+=3;
       }
+
+      if(idx<sorted.length-1){ doc.setDrawColor(...C.bgDark); doc.setLineWidth(0.2); doc.line(M,y,M+CW,y); y+=3; }
     });
   }
 
-  // ── VÍDEOS ───────────────────────────────────
-  if(p.videos && p.videos.length){
-    sectionTitle('Vídeos & Links');
-    p.videos.forEach(v => {
-      newPageIfNeeded(8);
-      doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.blue); doc.setFontSize(8);
-      doc.text(`▸ ${v.desc||'Vídeo'}`, M, y);
-      doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.muted); doc.setFontSize(7);
-      doc.text(v.url, M+3, y+4);
-      y += 9;
-    });
-  }
-
-  // ── RODAPÉ EM TODAS AS PÁGINAS ───────────────
-  const totalPages = doc.internal.getNumberOfPages();
-  for(let i=1; i<=totalPages; i++){
+  // ── RODAPÉ EM TODAS AS PÁGINAS ────────────────────────
+  const totalPages=doc.internal.getNumberOfPages();
+  for(let i=1;i<=totalPages;i++){
     doc.setPage(i);
-    // Linha rodapé
-    doc.setDrawColor(...PAL.light2); doc.setLineWidth(0.3);
-    doc.line(M, 288, W-M, 288);
-    // Lado esquerdo
-    doc.setFillColor(...PAL.acc); doc.roundedRect(M, 290, 18, 5, 1, 1, 'F');
-    doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.dark); doc.setFontSize(6);
-    doc.text('SCOUTFLOW', M+9, 293.5, {align:'center'});
-    // Info central
-    doc.setFont(undefined,'normal'); doc.setTextColor(...PAL.muted); doc.setFontSize(7);
-    doc.text(`${p.name||'Atleta'} · ${p.position||''} · ${p.club||''}`, W/2, 293.5, {align:'center'});
+    // Barra verde no rodapé
+    doc.setFillColor(...C.green);
+    doc.rect(0,287,W,10,'F');
+    // Logo
+    doc.setFont(undefined,'bold'); doc.setFontSize(7); doc.setTextColor(...C.white);
+    doc.text('SCOUTFLOW PRO', M, 293.5);
+    // Nome do atleta
+    doc.setFont(undefined,'normal'); doc.setFontSize(7); doc.setTextColor(200,240,225);
+    doc.text(`${p.name||''} · ${p.position||''} · ${p.club||''}`, W/2, 293.5, {align:'center'});
     // Paginação
-    doc.setFont(undefined,'bold'); doc.setTextColor(...PAL.muted); doc.setFontSize(7);
+    doc.setFont(undefined,'bold'); doc.setFontSize(7); doc.setTextColor(...C.white);
     doc.text(`${i} / ${totalPages}`, W-M, 293.5, {align:'right'});
   }
 
-  const fileName = `${(p.name||'atleta').replace(/\s+/g,'_')}_ScoutFlow_${new Date().toISOString().slice(0,10)}.pdf`;
-
+  const fileName=`${(p.name||'atleta').replace(/\s+/g,'_')}_ScoutFlow_${new Date().toISOString().slice(0,10)}.pdf`;
   if(openEmail){
-    // Para envio por email: gerar blob e abrir modal
-    const pdfBlob = doc.output('blob');
-    const pdfUrl = URL.createObjectURL(pdfBlob);
-    openEmailModal(p, pdfUrl, fileName, doc);
-  } else {
+    const pdfBlob=doc.output('blob');
+    const pdfUrl=URL.createObjectURL(pdfBlob);
+    openEmailModal(p,pdfUrl,fileName,doc);
+  }else{
     doc.save(fileName);
     toast('PDF exportado!');
   }
 }
+
 
 // ── MODAL DE ENVIO POR EMAIL ──────────────────
 function openEmailModal(player, pdfUrl, fileName, doc) {
@@ -5189,6 +5239,14 @@ const SHADOW_KEY = 'scoutflow_shadow';
 let shadowTeam = JSON.parse(localStorage.getItem(SHADOW_KEY) || '{}');
 // Estrutura: { formation: '433', positions: { GR: playerId, DC1: playerId, ... }, notes: '' }
 
+const FORMATIONS = {
+  '433':  ['GR','DC1','DC2','LD','LE','MC1','MC2','MC3','EXT1','PL','EXT2'],
+  '442':  ['GR','DC1','DC2','LD','LE','MD1','MD2','EXT1','EXT2','PL1','PL2'],
+  '4231': ['GR','DC1','DC2','LD','LE','MD1','MD2','MO1','MO2','MO3','PL'],
+  '352':  ['GR','DC1','DC2','DC3','MC1','MC2','MC3','EXT1','EXT2','PL1','PL2'],
+  '343':  ['GR','DC1','DC2','DC3','EXT1','MC1','MC2','EXT2','PL1','PL2','PL3'],
+  '532':  ['GR','DC1','DC2','DC3','LE','LD','MC1','MC2','MC3','PL1','PL2'],
+};
 
 // Coordenadas Y por linha (% da altura) e X por coluna
 const FORMATION_LAYOUTS = {
