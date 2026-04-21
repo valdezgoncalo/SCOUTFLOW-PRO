@@ -764,7 +764,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
   <div style="width:120px;height:3px;background:#1a2235;border-radius:2px;overflow:hidden;">
     <div style="width:100%;height:100%;background:#00e5a0;border-radius:2px;animation:loadBar 1.2s ease-in-out infinite;"></div>
   </div>
-  <div id="splash-status" style="font-size:11px;color:#4d607a;font-family:'DM Mono',monospace;margin-top:-8px;">A verificar sessão…</div>
+  <div id="splash-status" style="font-size:11px;color:#4d607a;font-family:'DM Mono',monospace;margin-top:-8px;">v4.1 · A iniciar…</div>
   <!-- Botão de escape: aparece após 4s se ainda estiver no splash -->
   <button id="splash-escape" onclick="onUserLoggedOut()"
     style="display:none;margin-top:8px;background:transparent;border:1px solid #4d607a;color:#4d607a;
@@ -5512,16 +5512,9 @@ if (_isRecoveryFlow) {
   }, 3000);
 
 } else {
-  // ─── FLUXO NORMAL ────────────────────────────
-  // Estratégia simples: mostrar login imediatamente após 1.5s
-  // Se onAuthStateChange disparar com sessão válida antes disso, entra automaticamente
-  // Se não disparar, o utilizador faz login manualmente
-
-  setTimeout(() => {
-    if (!_authHandled) {
-      onUserLoggedOut();
-    }
-  }, 1500);
+  // Mostrar login IMEDIATAMENTE — sem esperar pelo Supabase
+  // Se onAuthStateChange trouxer sessão válida, entra automaticamente
+  onUserLoggedOut();
 }
 </script>
 </body>
