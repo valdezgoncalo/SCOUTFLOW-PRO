@@ -877,7 +877,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
     <button class="nav-link" id="nl-evolution" onclick="showView('evolution')">Evolução</button>
     <button class="nav-link" id="nl-analytics" onclick="showView('analytics')">Analytics</button>
     <button class="nav-link" id="nl-compare" onclick="showView('compare')">Comparar</button>
-    <button class="nav-link" id="nl-team" onclick="showView('team')">👥 Equipa</button>
+    <button class="nav-link" id="nl-team" onclick="showView('team')" style="display:none">👥 Equipa</button>
     <button onclick="manualSync()" title="Sincronizar" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;font-family:var(--font-body);font-size:12px;color:var(--text2);transition:all 0.2s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='var(--bg3)'">
       <div id="sync-dot" style="width:8px;height:8px;border-radius:50%;background:#ffbe0b;flex-shrink:0;transition:background 0.3s;"></div>
       <span id="sync-lbl">A carregar…</span>
@@ -896,7 +896,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           O Meu Perfil
         </button>
-        <button class="scout-menu-item" onclick="showView('team');closeScoutMenu()">
+        <button class="scout-menu-item" onclick="showView('team');closeScoutMenu()" style="display:none">
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
           Ver Equipa
         </button>
@@ -2011,15 +2011,23 @@ const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 
 // ─── DETETAR RECOVERY ANTES DE TUDO ──────────
 // Verificar URL ANTES de criar o cliente Supabase
-// O link de recuperação chega como: URL?code=XXXX
-// Quando há ?code= na URL, é SEMPRE um link de recovery (é o único caso onde o Supabase usa ?code=)
-const _hasRecoveryCode = !!new URLSearchParams(window.location.search).get('code');
-const _hasRecoveryHash = window.location.hash.includes('type=recovery') ||
-                         window.location.hash.includes('access_token');
+// O Supabase usa ?code= para dois fluxos diferentes:
+//   - Confirmação de email novo registo: ?code=X&type=signup (ou sem type)
+//   - Recuperação de password:           ?code=X&type=recovery
+// Só activamos o flow de recovery quando o type é explicitamente 'recovery'
+const _urlParams = new URLSearchParams(window.location.search);
+const _urlType   = _urlParams.get('type');
+const _hasRecoveryCode = !!_urlParams.get('code') && _urlType === 'recovery';
+const _hasRecoveryHash = window.location.hash.includes('type=recovery');
+// Confirmação de email: tem ?code= mas type != 'recovery' — tratar como login normal
+const _isEmailConfirmation = !!_urlParams.get('code') && (_urlType === 'signup' || _urlType === 'email' || (!_urlType && !_hasRecoveryHash));
 
 // Guardar em sessionStorage para sobreviver ao redirect interno do Supabase
 if (_hasRecoveryCode || _hasRecoveryHash) {
   sessionStorage.setItem('sf_recovery', '1');
+} else if (_isEmailConfirmation) {
+  // Confirmação de email — limpar qualquer flag de recovery que possa existir
+  sessionStorage.removeItem('sf_recovery');
 }
 const _isRecoveryFlow = sessionStorage.getItem('sf_recovery') === '1';
 
@@ -2644,6 +2652,7 @@ async function checkAccess(user) {
   // Admin tem sempre acesso
   if (user.email === ADMIN_EMAIL) {
     showAdminMenu();
+    applyPlanUI('clube'); // admin vê tudo
     return true;
   }
   try {
@@ -2662,27 +2671,29 @@ async function checkAccess(user) {
     // Verificar estado
     if (sub.status === 'active' && sub.paid_until) {
       if (new Date(sub.paid_until) > new Date()) {
-        // Pago e válido — verificar limite de dispositivos se for clube
+        // Pago e válido — guardar plano no currentUser
+        if (currentUser) currentUser.plan = sub.plan || 'scout';
+        // Verificar limite de dispositivos se for clube
         const deviceCheck = await checkDeviceLimit(user.id, sub.plan);
         if (!deviceCheck.allowed) {
           showDeviceLimitScreen(deviceCheck.devices);
           return false;
         }
-        // Registar este dispositivo
         await registerDevice(user.id);
+        applyPlanUI(sub.plan);
         return true;
       }
-      // Expirou — actualizar estado
       await sb.from('subscriptions').update({ status: 'expired' }).eq('user_id', user.id);
     }
 
     if (sub.status === 'trial') {
       const daysLeft = Math.ceil((new Date(sub.trial_end) - new Date()) / (1000 * 60 * 60 * 24));
       if (daysLeft > 0) {
+        if (currentUser) currentUser.plan = 'trial';
+        applyPlanUI('trial');
         showTrialBanner(daysLeft);
         return true;
       }
-      // Trial expirado
       await sb.from('subscriptions').update({ status: 'expired' }).eq('user_id', user.id);
     }
 
@@ -2740,6 +2751,20 @@ function showDeviceLimitScreen(devices) {
 function showAdminMenu() {
   const el = document.getElementById('admin-menu-item');
   if (el) el.style.display = 'block';
+}
+
+// Aplica visibilidade de UI consoante o plano do utilizador
+function applyPlanUI(plan) {
+  const isClube = plan === 'clube';
+  const isAdmin = currentUser?.email === ADMIN_EMAIL;
+
+  // Botão Equipa — só visível para Clube e Admin
+  const nlTeam = document.getElementById('nl-team');
+  if (nlTeam) nlTeam.style.display = (isClube || isAdmin) ? '' : 'none';
+
+  // Item "Ver Equipa" no menu do avatar
+  const menuTeamBtn = document.querySelector('.scout-menu-item[onclick*="team"]');
+  if (menuTeamBtn) menuTeamBtn.style.display = (isClube || isAdmin) ? '' : 'none';
 }
 
 function showTrialBanner(daysLeft) {
