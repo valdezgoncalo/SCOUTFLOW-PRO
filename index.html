@@ -3986,8 +3986,8 @@ function exportPDF(openEmail=false){
     acc2:   [0,184,122],
     dark:   [10,14,26],
     dark2:  [17,24,39],
-    text:   [232,237,245],
-    muted:  [136,150,176],
+    text:   [36,44,62],
+    muted:  [102,116,143],
     light:  [26,34,53],
     light2: [30,45,69],
     white:  [255,255,255],
@@ -4095,7 +4095,7 @@ function exportPDF(openEmail=false){
     const tw = doc.getTextWidth(pill) + 6;
     doc.setFillColor(...PAL.light2);
     doc.roundedRect(px, 33, tw, 6, 1.5, 1.5, 'F');
-    doc.setTextColor(...PAL.text); doc.setFontSize(7); doc.setFont(undefined,'normal');
+    doc.setTextColor(...PAL.white); doc.setFontSize(7); doc.setFont(undefined,'normal');
     doc.text(pill, px+3, 37.5);
     px += tw + 3;
   });
@@ -5477,4 +5477,3 @@ if (_isRecoveryFlow) {
 </script>
 </body>
 </html>
-
