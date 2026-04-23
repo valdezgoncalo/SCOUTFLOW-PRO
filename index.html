@@ -3006,38 +3006,48 @@ async function loadAdminUsers() {
   const in30 = new Date(now.getTime() + 30*24*60*60*1000);
 
   try {
-    // Buscar subscriptions + access_codes em paralelo
-    const [{ data: subs }, { data: codes }] = await Promise.all([
+    // Buscar scouts (nomes/emails), subscriptions e access_codes em paralelo
+    const [{ data: scouts }, { data: subs }, { data: codes }] = await Promise.all([
+      sb.from('scouts').select('id, email, nome').order('created_at', { ascending: false }),
       sb.from('subscriptions').select('*').order('created_at', { ascending: false }),
       sb.from('access_codes').select('*').order('created_at', { ascending: false }),
     ]);
 
-    const subsByUser = {};
-    (subs||[]).forEach(s => { subsByUser[s.user_id] = s; });
+    // Mapa de scout por user_id → nome/email
+    const scoutMap = {};
+    (scouts||[]).forEach(s => { scoutMap[s.id] = s; });
 
-    // Construir info por utilizador a partir dos códigos usados
+    // Mapa de código por user_id
     const usedCodes = (codes||[]).filter(c => c.used_by);
-    const userMap = {};
+    const codeMap = {};
     usedCodes.forEach(c => {
-      if(!userMap[c.used_by]) userMap[c.used_by] = { codes: [], notes: c.notes||'' };
-      userMap[c.used_by].codes.push(c);
-      if(c.notes) userMap[c.used_by].notes = c.notes;
+      if(!codeMap[c.used_by]) codeMap[c.used_by] = [];
+      codeMap[c.used_by].push(c);
     });
 
-    // Categorizar
+    // Categorizar subscriptions
     const trials=[], actives=[], expiring=[];
 
     (subs||[]).forEach(s => {
-      const userCodes = userMap[s.user_id]?.codes || [];
-      const latestCode = userCodes.sort((a,b)=>new Date(b.used_at)-new Date(a.used_at))[0];
+      const scout = scoutMap[s.user_id];
+      const userCodes = (codeMap[s.user_id]||[]).sort((a,b)=>new Date(b.used_at||0)-new Date(a.used_at||0));
+      const latestCode = userCodes[0];
+
+      // Nome: primeiro das notas do código, depois do perfil, depois email
+      const notesName = latestCode?.notes?.split('—')[0]?.trim() || '';
+      const displayName = notesName || scout?.nome || scout?.email || 'Utilizador';
+      const email = scout?.email || '';
+
       const info = {
-        user_id: s.user_id,
-        plan: s.plan || latestCode?.plan || 'scout',
-        notes: userMap[s.user_id]?.notes || '—',
-        status: s.status,
-        trial_end: s.trial_end,
+        user_id:    s.user_id,
+        plan:       s.plan || latestCode?.plan || 'scout',
+        displayName,
+        email,
+        notes:      latestCode?.notes || '',
+        status:     s.status,
+        trial_end:  s.trial_end,
         paid_until: s.paid_until || latestCode?.expires_at,
-        code: latestCode?.code || '—',
+        code:       latestCode?.code || null,
       };
 
       if(s.status === 'trial' && s.trial_end && new Date(s.trial_end) > now) {
@@ -3050,17 +3060,16 @@ async function loadAdminUsers() {
 
     // KPIs
     const PLAN_PRICE = { scout: 35, clube: 129.99 };
-    const revenue = actives.reduce((s,u) => s + (PLAN_PRICE[u.plan]||35)/12, 0);
+    const revenue = [...actives, ...expiring].reduce((acc,u) => acc + (PLAN_PRICE[u.plan]||35)/12, 0);
 
     document.getElementById('admin-stat-active').textContent   = actives.length + expiring.length;
     document.getElementById('admin-stat-trials').textContent   = trials.length;
     document.getElementById('admin-stat-expiring').textContent = expiring.length;
     document.getElementById('admin-stat-revenue').textContent  = `€${revenue.toFixed(0)}`;
 
-    // Render listas
-    renderAdminUserList('admin-trials-list',   'admin-trials-count',   trials,   'trial');
-    renderAdminUserList('admin-expiring-list',  'admin-expiring-count', expiring, 'expiring');
-    renderAdminUserList('admin-active-list',    'admin-active-count',   actives,  'active');
+    renderAdminUserList('admin-trials-list',  'admin-trials-count',   trials,   'trial');
+    renderAdminUserList('admin-expiring-list','admin-expiring-count',  expiring, 'expiring');
+    renderAdminUserList('admin-active-list',  'admin-active-count',    actives,  'active');
 
   } catch(e) {
     console.warn('loadAdminUsers:', e.message);
@@ -3088,49 +3097,47 @@ function renderAdminUserList(listId, countId, users, type) {
   const PLAN_PRICE  = { scout:'€35/ano', clube:'€129.99/ano' };
 
   el.innerHTML = users.map(u => {
-    // Data relevante e dias restantes
-    const dateStr = type==='trial' ? u.trial_end : u.paid_until;
+    // Dias restantes
+    const dateStr  = type==='trial' ? u.trial_end : u.paid_until;
     const daysLeft = dateStr ? Math.ceil((new Date(dateStr)-now)/(1000*60*60*24)) : null;
-    const daysColor = daysLeft===null?'var(--text3)':daysLeft<=7?'var(--red)':daysLeft<=30?'var(--amber)':'var(--accent)';
-    const daysText = daysLeft===null?'sem data':daysLeft<=0?'Expirado':`${daysLeft}d restantes`;
+    const daysColor = daysLeft===null?'var(--text3)':daysLeft<=7?'var(--red)':daysLeft<=14?'var(--amber)':'var(--accent)';
+    const daysText  = daysLeft===null?'sem data':daysLeft<=0?'Expirado':`${daysLeft}d restantes`;
 
-    // Extrair nome/contacto das notas
-    const noteParts = u.notes.split('—').map(s=>s.trim());
-    const displayName = noteParts[0] || 'Utilizador';
-    const payInfo = noteParts.slice(1).join(' — ') || '';
+    // Nome a mostrar — vem já resolvido do loadAdminUsers
+    const displayName = u.displayName || u.email || 'Utilizador';
+    // Info extra das notas (ex: "€35 pago MB Way — 912 345 678")
+    const noteParts = (u.notes||'').split('—').map(s=>s.trim()).filter(Boolean);
+    const payInfo   = noteParts.length > 1 ? noteParts.slice(1).join(' · ') : '';
 
-    // Mensagem WhatsApp pré-escrita
+    // Mensagem WhatsApp
     const waMsg = type==='trial'
-      ? `Olá ${displayName}! O teu trial do ScoutFlow Pro termina em ${daysLeft} dia${daysLeft!==1?'s':''}. Renova agora por ${PLAN_PRICE[u.plan]||'€35/ano'} e continua a gerir os teus atletas sem interrupções 🏆`
-      : `Olá ${displayName}! O teu acesso ao ScoutFlow Pro expira em ${daysLeft} dia${daysLeft!==1?'s':''}. Renova já para não perder o acesso aos teus dados 📋`;
+      ? `Olá ${displayName}! 👋\n\nO teu trial do ScoutFlow Pro termina em ${daysLeft} dia${daysLeft!==1?'s':''}.\n\nRenova agora por ${PLAN_PRICE[u.plan]||'€35/ano'} e continua a gerir os teus atletas sem interrupções 🏆\n\nwww.scoutflowpro.pt`
+      : `Olá ${displayName}! 👋\n\nO teu acesso ao ScoutFlow Pro expira em ${daysLeft} dia${daysLeft!==1?'s':''}.\n\nRenova já para não perderes o acesso aos teus dados 📋\n\nwww.scoutflowpro.pt`;
     const waLink = `https://wa.me/?text=${encodeURIComponent(waMsg)}`;
 
     return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
-      <!-- Avatar -->
-      <div style="width:36px;height:36px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--accent);flex-shrink:0">
+      <div style="width:38px;height:38px;border-radius:50%;background:var(--bg3);border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--accent);flex-shrink:0">
         ${displayName.slice(0,2).toUpperCase()}
       </div>
-      <!-- Info -->
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;flex-wrap:wrap">
           <span style="font-size:13px;font-weight:700;color:var(--text)">${displayName}</span>
-          <span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:8px;background:var(--accent-dim);color:var(--accent)">${PLAN_LABELS[u.plan]||u.plan}</span>
+          <span style="font-size:10px;font-weight:700;padding:1px 8px;border-radius:8px;background:var(--accent-dim);color:var(--accent)">${PLAN_LABELS[u.plan]||u.plan}</span>
+          ${type==='trial'?`<span style="font-size:10px;padding:1px 8px;border-radius:8px;background:var(--amber-dim);color:var(--amber)">Trial</span>`:''}
         </div>
-        ${payInfo ? `<div style="font-size:11px;color:var(--text3);margin-bottom:2px">${payInfo}</div>` : ''}
-        <div style="font-size:11px;color:var(--text3)">
-          Código: <span style="font-family:var(--font-mono);color:var(--text2)">${u.code}</span>
-          · <span style="color:${daysColor};font-weight:600">${daysText}</span>
-          ${dateStr ? `· até ${new Date(dateStr).toLocaleDateString('pt-PT')}` : ''}
+        ${u.email && u.email!==displayName ? `<div style="font-size:11px;color:var(--text3);margin-bottom:1px">${u.email}</div>` : ''}
+        ${payInfo ? `<div style="font-size:11px;color:var(--text3);margin-bottom:1px">${payInfo}</div>` : ''}
+        <div style="font-size:11px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          ${u.code ? `<span style="font-family:var(--font-mono);color:var(--text3);font-size:10px">${u.code}</span><span style="color:var(--text3)">·</span>` : ''}
+          <span style="color:${daysColor};font-weight:700">${daysText}</span>
+          ${dateStr ? `<span style="color:var(--text3)">· até ${new Date(dateStr).toLocaleDateString('pt-PT')}</span>` : ''}
         </div>
       </div>
-      <!-- Acções -->
-      <div style="display:flex;gap:6px;flex-shrink:0">
-        <a href="${waLink}" target="_blank"
-          style="background:rgba(37,211,102,0.12);border:1px solid rgba(37,211,102,0.3);border-radius:var(--radius-sm);padding:6px 10px;cursor:pointer;color:#25D366;font-family:var(--font-body);font-size:11px;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:4px"
-          title="Enviar mensagem WhatsApp">
-          💬 WhatsApp
-        </a>
-      </div>
+      <a href="${waLink}" target="_blank"
+        style="background:rgba(37,211,102,0.12);border:1px solid rgba(37,211,102,0.3);border-radius:var(--radius-sm);padding:6px 10px;color:#25D366;font-family:var(--font-body);font-size:11px;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:4px;flex-shrink:0;white-space:nowrap"
+        title="Enviar WhatsApp">
+        💬 WhatsApp
+      </a>
     </div>`;
   }).join('');
 }
