@@ -1671,38 +1671,78 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
   <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;">
     <div>
       <div class="page-title">PAINEL <span>ADMIN</span></div>
-      <div class="page-sub">Gestão de acessos e códigos de activação · só visível para ti</div>
+      <div class="page-sub">Dashboard de negócio · gestão de acessos · só visível para ti</div>
     </div>
-    <button class="btn-primary" onclick="openGenerateCode()">
-      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-      Gerar Código
-    </button>
+    <div style="display:flex;gap:8px">
+      <button class="btn-ghost" onclick="loadAdminDashboard()" style="font-size:12px">↻ Actualizar</button>
+      <button class="btn-primary" onclick="openGenerateCode()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        Gerar Código
+      </button>
+    </div>
   </div>
 
-  <!-- Stats rápidas -->
+  <!-- KPIs negócio -->
   <div class="stats-row" style="margin-bottom:20px">
-    <div class="stat-box"><div class="stat-val green" id="admin-stat-active">0</div><div class="stat-lbl">Activos</div></div>
-    <div class="stat-box"><div class="stat-val amber" id="admin-stat-unused">0</div><div class="stat-lbl">Por usar</div></div>
-    <div class="stat-box"><div class="stat-val red" id="admin-stat-expired">0</div><div class="stat-lbl">Expirados</div></div>
-    <div class="stat-box"><div class="stat-val blue" id="admin-stat-total">0</div><div class="stat-lbl">Total gerados</div></div>
+    <div class="stat-box"><div class="stat-val green" id="admin-stat-active">0</div><div class="stat-lbl">Pagos Activos</div></div>
+    <div class="stat-box"><div class="stat-val amber" id="admin-stat-trials">0</div><div class="stat-lbl">Em Trial</div></div>
+    <div class="stat-box"><div class="stat-val red" id="admin-stat-expiring">0</div><div class="stat-lbl">A Expirar (30d)</div></div>
+    <div class="stat-box"><div class="stat-val blue" id="admin-stat-revenue">€0</div><div class="stat-lbl">Receita Est./mês</div></div>
   </div>
 
-  <!-- Lista de códigos -->
-  <div class="card card-inner">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <div class="section-title" style="margin:0;padding:0">Códigos de Acesso</div>
-      <div style="display:flex;gap:8px">
-        <select id="admin-filter" onchange="loadAdminCodes()" style="font-size:12px;padding:6px 10px;width:auto">
-          <option value="all">Todos</option>
-          <option value="unused">Por usar</option>
-          <option value="active">Activos</option>
-          <option value="expired">Expirados</option>
-        </select>
-        <button class="btn-ghost" onclick="loadAdminCodes()" style="font-size:12px;padding:6px 12px">↻ Actualizar</button>
+  <!-- Tabs -->
+  <div style="display:flex;gap:4px;margin-bottom:16px;background:var(--bg3);padding:4px;border-radius:var(--radius-sm);width:fit-content">
+    <button id="admin-tab-users" onclick="adminTab('users')" style="padding:6px 16px;border-radius:6px;border:none;cursor:pointer;font-family:var(--font-body);font-size:12px;font-weight:700;background:var(--accent);color:var(--bg)">Utilizadores</button>
+    <button id="admin-tab-codes" onclick="adminTab('codes')" style="padding:6px 16px;border-radius:6px;border:none;cursor:pointer;font-family:var(--font-body);font-size:12px;font-weight:700;background:transparent;color:var(--text2)">Códigos</button>
+  </div>
+
+  <!-- TAB: Utilizadores -->
+  <div id="admin-panel-users">
+    <!-- Trials activos -->
+    <div class="card card-inner" style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div class="section-title" style="margin:0;padding:0;color:var(--amber)">⏳ Trials Activos</div>
+        <span id="admin-trials-count" style="font-size:11px;color:var(--text3)">a carregar…</span>
       </div>
+      <div id="admin-trials-list"><p style="color:var(--text3);font-size:12px;text-align:center;padding:16px">A carregar…</p></div>
     </div>
-    <div id="admin-codes-list">
-      <p style="color:var(--text3);text-align:center;padding:30px">A carregar...</p>
+
+    <!-- A expirar em 30 dias -->
+    <div class="card card-inner" style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div class="section-title" style="margin:0;padding:0;color:var(--red)">🔴 A Expirar em 30 Dias</div>
+        <span id="admin-expiring-count" style="font-size:11px;color:var(--text3)">a carregar…</span>
+      </div>
+      <div id="admin-expiring-list"><p style="color:var(--text3);font-size:12px;text-align:center;padding:16px">A carregar…</p></div>
+    </div>
+
+    <!-- Pagos activos -->
+    <div class="card card-inner">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div class="section-title" style="margin:0;padding:0;color:var(--accent)">✅ Pagos Activos</div>
+        <span id="admin-active-count" style="font-size:11px;color:var(--text3)">a carregar…</span>
+      </div>
+      <div id="admin-active-list"><p style="color:var(--text3);font-size:12px;text-align:center;padding:16px">A carregar…</p></div>
+    </div>
+  </div>
+
+  <!-- TAB: Códigos -->
+  <div id="admin-panel-codes" style="display:none">
+    <div class="card card-inner">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div class="section-title" style="margin:0;padding:0">Códigos de Acesso</div>
+        <div style="display:flex;gap:8px">
+          <select id="admin-filter" onchange="loadAdminCodes()" style="font-size:12px;padding:6px 10px;width:auto">
+            <option value="all">Todos</option>
+            <option value="unused">Por usar</option>
+            <option value="active">Activos</option>
+            <option value="expired">Expirados</option>
+          </select>
+        </div>
+      </div>
+      <div id="admin-codes-list">
+        <p style="color:var(--text3);text-align:center;padding:30px">A carregar...</p>
+      </div>
     </div>
   </div>
 </div>
@@ -2937,6 +2977,164 @@ function copyGeneratedCode() {
   });
 }
 
+// ═══════════════════════════════════════════════
+// ADMIN DASHBOARD
+// ═══════════════════════════════════════════════
+
+function adminTab(tab) {
+  document.getElementById('admin-panel-users').style.display = tab==='users'?'block':'none';
+  document.getElementById('admin-panel-codes').style.display = tab==='codes'?'block':'none';
+  const btnU = document.getElementById('admin-tab-users');
+  const btnC = document.getElementById('admin-tab-codes');
+  if(tab==='users'){
+    btnU.style.background='var(--accent)'; btnU.style.color='var(--bg)';
+    btnC.style.background='transparent';   btnC.style.color='var(--text2)';
+  } else {
+    btnC.style.background='var(--accent)'; btnC.style.color='var(--bg)';
+    btnU.style.background='transparent';   btnU.style.color='var(--text2)';
+    loadAdminCodes();
+  }
+}
+
+async function loadAdminDashboard() {
+  // Carregar ambas as tabs em paralelo
+  await Promise.all([loadAdminUsers(), loadAdminCodes()]);
+}
+
+async function loadAdminUsers() {
+  const now = new Date();
+  const in30 = new Date(now.getTime() + 30*24*60*60*1000);
+
+  try {
+    // Buscar subscriptions + access_codes em paralelo
+    const [{ data: subs }, { data: codes }] = await Promise.all([
+      sb.from('subscriptions').select('*').order('created_at', { ascending: false }),
+      sb.from('access_codes').select('*').order('created_at', { ascending: false }),
+    ]);
+
+    const subsByUser = {};
+    (subs||[]).forEach(s => { subsByUser[s.user_id] = s; });
+
+    // Construir info por utilizador a partir dos códigos usados
+    const usedCodes = (codes||[]).filter(c => c.used_by);
+    const userMap = {};
+    usedCodes.forEach(c => {
+      if(!userMap[c.used_by]) userMap[c.used_by] = { codes: [], notes: c.notes||'' };
+      userMap[c.used_by].codes.push(c);
+      if(c.notes) userMap[c.used_by].notes = c.notes;
+    });
+
+    // Categorizar
+    const trials=[], actives=[], expiring=[];
+
+    (subs||[]).forEach(s => {
+      const userCodes = userMap[s.user_id]?.codes || [];
+      const latestCode = userCodes.sort((a,b)=>new Date(b.used_at)-new Date(a.used_at))[0];
+      const info = {
+        user_id: s.user_id,
+        plan: s.plan || latestCode?.plan || 'scout',
+        notes: userMap[s.user_id]?.notes || '—',
+        status: s.status,
+        trial_end: s.trial_end,
+        paid_until: s.paid_until || latestCode?.expires_at,
+        code: latestCode?.code || '—',
+      };
+
+      if(s.status === 'trial' && s.trial_end && new Date(s.trial_end) > now) {
+        trials.push(info);
+      } else if(s.status === 'active' && info.paid_until && new Date(info.paid_until) > now) {
+        if(new Date(info.paid_until) <= in30) expiring.push(info);
+        else actives.push(info);
+      }
+    });
+
+    // KPIs
+    const PLAN_PRICE = { scout: 35, clube: 129.99 };
+    const revenue = actives.reduce((s,u) => s + (PLAN_PRICE[u.plan]||35)/12, 0);
+
+    document.getElementById('admin-stat-active').textContent   = actives.length + expiring.length;
+    document.getElementById('admin-stat-trials').textContent   = trials.length;
+    document.getElementById('admin-stat-expiring').textContent = expiring.length;
+    document.getElementById('admin-stat-revenue').textContent  = `€${revenue.toFixed(0)}`;
+
+    // Render listas
+    renderAdminUserList('admin-trials-list',   'admin-trials-count',   trials,   'trial');
+    renderAdminUserList('admin-expiring-list',  'admin-expiring-count', expiring, 'expiring');
+    renderAdminUserList('admin-active-list',    'admin-active-count',   actives,  'active');
+
+  } catch(e) {
+    console.warn('loadAdminUsers:', e.message);
+    ['admin-trials-list','admin-expiring-list','admin-active-list'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.innerHTML=`<p style="color:var(--red);font-size:12px;padding:10px">Erro: ${e.message}</p>`;
+    });
+  }
+}
+
+function renderAdminUserList(listId, countId, users, type) {
+  const el = document.getElementById(listId);
+  const countEl = document.getElementById(countId);
+  if(!el) return;
+
+  if(countEl) countEl.textContent = `${users.length} utilizador${users.length!==1?'es':''}`;
+
+  if(!users.length){
+    el.innerHTML = '<p style="color:var(--text3);font-size:12px;text-align:center;padding:12px">Nenhum.</p>';
+    return;
+  }
+
+  const now = new Date();
+  const PLAN_LABELS = { scout:'Scout', clube:'Clube' };
+  const PLAN_PRICE  = { scout:'€35/ano', clube:'€129.99/ano' };
+
+  el.innerHTML = users.map(u => {
+    // Data relevante e dias restantes
+    const dateStr = type==='trial' ? u.trial_end : u.paid_until;
+    const daysLeft = dateStr ? Math.ceil((new Date(dateStr)-now)/(1000*60*60*24)) : null;
+    const daysColor = daysLeft===null?'var(--text3)':daysLeft<=7?'var(--red)':daysLeft<=30?'var(--amber)':'var(--accent)';
+    const daysText = daysLeft===null?'sem data':daysLeft<=0?'Expirado':`${daysLeft}d restantes`;
+
+    // Extrair nome/contacto das notas
+    const noteParts = u.notes.split('—').map(s=>s.trim());
+    const displayName = noteParts[0] || 'Utilizador';
+    const payInfo = noteParts.slice(1).join(' — ') || '';
+
+    // Mensagem WhatsApp pré-escrita
+    const waMsg = type==='trial'
+      ? `Olá ${displayName}! O teu trial do ScoutFlow Pro termina em ${daysLeft} dia${daysLeft!==1?'s':''}. Renova agora por ${PLAN_PRICE[u.plan]||'€35/ano'} e continua a gerir os teus atletas sem interrupções 🏆`
+      : `Olá ${displayName}! O teu acesso ao ScoutFlow Pro expira em ${daysLeft} dia${daysLeft!==1?'s':''}. Renova já para não perder o acesso aos teus dados 📋`;
+    const waLink = `https://wa.me/?text=${encodeURIComponent(waMsg)}`;
+
+    return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <!-- Avatar -->
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--accent);flex-shrink:0">
+        ${displayName.slice(0,2).toUpperCase()}
+      </div>
+      <!-- Info -->
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;flex-wrap:wrap">
+          <span style="font-size:13px;font-weight:700;color:var(--text)">${displayName}</span>
+          <span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:8px;background:var(--accent-dim);color:var(--accent)">${PLAN_LABELS[u.plan]||u.plan}</span>
+        </div>
+        ${payInfo ? `<div style="font-size:11px;color:var(--text3);margin-bottom:2px">${payInfo}</div>` : ''}
+        <div style="font-size:11px;color:var(--text3)">
+          Código: <span style="font-family:var(--font-mono);color:var(--text2)">${u.code}</span>
+          · <span style="color:${daysColor};font-weight:600">${daysText}</span>
+          ${dateStr ? `· até ${new Date(dateStr).toLocaleDateString('pt-PT')}` : ''}
+        </div>
+      </div>
+      <!-- Acções -->
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <a href="${waLink}" target="_blank"
+          style="background:rgba(37,211,102,0.12);border:1px solid rgba(37,211,102,0.3);border-radius:var(--radius-sm);padding:6px 10px;cursor:pointer;color:#25D366;font-family:var(--font-body);font-size:11px;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:4px"
+          title="Enviar mensagem WhatsApp">
+          💬 WhatsApp
+        </a>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 async function loadAdminCodes() {
   const list   = document.getElementById('admin-codes-list');
   const filter = document.getElementById('admin-filter')?.value || 'all';
@@ -2945,26 +3143,17 @@ async function loadAdminCodes() {
   list.innerHTML = '<p style="color:var(--text3);text-align:center;padding:20px">A carregar…</p>';
 
   try {
-    let query = sb.from('access_codes').select('*').order('created_at', { ascending: false });
-
-    const { data, error } = await query;
+    const { data, error } = await sb.from('access_codes').select('*').order('created_at', { ascending: false });
     if (error) throw error;
 
     const now = new Date();
-
-    // Calcular stats
     let active=0, unused=0, expired=0;
     data.forEach(c => {
       if (!c.used_by) unused++;
       else if (c.expires_at && new Date(c.expires_at) > now) active++;
       else expired++;
     });
-    document.getElementById('admin-stat-active').textContent  = active;
-    document.getElementById('admin-stat-unused').textContent  = unused;
-    document.getElementById('admin-stat-expired').textContent = expired;
-    document.getElementById('admin-stat-total').textContent   = data.length;
 
-    // Filtrar
     const filtered = data.filter(c => {
       if (filter === 'unused')  return !c.used_by;
       if (filter === 'active')  return c.used_by && c.expires_at && new Date(c.expires_at) > now;
@@ -2977,22 +3166,19 @@ async function loadAdminCodes() {
       return;
     }
 
-    const PLAN_LABELS = { scout: '👤 Scout', clube: '🏟 Clube (5 scouts)' };
+    const PLAN_LABELS = { scout: '👤 Scout', clube: '🏟 Clube' };
 
     list.innerHTML = filtered.map(c => {
       const isUsed    = !!c.used_by;
       const isActive  = isUsed && c.expires_at && new Date(c.expires_at) > now;
-      const isExpired = isUsed && (!c.expires_at || new Date(c.expires_at) <= now);
-
       const statusColor = !isUsed ? 'var(--amber)' : isActive ? 'var(--accent)' : 'var(--text3)';
       const statusLabel = !isUsed ? 'Por usar' : isActive ? 'Activo' : 'Expirado';
-      const expiryText  = isUsed && c.expires_at
-        ? `até ${new Date(c.expires_at).toLocaleDateString('pt-PT')}` : '';
+      const expiryText  = isUsed && c.expires_at ? `até ${new Date(c.expires_at).toLocaleDateString('pt-PT')}` : '';
 
       return `<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">
         <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
-            <span style="font-family:var(--font-mono);font-size:14px;font-weight:700;color:var(--text);letter-spacing:1px">${c.code}</span>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap">
+            <span style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--text);letter-spacing:1px">${c.code}</span>
             <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;background:${statusColor}22;color:${statusColor}">${statusLabel}</span>
             <span style="font-size:10px;color:var(--text3)">${PLAN_LABELS[c.plan]||c.plan} · ${c.duration_days}d ${expiryText}</span>
           </div>
@@ -3002,11 +3188,10 @@ async function loadAdminCodes() {
         <div style="display:flex;gap:6px;flex-shrink:0">
           ${c.plan === 'clube' && c.used_by ? `
             <button onclick="showDevicesForAccount('${c.used_by}','${c.notes||'clube'}')"
-              title="Ver dispositivos" class="btn-ghost"
-              style="font-size:11px;padding:6px 10px;color:var(--blue);border-color:rgba(77,159,255,0.3)">
+              class="btn-ghost" style="font-size:11px;padding:6px 10px;color:var(--blue);border-color:rgba(77,159,255,0.3)">
               📱 Dispositivos
             </button>` : ''}
-          <button onclick="copyCode('${c.code}')" title="Copiar código"
+          <button onclick="copyCode('${c.code}')"
             style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:6px 10px;cursor:pointer;color:var(--text2);font-family:var(--font-body);font-size:11px">
             📋 Copiar
           </button>
@@ -3327,7 +3512,7 @@ function showView(name){
   if(name==='evolution') initEvolution();
   if(name==='team')      loadTeam();
   if(name==='profile')   loadProfile();
-  if(name==='admin')     loadAdminCodes();
+  if(name==='admin')     loadAdminDashboard();
   if(name==='shadow')    loadShadowTeam();
 }
 
