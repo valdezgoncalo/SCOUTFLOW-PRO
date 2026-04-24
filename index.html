@@ -23,6 +23,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 :root {
@@ -753,9 +755,24 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
 
   /* Radar chart height */
   #radarChart { max-height: 240px !important; }
+
+  /* Mapa mobile */
+  #map-layout { grid-template-columns: 1fr !important; }
+  #scout-map { height: 320px !important; }
 }
+/* ── LEAFLET POPUP TEMA ESCURO ── */
+.sfp-popup .leaflet-popup-content-wrapper {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
+  padding: 0 !important;
+  border-radius: 10px !important;
+  overflow: hidden;
+}
+.sfp-popup .leaflet-popup-content { margin: 0 !important; }
+.sfp-popup .leaflet-popup-tip { background: #141b2d !important; }
+.leaflet-container { background: #0a0e1a !important; }
 </style>
-</head>
 <body>
 <!-- ── SPLASH LOADING (PWA) ── -->
 <div id="splash-screen" style="position:fixed;inset:0;z-index:600;background:#0a0e1a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;">
@@ -877,6 +894,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
     <button class="nav-link" id="nl-evolution" onclick="showView('evolution')">Evolução</button>
     <button class="nav-link" id="nl-analytics" onclick="showView('analytics')">Analytics</button>
     <button class="nav-link" id="nl-compare" onclick="showView('compare')">Comparar</button>
+    <button class="nav-link" id="nl-map" onclick="showView('map')">🗺️ Mapa</button>
     <button class="nav-link" id="nl-team" onclick="showView('team')" style="display:none">👥 Equipa</button>
     <button onclick="manualSync()" title="Sincronizar" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;font-family:var(--font-body);font-size:12px;color:var(--text2);transition:all 0.2s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='var(--bg3)'">
       <div id="sync-dot" style="width:8px;height:8px;border-radius:50%;background:#ffbe0b;flex-shrink:0;transition:background 0.3s;"></div>
@@ -1900,6 +1918,87 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
   </div>
 </div>
 
+<!-- ═══════════════ MAPA DE SCOUTING ═══════════════ -->
+<div class="view" id="view-map">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px;">
+    <div>
+      <div class="page-title">MAPA DE <span>SCOUTING</span></div>
+      <div class="page-sub">Distribuição geográfica dos atletas observados</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <select id="map-filter-pos" onchange="renderMap()" style="font-size:12px;padding:6px 10px;width:auto">
+        <option value="">Todas as posições</option>
+        <option>GR</option><option>DC</option><option>LD</option><option>LE</option>
+        <option>MC</option><option>MD</option><option>MO</option><option>EXT</option><option>PL</option>
+      </select>
+      <select id="map-filter-tag" onchange="renderMap()" style="font-size:12px;padding:6px 10px;width:auto">
+        <option value="">Todas as tags</option>
+        <option value="promessa">Promessas</option>
+        <option value="urgente">Urgentes</option>
+        <option value="monitorar">Monitorar</option>
+        <option value="contactado">Contactados</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Stats rápidas do mapa -->
+  <div class="stats-row" style="margin-bottom:16px">
+    <div class="stat-box"><div class="stat-val green" id="map-stat-total">0</div><div class="stat-lbl">Atletas</div></div>
+    <div class="stat-box"><div class="stat-val blue" id="map-stat-paises">0</div><div class="stat-lbl">Países</div></div>
+    <div class="stat-box"><div class="stat-val amber" id="map-stat-promessas">0</div><div class="stat-lbl">Promessas</div></div>
+    <div class="stat-box"><div class="stat-val purple" id="map-stat-avg">—</div><div class="stat-lbl">Nota Média</div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 300px;gap:16px" id="map-layout">
+    <!-- Mapa -->
+    <div class="card" style="overflow:hidden;padding:0">
+      <div id="scout-map" style="height:480px;width:100%;border-radius:var(--radius)"></div>
+    </div>
+
+    <!-- Painel lateral: top países + lista -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <!-- Top países -->
+      <div class="card card-inner">
+        <div class="section-title">Top Países</div>
+        <div id="map-country-list" style="display:flex;flex-direction:column;gap:8px;margin-top:8px"></div>
+      </div>
+      <!-- Atletas sem localização -->
+      <div class="card card-inner" id="map-no-location-card" style="display:none">
+        <div class="section-title" style="color:var(--amber)">⚠️ Sem País Definido</div>
+        <div id="map-no-location-list" style="margin-top:8px;font-size:12px;color:var(--text3)"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ ONBOARDING ═══════════════ -->
+<div id="onboarding-overlay" style="display:none;position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:24px;width:100%;max-width:420px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,0.6)">
+    <!-- Progress bar -->
+    <div style="height:3px;background:var(--bg3)">
+      <div id="ob-progress" style="height:100%;background:var(--accent);transition:width 0.3s;width:25%"></div>
+    </div>
+    <!-- Content -->
+    <div style="padding:32px 28px">
+      <div id="ob-step-icon" style="font-size:40px;margin-bottom:16px;text-align:center">👋</div>
+      <div id="ob-step-title" style="font-family:var(--font-display);font-size:22px;letter-spacing:2px;margin-bottom:8px;text-align:center">BEM-VINDO!</div>
+      <div id="ob-step-desc" style="font-size:13px;color:var(--text2);line-height:1.7;text-align:center;margin-bottom:24px"></div>
+      <!-- Indicadores de passo -->
+      <div style="display:flex;justify-content:center;gap:8px;margin-bottom:24px">
+        <div class="ob-dot" id="ob-dot-0" style="width:8px;height:8px;border-radius:50%;background:var(--accent)"></div>
+        <div class="ob-dot" id="ob-dot-1" style="width:8px;height:8px;border-radius:50%;background:var(--bg3)"></div>
+        <div class="ob-dot" id="ob-dot-2" style="width:8px;height:8px;border-radius:50%;background:var(--bg3)"></div>
+        <div class="ob-dot" id="ob-dot-3" style="width:8px;height:8px;border-radius:50%;background:var(--bg3)"></div>
+      </div>
+      <!-- Botões -->
+      <div style="display:flex;gap:10px">
+        <button id="ob-skip" onclick="skipOnboarding()" class="btn-ghost" style="flex:1;justify-content:center">Saltar</button>
+        <button id="ob-next" onclick="nextOnboardingStep()" class="btn-primary" style="flex:2;justify-content:center">Continuar →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </main>
 </div>
 
@@ -1969,6 +2068,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
     <button class="mnav-btn" id="mnl-analytics" onclick="showView('analytics')">
       <div class="mnav-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></div>
       Stats
+    </button>
+    <button class="mnav-btn" id="mnl-map" onclick="showView('map')">
+      <div class="mnav-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></div>
+      Mapa
     </button>
     <button class="mnav-btn" id="mnl-save" onclick="savePlayer()" style="display:none;color:var(--accent)">
       <div class="mnav-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></div>
@@ -2139,7 +2242,9 @@ async function onUserLoggedIn(user) {
       document.getElementById('main-app').style.display = 'none';
     }
     setSyncStatus('syncing');
-    loadFromCloud().catch(e => { console.warn('loadFromCloud:', e.message); setSyncStatus('error'); });
+    loadFromCloud()
+      .then(() => { setTimeout(() => showOnboarding(), 800); })
+      .catch(e => { console.warn('loadFromCloud:', e.message); setSyncStatus('error'); setTimeout(() => showOnboarding(), 800); });
   }, 100);
 }
 
@@ -3291,6 +3396,355 @@ async function revokeAllDevices(userId) {
   } catch(e) { toast('Erro: ' + e.message, 'error'); }
 }
 
+// ═══════════════════════════════════════════════
+// MAPA DE SCOUTING
+// ═══════════════════════════════════════════════
+
+// Coordenadas por país (os mais comuns no futebol europeu)
+const COUNTRY_COORDS = {
+  'Portugal':         [39.5, -8.0],
+  'Espanha':          [40.4, -3.7],
+  'França':           [46.2, 2.2],
+  'Alemanha':         [51.2, 10.4],
+  'Itália':           [41.9, 12.5],
+  'Inglaterra':       [52.4, -1.5],
+  'Brasil':           [-14.2, -51.9],
+  'Argentina':        [-38.4, -63.6],
+  'Holanda':          [52.1, 5.3],
+  'Bélgica':          [50.5, 4.5],
+  'Croácia':          [45.1, 15.2],
+  'Sérvia':           [44.0, 21.0],
+  'Senegal':          [14.5, -14.4],
+  'Marrocos':         [31.8, -7.1],
+  'Costa do Marfim':  [7.5, -5.5],
+  'Nigéria':          [9.0, 8.7],
+  'Gana':             [7.9, -1.0],
+  'Angola':           [-11.2, 17.9],
+  'Moçambique':       [-18.7, 35.5],
+  'Cabo Verde':       [16.0, -24.0],
+  'Uruguai':          [-32.5, -55.8],
+  'Colômbia':         [4.6, -74.1],
+  'Chile':            [-35.7, -71.5],
+  'México':           [23.6, -102.6],
+  'USA':              [37.1, -95.7],
+  'Suécia':           [60.1, 18.6],
+  'Noruega':          [60.5, 8.5],
+  'Dinamarca':        [56.3, 9.5],
+  'Polónia':          [51.9, 19.1],
+  'Ucrânia':          [48.4, 31.2],
+  'Turquia':          [38.9, 35.2],
+  'Grécia':           [39.1, 21.8],
+  'Suíça':            [46.8, 8.2],
+  'Áustria':          [47.5, 14.6],
+  'Escócia':          [56.5, -4.2],
+  'Irlanda':          [53.4, -8.2],
+  'República Checa':  [49.8, 15.5],
+  'Eslováquia':       [48.7, 19.7],
+  'Hungria':          [47.2, 19.5],
+  'Romênia':          [45.9, 24.9],
+  'Bulgária':         [42.7, 25.5],
+  'Rússia':           [61.5, 90.0],
+  'Japão':            [36.2, 138.3],
+  'Coreia do Sul':    [35.9, 127.8],
+  'Austrália':        [-25.3, 133.8],
+};
+
+let _leafletMap = null;
+let _mapMarkers = [];
+
+function normalizeCountry(str) {
+  if (!str) return null;
+  const s = str.trim();
+  // Tentar match directo
+  if (COUNTRY_COORDS[s]) return s;
+  // Tentar case-insensitive
+  const lower = s.toLowerCase();
+  const found = Object.keys(COUNTRY_COORDS).find(k => k.toLowerCase() === lower);
+  if (found) return found;
+  // Aliases comuns
+  const aliases = {
+    'brasil': 'Brasil', 'brazil': 'Brasil',
+    'spain': 'Espanha', 'españa': 'Espanha',
+    'france': 'França',
+    'germany': 'Alemanha', 'deutschland': 'Alemanha',
+    'italy': 'Itália', 'italia': 'Itália',
+    'england': 'Inglaterra', 'uk': 'Inglaterra',
+    'netherlands': 'Holanda', 'holland': 'Holanda',
+    'belgium': 'Bélgica',
+    'portugal': 'Portugal',
+    'argentina': 'Argentina',
+    'morocco': 'Marrocos',
+    'nigeria': 'Nigéria',
+    'ghana': 'Gana',
+    'senegal': 'Senegal',
+    'colombia': 'Colômbia',
+    'sweden': 'Suécia', 'suecia': 'Suécia',
+    'norway': 'Noruega',
+    'denmark': 'Dinamarca',
+    'poland': 'Polónia',
+    'turkey': 'Turquia', 'türkiye': 'Turquia',
+    'croatia': 'Croácia', 'hrvatska': 'Croácia',
+    'serbia': 'Sérvia',
+    'usa': 'USA', 'united states': 'USA', 'estados unidos': 'USA',
+    'japan': 'Japão',
+    'south korea': 'Coreia do Sul', 'corea del sur': 'Coreia do Sul',
+    'australia': 'Austrália',
+    'russia': 'Rússia', 'rusia': 'Rússia',
+    'switzerland': 'Suíça', 'suiza': 'Suíça',
+    'austria': 'Áustria',
+    'greece': 'Grécia', 'grecia': 'Grécia',
+    'ukraine': 'Ucrânia',
+    'czech republic': 'República Checa', 'czechia': 'República Checa',
+    'hungary': 'Hungria', 'hungria': 'Hungria',
+    'romania': 'Romênia', 'rumania': 'Romênia',
+    'bulgaria': 'Bulgária',
+    'scotland': 'Escócia',
+    'ireland': 'Irlanda',
+    'cabo verde': 'Cabo Verde', 'cape verde': 'Cabo Verde',
+    'angola': 'Angola',
+    'mozambique': 'Moçambique', 'mozambico': 'Moçambique',
+    'ivory coast': 'Costa do Marfim', "cote d'ivoire": 'Costa do Marfim',
+  };
+  return aliases[lower] || null;
+}
+
+function initMap() {
+  if (_leafletMap) return; // já inicializado
+  if (typeof L === 'undefined') { toast('Mapa não disponível — verifica a ligação', 'error'); return; }
+
+  _leafletMap = L.map('scout-map', {
+    center: [20, 10],
+    zoom: 2,
+    zoomControl: true,
+    attributionControl: false,
+  });
+
+  // Tile escuro que combina com o tema da app
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 18,
+  }).addTo(_leafletMap);
+
+  // Aguardar um tick para o mapa renderizar correctamente
+  setTimeout(() => _leafletMap.invalidateSize(), 100);
+}
+
+function renderMap() {
+  if (!_leafletMap) initMap();
+  if (!_leafletMap) return;
+
+  const posFilter = document.getElementById('map-filter-pos')?.value || '';
+  const tagFilter = document.getElementById('map-filter-tag')?.value || '';
+
+  // Filtrar atletas
+  let filtered = [...players].filter(p => p.name);
+  if (posFilter) filtered = filtered.filter(p => p.position === posFilter || p.position2 === posFilter);
+  if (tagFilter) filtered = filtered.filter(p => p.tag === tagFilter);
+
+  // Remover marcadores anteriores
+  _mapMarkers.forEach(m => m.remove());
+  _mapMarkers = [];
+
+  // Agrupar por país normalizado
+  const countryGroups = {};
+  const noLocation = [];
+
+  filtered.forEach(p => {
+    const country = normalizeCountry(p.nationality);
+    if (country) {
+      if (!countryGroups[country]) countryGroups[country] = [];
+      countryGroups[country].push(p);
+    } else {
+      noLocation.push(p);
+    }
+  });
+
+  const TAG_COLORS = {
+    promessa:'#ffbe0b', urgente:'#ff4d6d', monitorar:'#4d9fff',
+    contactado:'#00e5a0', descartado:'#8896b0'
+  };
+
+  // Criar marcadores por país
+  Object.entries(countryGroups).forEach(([country, athleteList]) => {
+    const coords = COUNTRY_COORDS[country];
+    if (!coords) return;
+
+    const count = athleteList.length;
+    const avgR = round1(athleteList.reduce((s, p) => s + calcRating(p.metrics||{}), 0) / count);
+    const rColor = avgR >= 7.5 ? '#00e5a0' : avgR >= 5 ? '#ffbe0b' : '#8896b0';
+    const size = Math.min(20 + count * 8, 56);
+
+    // Ícone personalizado
+    const icon = L.divIcon({
+      html: `<div style="
+        width:${size}px;height:${size}px;border-radius:50%;
+        background:${rColor};border:3px solid rgba(255,255,255,0.9);
+        display:flex;align-items:center;justify-content:center;
+        font-weight:900;font-size:${count>9?11:13}px;color:#0a0e1a;
+        box-shadow:0 4px 16px rgba(0,0,0,0.5);
+        cursor:pointer;transition:transform 0.15s;
+        font-family:-apple-system,sans-serif;
+      ">${count}</div>`,
+      className: '',
+      iconSize: [size, size],
+      iconAnchor: [size/2, size/2],
+    });
+
+    // Popup com lista de atletas
+    const athleteHTML = athleteList.slice(0,8).map(p => {
+      const r = calcRating(p.metrics||{});
+      const rc = r>=7.5?'#00e5a0':r>=5?'#ffbe0b':'#8896b0';
+      const tagC = TAG_COLORS[p.tag] || '#8896b0';
+      return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.08)">
+        <span style="font-size:11px;font-weight:700;color:${rc};min-width:24px">${r||'—'}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div>
+          <div style="font-size:10px;color:#8896b0">${p.position||'—'} · ${p.club||'Ag. Livre'}</div>
+        </div>
+        ${p.tag?`<span style="font-size:9px;font-weight:700;color:${tagC};background:${tagC}22;padding:1px 6px;border-radius:6px;white-space:nowrap">${p.tag}</span>`:''}
+      </div>`;
+    }).join('');
+
+    const moreText = athleteList.length > 8 ? `<div style="font-size:10px;color:#8896b0;text-align:center;margin-top:6px">+${athleteList.length-8} mais</div>` : '';
+
+    const popup = L.popup({
+      className: 'sfp-popup',
+      maxWidth: 260,
+      minWidth: 220,
+    }).setContent(`
+      <div style="background:#141b2d;border-radius:10px;overflow:hidden">
+        <div style="background:${rColor};padding:8px 12px;display:flex;align-items:center;justify-content:space-between">
+          <div style="font-weight:900;font-size:13px;color:#0a0e1a">${country.toUpperCase()}</div>
+          <div style="font-size:11px;font-weight:700;color:#0a0e1a">${count} atleta${count!==1?'s':''} · Média ${avgR}</div>
+        </div>
+        <div style="padding:8px 12px">${athleteHTML}${moreText}</div>
+      </div>
+    `);
+
+    const marker = L.marker(coords, { icon }).addTo(_leafletMap).bindPopup(popup);
+    _mapMarkers.push(marker);
+  });
+
+  // Stats
+  const allRatings = filtered.filter(p=>calcRating(p.metrics||{})>0).map(p=>calcRating(p.metrics||{}));
+  const avgAll = allRatings.length ? round1(allRatings.reduce((a,b)=>a+b,0)/allRatings.length) : null;
+
+  document.getElementById('map-stat-total').textContent     = filtered.length;
+  document.getElementById('map-stat-paises').textContent    = Object.keys(countryGroups).length;
+  document.getElementById('map-stat-promessas').textContent = filtered.filter(p=>p.tag==='promessa').length;
+  document.getElementById('map-stat-avg').textContent       = avgAll || '—';
+
+  // Top países
+  const sortedCountries = Object.entries(countryGroups)
+    .sort((a,b) => b[1].length - a[1].length)
+    .slice(0, 7);
+  const maxCount = sortedCountries[0]?.[1]?.length || 1;
+
+  document.getElementById('map-country-list').innerHTML = sortedCountries.map(([country, list]) => {
+    const pct = Math.round((list.length / maxCount) * 100);
+    return `<div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+        <span style="font-size:12px;font-weight:600;color:var(--text)">${country}</span>
+        <span style="font-size:12px;font-weight:700;color:var(--accent)">${list.length}</span>
+      </div>
+      <div style="height:4px;background:var(--bg3);border-radius:2px">
+        <div style="height:100%;width:${pct}%;background:var(--accent);border-radius:2px;transition:width 0.4s"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Sem localização
+  const noLocCard = document.getElementById('map-no-location-card');
+  if (noLocation.length) {
+    noLocCard.style.display = 'block';
+    document.getElementById('map-no-location-list').innerHTML =
+      noLocation.slice(0,10).map(p=>`<div style="padding:3px 0">${p.name} <span style="color:var(--text3)">(${p.position||'—'})</span></div>`).join('') +
+      (noLocation.length>10 ? `<div style="margin-top:4px">+${noLocation.length-10} mais sem país definido</div>` : '');
+  } else {
+    noLocCard.style.display = 'none';
+  }
+
+  // Ajustar zoom para os marcadores existentes
+  if (_mapMarkers.length > 0) {
+    const group = L.featureGroup(_mapMarkers);
+    _leafletMap.fitBounds(group.getBounds().pad(0.2), { maxZoom: 6 });
+  }
+}
+
+// ═══════════════════════════════════════════════
+// ONBOARDING
+// ═══════════════════════════════════════════════
+
+const ONBOARDING_KEY = 'sfp_onboarded_v1';
+let _obStep = 0;
+
+const OB_STEPS = [
+  {
+    icon: '👋',
+    title: 'BEM-VINDO AO SCOUTFLOW PRO!',
+    desc: `Tens <strong>14 dias gratuitos</strong> para explorar todas as funcionalidades. Deixa-nos mostrar o essencial em 4 passos rápidos.`,
+  },
+  {
+    icon: '⚽',
+    title: 'ADICIONA OS TEUS ATLETAS',
+    desc: `Clica em <strong>"+ Novo Atleta"</strong> para registar jogadores. Adiciona foto, posição, métricas e relatórios de jogo. O PDF é gerado automaticamente.`,
+  },
+  {
+    icon: '⚡',
+    title: 'SHADOW TEAM',
+    desc: `Constrói o teu <strong>onze ideal</strong> com os atletas da tua base de dados. Escolhe a formação e coloca cada jogador na posição ideal.`,
+  },
+  {
+    icon: '🗺️',
+    title: 'MAPA DE SCOUTING',
+    desc: `Visualiza os teus atletas <strong>no mapa mundial</strong>. Basta definir a nacionalidade de cada atleta e o mapa actualiza automaticamente.`,
+  },
+];
+
+function showOnboarding() {
+  if (localStorage.getItem(ONBOARDING_KEY)) return; // já viu
+  _obStep = 0;
+  updateOnboardingStep();
+  document.getElementById('onboarding-overlay').style.display = 'flex';
+}
+
+function updateOnboardingStep() {
+  const step = OB_STEPS[_obStep];
+  document.getElementById('ob-step-icon').textContent = step.icon;
+  document.getElementById('ob-step-title').textContent = step.title;
+  document.getElementById('ob-step-desc').innerHTML = step.desc;
+  document.getElementById('ob-progress').style.width = `${((_obStep+1)/OB_STEPS.length)*100}%`;
+
+  // Dots
+  OB_STEPS.forEach((_, i) => {
+    const dot = document.getElementById(`ob-dot-${i}`);
+    if (dot) dot.style.background = i === _obStep ? 'var(--accent)' : 'var(--bg3)';
+  });
+
+  // Último passo
+  const btn = document.getElementById('ob-next');
+  if (_obStep === OB_STEPS.length - 1) {
+    btn.textContent = '🚀 Começar!';
+    document.getElementById('ob-skip').style.display = 'none';
+  } else {
+    btn.textContent = 'Continuar →';
+    document.getElementById('ob-skip').style.display = 'flex';
+  }
+}
+
+function nextOnboardingStep() {
+  if (_obStep < OB_STEPS.length - 1) {
+    _obStep++;
+    updateOnboardingStep();
+  } else {
+    skipOnboarding();
+  }
+}
+
+function skipOnboarding() {
+  localStorage.setItem(ONBOARDING_KEY, '1');
+  document.getElementById('onboarding-overlay').style.display = 'none';
+}
+
 async function loadTeam() {
   const c = document.getElementById('team-list');
   if (!c) return;
@@ -3521,6 +3975,7 @@ function showView(name){
   if(name==='profile')   loadProfile();
   if(name==='admin')     loadAdminDashboard();
   if(name==='shadow')    loadShadowTeam();
+  if(name==='map')       { initMap(); renderMap(); }
 }
 
 function goHome(){ showView('home'); window.scrollTo(0,0); }
