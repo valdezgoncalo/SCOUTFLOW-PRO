@@ -1171,7 +1171,57 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
               <option value="Ambidestro">Ambidestro</option>
             </select>
           </div>
-          <div class="field"><label>Nacionalidade</label><input type="text" id="p-nation" placeholder="Ex: Portuguesa"></div>
+          <div class="field">
+            <label>Nacionalidade</label>
+            <select id="p-nation">
+              <option value="">— Seleccionar —</option>
+              <option value="Portugal">🇵🇹 Portugal</option>
+              <option value="Espanha">🇪🇸 Espanha</option>
+              <option value="França">🇫🇷 França</option>
+              <option value="Alemanha">🇩🇪 Alemanha</option>
+              <option value="Itália">🇮🇹 Itália</option>
+              <option value="Inglaterra">🏴󠁧󠁢󠁥󠁮󠁧󠁿 Inglaterra</option>
+              <option value="Holanda">🇳🇱 Holanda</option>
+              <option value="Bélgica">🇧🇪 Bélgica</option>
+              <option value="Suíça">🇨🇭 Suíça</option>
+              <option value="Áustria">🇦🇹 Áustria</option>
+              <option value="Suécia">🇸🇪 Suécia</option>
+              <option value="Noruega">🇳🇴 Noruega</option>
+              <option value="Dinamarca">🇩🇰 Dinamarca</option>
+              <option value="Escócia">🏴󠁧󠁢󠁳󠁣󠁴󠁿 Escócia</option>
+              <option value="Irlanda">🇮🇪 Irlanda</option>
+              <option value="Polónia">🇵🇱 Polónia</option>
+              <option value="República Checa">🇨🇿 República Checa</option>
+              <option value="Eslováquia">🇸🇰 Eslováquia</option>
+              <option value="Hungria">🇭🇺 Hungria</option>
+              <option value="Romênia">🇷🇴 Romênia</option>
+              <option value="Bulgária">🇧🇬 Bulgária</option>
+              <option value="Croácia">🇭🇷 Croácia</option>
+              <option value="Sérvia">🇷🇸 Sérvia</option>
+              <option value="Grécia">🇬🇷 Grécia</option>
+              <option value="Turquia">🇹🇷 Turquia</option>
+              <option value="Ucrânia">🇺🇦 Ucrânia</option>
+              <option value="Rússia">🇷🇺 Rússia</option>
+              <option value="Brasil">🇧🇷 Brasil</option>
+              <option value="Argentina">🇦🇷 Argentina</option>
+              <option value="Uruguai">🇺🇾 Uruguai</option>
+              <option value="Colômbia">🇨🇴 Colômbia</option>
+              <option value="Chile">🇨🇱 Chile</option>
+              <option value="México">🇲🇽 México</option>
+              <option value="USA">🇺🇸 USA</option>
+              <option value="Senegal">🇸🇳 Senegal</option>
+              <option value="Marrocos">🇲🇦 Marrocos</option>
+              <option value="Nigéria">🇳🇬 Nigéria</option>
+              <option value="Gana">🇬🇭 Gana</option>
+              <option value="Costa do Marfim">🇨🇮 Costa do Marfim</option>
+              <option value="Angola">🇦🇴 Angola</option>
+              <option value="Cabo Verde">🇨🇻 Cabo Verde</option>
+              <option value="Moçambique">🇲🇿 Moçambique</option>
+              <option value="Japão">🇯🇵 Japão</option>
+              <option value="Coreia do Sul">🇰🇷 Coreia do Sul</option>
+              <option value="Austrália">🇦🇺 Austrália</option>
+            </select>
+          </div>
         </div>
         <div class="form-row" style="margin-bottom:12px">
           <div class="field">
@@ -4100,7 +4150,10 @@ function editPlayer(id){
   const set = (id,val)=>{ const el=document.getElementById(id); if(el) el.value=val||''; };
   set('p-name',p.name); set('p-club',p.club); set('p-age',p.age); set('p-height',p.height);
   set('p-weight',p.weight); set('p-pos',p.position); set('p-pos2',p.position2);
-  set('p-foot',p.foot); set('p-nation',p.nationality);
+  set('p-foot',p.foot);
+  // Normalizar nacionalidade para o novo select
+  const normNat = normalizeCountry(p.nationality) || p.nationality || '';
+  set('p-nation', normNat);
   set('p-tag',p.tag); set('p-neg',p.negotiation);
   set('p-contract',p.contractEnd); set('p-clause',p.releaseClause); set('p-market',p.marketValue);
   set('p-games',p.games); set('p-mins',p.minutes); set('p-goals',p.goals);
