@@ -305,13 +305,30 @@ input[type="range"]:focus { box-shadow: none; border: none; }
 .pitch-svg { width: 100%; display: block; }
 .pitch-instructions { text-align: center; font-size: 12px; color: var(--text3); padding: 8px 0; }
 
-.hotspot {
-  cursor: pointer; transition: all 0.2s;
+/* Mapa de calor — zonas rectangulares */
+.heat-zone {
+  cursor: pointer;
+  transition: all 0.25s ease;
 }
-.hotspot circle { transition: all 0.2s; }
-.hotspot:hover circle { opacity: 0.9; transform: scale(1.2); transform-origin: center; }
-.hotspot.on circle { fill: var(--accent) !important; filter: drop-shadow(0 0 6px rgba(0,229,160,0.8)); }
-.hotspot.on text { fill: var(--bg) !important; }
+.heat-zone rect {
+  transition: all 0.25s ease;
+}
+.heat-zone:hover rect {
+  opacity: 0.85;
+  filter: brightness(1.2);
+}
+/* Labels das zonas do campo */
+.pitch-zone-label {
+  font-size: 9px;
+  font-weight: 700;
+  fill: rgba(255,255,255,0.35);
+  text-anchor: middle;
+  dominant-baseline: middle;
+  pointer-events: none;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
 
 /* ── REPORT ── */
 .report-form { display: flex; flex-direction: column; gap: 16px; }
@@ -1171,57 +1188,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
               <option value="Ambidestro">Ambidestro</option>
             </select>
           </div>
-          <div class="field">
-            <label>Nacionalidade</label>
-            <select id="p-nation">
-              <option value="">— Seleccionar —</option>
-              <option value="Portugal">🇵🇹 Portugal</option>
-              <option value="Espanha">🇪🇸 Espanha</option>
-              <option value="França">🇫🇷 França</option>
-              <option value="Alemanha">🇩🇪 Alemanha</option>
-              <option value="Itália">🇮🇹 Itália</option>
-              <option value="Inglaterra">🏴󠁧󠁢󠁥󠁮󠁧󠁿 Inglaterra</option>
-              <option value="Holanda">🇳🇱 Holanda</option>
-              <option value="Bélgica">🇧🇪 Bélgica</option>
-              <option value="Suíça">🇨🇭 Suíça</option>
-              <option value="Áustria">🇦🇹 Áustria</option>
-              <option value="Suécia">🇸🇪 Suécia</option>
-              <option value="Noruega">🇳🇴 Noruega</option>
-              <option value="Dinamarca">🇩🇰 Dinamarca</option>
-              <option value="Escócia">🏴󠁧󠁢󠁳󠁣󠁴󠁿 Escócia</option>
-              <option value="Irlanda">🇮🇪 Irlanda</option>
-              <option value="Polónia">🇵🇱 Polónia</option>
-              <option value="República Checa">🇨🇿 República Checa</option>
-              <option value="Eslováquia">🇸🇰 Eslováquia</option>
-              <option value="Hungria">🇭🇺 Hungria</option>
-              <option value="Romênia">🇷🇴 Romênia</option>
-              <option value="Bulgária">🇧🇬 Bulgária</option>
-              <option value="Croácia">🇭🇷 Croácia</option>
-              <option value="Sérvia">🇷🇸 Sérvia</option>
-              <option value="Grécia">🇬🇷 Grécia</option>
-              <option value="Turquia">🇹🇷 Turquia</option>
-              <option value="Ucrânia">🇺🇦 Ucrânia</option>
-              <option value="Rússia">🇷🇺 Rússia</option>
-              <option value="Brasil">🇧🇷 Brasil</option>
-              <option value="Argentina">🇦🇷 Argentina</option>
-              <option value="Uruguai">🇺🇾 Uruguai</option>
-              <option value="Colômbia">🇨🇴 Colômbia</option>
-              <option value="Chile">🇨🇱 Chile</option>
-              <option value="México">🇲🇽 México</option>
-              <option value="USA">🇺🇸 USA</option>
-              <option value="Senegal">🇸🇳 Senegal</option>
-              <option value="Marrocos">🇲🇦 Marrocos</option>
-              <option value="Nigéria">🇳🇬 Nigéria</option>
-              <option value="Gana">🇬🇭 Gana</option>
-              <option value="Costa do Marfim">🇨🇮 Costa do Marfim</option>
-              <option value="Angola">🇦🇴 Angola</option>
-              <option value="Cabo Verde">🇨🇻 Cabo Verde</option>
-              <option value="Moçambique">🇲🇿 Moçambique</option>
-              <option value="Japão">🇯🇵 Japão</option>
-              <option value="Coreia do Sul">🇰🇷 Coreia do Sul</option>
-              <option value="Austrália">🇦🇺 Austrália</option>
-            </select>
-          </div>
+          <div class="field"><label>Nacionalidade</label><input type="text" id="p-nation" placeholder="Ex: Portuguesa"></div>
         </div>
         <div class="form-row" style="margin-bottom:12px">
           <div class="field">
@@ -1350,44 +1317,51 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
         <p style="font-size:12px; color:var(--text3); margin-bottom:12px;">Clique nas zonas onde o atleta atua / é mais eficaz</p>
         <div class="pitch-wrap">
           <svg id="pitch-svg" class="pitch-svg" viewBox="0 0 340 510" xmlns="http://www.w3.org/2000/svg">
-            <!-- Relva -->
             <defs>
-              <pattern id="grass" x="0" y="0" width="340" height="51" patternUnits="userSpaceOnUse">
-                <rect width="340" height="51" fill="#1a2e1a"/>
-                <rect width="340" height="51" fill="#1f351f" y="51"/>
+              <!-- Gradientes do mapa de calor -->
+              <radialGradient id="heat-low"    cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ffeb3b" stop-opacity="0.9"/><stop offset="100%" stop-color="#ff9800" stop-opacity="0.6"/></radialGradient>
+              <radialGradient id="heat-med"    cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ff5722" stop-opacity="0.95"/><stop offset="100%" stop-color="#e91e63" stop-opacity="0.7"/></radialGradient>
+              <radialGradient id="heat-high"   cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ff1744" stop-opacity="1"/><stop offset="100%" stop-color="#d50000" stop-opacity="0.85"/></radialGradient>
+              <filter id="heat-blur"><feGaussianBlur stdDeviation="3" result="blur"/></filter>
+              <!-- Padrão de relva alternada -->
+              <pattern id="grass2" x="0" y="0" width="340" height="42.5" patternUnits="userSpaceOnUse">
+                <rect width="340" height="42.5" fill="#162a14"/>
+                <rect y="21.25" width="340" height="21.25" fill="#193017"/>
               </pattern>
             </defs>
-            <rect width="340" height="510" fill="url(#grass)" rx="4"/>
+            <!-- Relva de fundo -->
+            <rect width="340" height="510" fill="url(#grass2)" rx="6"/>
             <!-- Linhas do campo -->
-            <g stroke="#4a7c59" stroke-width="1.5" fill="none" opacity="0.7">
-              <!-- Linha de meio campo -->
+            <g stroke="rgba(255,255,255,0.18)" stroke-width="1.2" fill="none">
+              <rect x="20" y="20" width="300" height="470" rx="2"/>
               <line x1="20" y1="255" x2="320" y2="255"/>
-              <!-- Círculo central -->
               <circle cx="170" cy="255" r="45"/>
-              <circle cx="170" cy="255" r="2" fill="#4a7c59"/>
-              <!-- Área de baliza (ataque - topo) -->
+              <circle cx="170" cy="255" r="2.5" fill="rgba(255,255,255,0.3)" stroke="none"/>
               <rect x="105" y="20" width="130" height="55"/>
-              <rect x="130" y="20" width="80" height="25"/>
-              <!-- Área de baliza (defesa - fundo) -->
+              <rect x="130" y="20" width="80" height="26"/>
               <rect x="105" y="435" width="130" height="55"/>
-              <rect x="130" y="465" width="80" height="25"/>
-              <!-- Linhas de fundo e laterais -->
-              <rect x="20" y="20" width="300" height="470"/>
-              <!-- Ponto de penalty topo -->
-              <circle cx="170" cy="95" r="2" fill="#4a7c59"/>
-              <!-- Arco penalty topo -->
-              <path d="M 125 75 A 45 45 0 0 1 215 75" fill="none"/>
-              <!-- Ponto de penalty baixo -->
-              <circle cx="170" cy="415" r="2" fill="#4a7c59"/>
-              <!-- Arco penalty baixo -->
-              <path d="M 125 435 A 45 45 0 0 0 215 435" fill="none"/>
+              <rect x="130" y="464" width="80" height="26"/>
+              <circle cx="170" cy="95" r="2.5" fill="rgba(255,255,255,0.3)" stroke="none"/>
+              <path d="M 128 75 A 45 45 0 0 1 212 75"/>
+              <circle cx="170" cy="415" r="2.5" fill="rgba(255,255,255,0.3)" stroke="none"/>
+              <path d="M 128 435 A 45 45 0 0 0 212 435"/>
             </g>
-            <!-- Hotspots - Grid 5x6 -->
-            <!-- Row 1 (attack) -->
+            <!-- Zonas do mapa de calor (preenchidas via JS) -->
+            <g id="heat-zones-blur" opacity="0.6" filter="url(#heat-blur)"></g>
+            <g id="heat-zones-sharp"></g>
+            <!-- Labels das zonas -->
+            <g id="heat-zone-labels"></g>
+            <!-- Zona interactiva invisível por cima -->
             <g id="hotspots"></g>
           </svg>
         </div>
-        <div class="pitch-instructions">Zonas selecionadas: <strong id="zones-count" style="color:var(--accent)">0</strong></div>
+        <div class="pitch-instructions" style="display:flex;justify-content:center;align-items:center;gap:16px;padding:10px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <div style="width:32px;height:8px;border-radius:4px;background:linear-gradient(90deg,rgba(255,235,59,0.8),rgba(255,87,34,0.9),rgba(255,23,68,1))"></div>
+            <span style="font-size:11px;color:var(--text3)">Intensidade de presença</span>
+          </div>
+          <span style="font-size:12px;color:var(--text2)">Zonas activas: <strong id="zones-count" style="color:var(--accent)">0</strong></span>
+        </div>
       </div>
       <div class="card card-inner">
         <div class="section-title">Posição no Sistema</div>
@@ -4150,10 +4124,7 @@ function editPlayer(id){
   const set = (id,val)=>{ const el=document.getElementById(id); if(el) el.value=val||''; };
   set('p-name',p.name); set('p-club',p.club); set('p-age',p.age); set('p-height',p.height);
   set('p-weight',p.weight); set('p-pos',p.position); set('p-pos2',p.position2);
-  set('p-foot',p.foot);
-  // Normalizar nacionalidade para o novo select
-  const normNat = normalizeCountry(p.nationality) || p.nationality || '';
-  set('p-nation', normNat);
+  set('p-foot',p.foot); set('p-nation',p.nationality);
   set('p-tag',p.tag); set('p-neg',p.negotiation);
   set('p-contract',p.contractEnd); set('p-clause',p.releaseClause); set('p-market',p.marketValue);
   set('p-games',p.games); set('p-mins',p.minutes); set('p-goals',p.goals);
@@ -4365,26 +4336,134 @@ function renderRadar(){
 }
 
 // ─── PITCH ───
+// Configuração do campo com zonas rectangulares (6 linhas x 5 colunas)
+// Cada zona ocupa uma fatia do campo
+const FIELD_W = 300, FIELD_H = 470, FIELD_X = 20, FIELD_Y = 20;
+const HEAT_ROWS = 6, HEAT_COLS = 5;
+const ZONE_W = FIELD_W / HEAT_COLS;
+const ZONE_H = FIELD_H / HEAT_ROWS;
+
+// Labels de zona (attack topo → defesa baixo)
+const ZONE_ROW_LABELS = ['ATQ','ATQ','MCA','MED','MCD','DEF'];
+
+function getZoneRect(row, col) {
+  return {
+    x: FIELD_X + col * ZONE_W,
+    y: FIELD_Y + row * ZONE_H,
+    w: ZONE_W,
+    h: ZONE_H,
+  };
+}
+
+function calcHeatIntensity(id) {
+  // Calcular intensidade baseada nas zonas adjacentes activas
+  const [,r,c] = id.match(/z(\d+)_(\d+)/);
+  const row = parseInt(r), col = parseInt(c);
+  let count = 0;
+  // Verificar vizinhos numa área 3x3
+  for(let dr=-1; dr<=1; dr++) {
+    for(let dc=-1; dc<=1; dc++) {
+      const nr = row+dr, nc = col+dc;
+      if(nr>=0 && nr<HEAT_ROWS && nc>=0 && nc<HEAT_COLS) {
+        if(tempZones.includes(`z${nr}_${nc}`)) count++;
+      }
+    }
+  }
+  return count; // max 9
+}
+
 function renderPitch(){
-  const svg=document.getElementById('hotspots'); if(!svg) return;
-  svg.innerHTML=PITCH_ZONES.map(z=>{
-    const on=tempZones.includes(z.id);
-    return `<g class="hotspot${on?' on':''}" data-id="${z.id}" onclick="toggleZone('${z.id}',this)">
-      <circle cx="${z.x}" cy="${z.y}" r="18" fill="${on?'var(--accent)':'rgba(255,255,255,0.07)'}" stroke="${on?'var(--accent)':'rgba(255,255,255,0.2)'}" stroke-width="1"/>
-    </g>`;
-  }).join('');
+  const blurLayer  = document.getElementById('heat-zones-blur');
+  const sharpLayer = document.getElementById('heat-zones-sharp');
+  const labelLayer = document.getElementById('heat-zone-labels');
+  const hitLayer   = document.getElementById('hotspots');
+  if(!hitLayer) return;
+
+  // Redesenhar todas as camadas
+  blurLayer.innerHTML  = '';
+  sharpLayer.innerHTML = '';
+  labelLayer.innerHTML = '';
+  hitLayer.innerHTML   = '';
+
+  PITCH_ZONES.forEach(z => {
+    const [,row,col] = z.id.match(/z(\d+)_(\d+)/);
+    const r = parseInt(row), c = parseInt(col);
+    const { x, y, w, h } = getZoneRect(r, c);
+    const on = tempZones.includes(z.id);
+    const intensity = on ? calcHeatIntensity(z.id) : 0;
+
+    // Gradiente consoante intensidade
+    let heatGrad = 'none';
+    let heatOpacity = 0;
+    if(on) {
+      if(intensity <= 2)      { heatGrad = 'url(#heat-low)';  heatOpacity = 0.75; }
+      else if(intensity <= 5) { heatGrad = 'url(#heat-med)';  heatOpacity = 0.88; }
+      else                    { heatGrad = 'url(#heat-high)'; heatOpacity = 1; }
+    }
+
+    // Camada blur (apenas zonas activas)
+    if(on) {
+      const blurRect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      blurRect.setAttribute('x', x+2); blurRect.setAttribute('y', y+2);
+      blurRect.setAttribute('width', w-4); blurRect.setAttribute('height', h-4);
+      blurRect.setAttribute('fill', heatGrad);
+      blurRect.setAttribute('opacity', heatOpacity);
+      blurRect.setAttribute('rx', '6');
+      blurLayer.appendChild(blurRect);
+    }
+
+    // Camada sharp (todas as zonas — fundo + activas)
+    const sharpRect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    sharpRect.setAttribute('x', x+1); sharpRect.setAttribute('y', y+1);
+    sharpRect.setAttribute('width', w-2); sharpRect.setAttribute('height', h-2);
+    sharpRect.setAttribute('fill', on ? heatGrad : 'rgba(255,255,255,0.02)');
+    sharpRect.setAttribute('opacity', on ? heatOpacity*0.8 : '1');
+    sharpRect.setAttribute('stroke', on ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)');
+    sharpRect.setAttribute('stroke-width', '0.5');
+    sharpRect.setAttribute('rx', '4');
+    sharpLayer.appendChild(sharpRect);
+
+    // Label da zona (só visível quando não activa)
+    if(!on) {
+      const label = document.createElementNS('http://www.w3.org/2000/svg','text');
+      label.setAttribute('x', x + w/2);
+      label.setAttribute('y', y + h/2);
+      label.setAttribute('class', 'pitch-zone-label');
+      label.textContent = ZONE_ROW_LABELS[r] || '';
+      labelLayer.appendChild(label);
+    }
+
+    // Zona invisível clicável por cima
+    const hitRect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    hitRect.setAttribute('x', x); hitRect.setAttribute('y', y);
+    hitRect.setAttribute('width', w); hitRect.setAttribute('height', h);
+    hitRect.setAttribute('fill', 'transparent');
+    hitRect.setAttribute('class', 'heat-zone');
+    hitRect.setAttribute('data-id', z.id);
+    hitRect.style.cursor = 'pointer';
+    hitRect.addEventListener('click', () => toggleZone(z.id));
+    hitRect.addEventListener('mouseover', () => {
+      if(!tempZones.includes(z.id)) {
+        hitRect.setAttribute('fill', 'rgba(255,255,255,0.06)');
+      }
+    });
+    hitRect.addEventListener('mouseout', () => {
+      hitRect.setAttribute('fill', 'transparent');
+    });
+    hitLayer.appendChild(hitRect);
+  });
+
   updateZoneCount();
 }
 
-function toggleZone(id, el){
-  if(tempZones.includes(id)){ tempZones=tempZones.filter(z=>z!==id); el.classList.remove('on'); }
-  else { tempZones.push(id); el.classList.add('on'); }
-  // update fill
-  const circle=el.querySelector('circle');
-  const on=tempZones.includes(id);
-  circle.setAttribute('fill', on?'var(--accent)':'rgba(255,255,255,0.07)');
-  circle.setAttribute('stroke', on?'var(--accent)':'rgba(255,255,255,0.2)');
-  updateZoneCount();
+function toggleZone(id){
+  if(tempZones.includes(id)){
+    tempZones = tempZones.filter(z => z !== id);
+  } else {
+    tempZones.push(id);
+  }
+  // Re-renderizar mapa de calor completo (para recalcular intensidades)
+  renderPitch();
 }
 
 function updateZoneCount(){ const c=document.getElementById('zones-count'); if(c) c.textContent=tempZones.length; }
