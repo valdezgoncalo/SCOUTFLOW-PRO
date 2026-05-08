@@ -23,8 +23,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 :root {
@@ -196,46 +194,125 @@ textarea { resize: vertical; line-height: 1.6; }
 
 .player-card {
   background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
-  cursor: pointer; transition: all 0.25s; overflow: hidden; position: relative;
+  cursor: pointer; transition: all 0.28s cubic-bezier(0.4,0,0.2,1); overflow: hidden; position: relative;
 }
-.player-card:hover { border-color: var(--border2); transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
-.player-card:hover .pc-img img { transform: scale(1.07); }
+.player-card:hover {
+  border-color: rgba(0,229,160,0.35);
+  transform: translateY(-5px);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.45), 0 0 0 1px rgba(0,229,160,0.1);
+}
+.player-card:hover .pc-img img { transform: scale(1.08); }
+.player-card:hover .pc-img-gradient { opacity: 1; }
 
 .pc-img {
-  height: 190px; background: var(--bg3); overflow: hidden; position: relative;
+  height: 210px; background: var(--bg3); overflow: hidden; position: relative;
   display: flex; align-items: center; justify-content: center;
 }
-.pc-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
-.pc-img svg { color: var(--text3); width: 60px; height: 60px; }
+.pc-img img { width: 100%; height: 100%; object-fit: cover; object-position: top center; transition: transform 0.5s cubic-bezier(0.4,0,0.2,1); }
+.pc-img svg { color: var(--text3); width: 64px; height: 64px; }
+
+/* Gradiente no fundo da foto — faz a transição foto→body fluída */
+.pc-img-gradient {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 80px;
+  background: linear-gradient(to top, var(--bg2) 0%, transparent 100%);
+  opacity: 0.85; transition: opacity 0.3s; pointer-events: none;
+}
 
 .pc-pos {
   position: absolute; top: 10px; left: 10px;
-  background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
-  color: var(--accent); font-family: var(--font-mono); font-size: 11px; font-weight: 500;
-  padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(0,229,160,0.2);
+  background: rgba(0,0,0,0.78); backdrop-filter: blur(10px);
+  color: var(--accent); font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+  padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(0,229,160,0.25);
+  letter-spacing: 0.5px;
 }
 .pc-rating {
   position: absolute; top: 10px; right: 10px;
   background: var(--accent); color: var(--bg);
-  font-family: var(--font-display); font-size: 20px;
-  padding: 4px 10px; border-radius: 8px; line-height: 1.2;
+  font-family: var(--font-display); font-size: 22px;
+  padding: 5px 11px; border-radius: 9px; line-height: 1.2;
+  box-shadow: 0 4px 12px rgba(0,229,160,0.4);
 }
-.pc-rating.med { background: var(--amber); }
-.pc-rating.low { background: var(--text3); }
+.pc-rating.med { background: var(--amber); box-shadow: 0 4px 12px rgba(255,190,11,0.3); }
+.pc-rating.low { background: var(--text3); box-shadow: none; }
 
-.pc-body { padding: 14px 16px; }
-.pc-club { font-size: 10px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
-.pc-name { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pc-meta { display: flex; gap: 10px; font-size: 11px; color: var(--text2); margin-bottom: 10px; }
+.pc-body { padding: 14px 16px 16px; }
+.pc-club { font-size: 10px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 2px; }
+.pc-name { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
+.pc-meta { display: flex; gap: 8px; font-size: 11px; color: var(--text2); margin-bottom: 10px; align-items: center; flex-wrap: wrap; }
+.pc-meta span { display: flex; align-items: center; gap: 3px; }
 .pc-tag {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+}
+
+/* ── BARRAS DE MÉTRICAS NOS CARDS ── */
+.pc-metrics {
+  margin-top: 10px; padding-top: 10px;
+  border-top: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 5px;
+}
+.pc-metric-row {
+  display: flex; align-items: center; gap: 8px;
+}
+.pc-metric-label {
+  font-size: 10px; font-weight: 600; color: var(--text3); width: 72px; flex-shrink: 0;
+  text-transform: uppercase; letter-spacing: 0.3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.pc-metric-bar-wrap {
+  flex: 1; height: 4px; background: var(--border2); border-radius: 2px; overflow: hidden;
+}
+.pc-metric-bar-fill {
+  height: 100%; border-radius: 2px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+}
+.pc-metric-val {
+  font-size: 10px; font-weight: 700; font-family: var(--font-mono); width: 22px; text-align: right; flex-shrink: 0;
 }
 .tag-promessa { background: rgba(255,190,11,0.15); color: var(--amber); }
 .tag-urgente { background: var(--red-dim); color: var(--red); }
 .tag-monitorar { background: var(--blue-dim); color: var(--blue); }
 .tag-contactado { background: var(--accent-dim); color: var(--accent); }
 .tag-descartado { background: rgba(77,96,122,0.2); color: var(--text3); }
+
+/* ── HOME KPIs ── */
+.home-kpis {
+  display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px;
+}
+.kpi-card {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px 18px; position: relative; overflow: hidden;
+  transition: border-color 0.2s, transform 0.2s;
+  cursor: default;
+}
+.kpi-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+}
+.kpi-card.kpi-green::before { background: var(--accent); }
+.kpi-card.kpi-amber::before { background: var(--amber); }
+.kpi-card.kpi-red::before   { background: var(--red); }
+.kpi-card.kpi-blue::before  { background: var(--blue); }
+.kpi-card:hover { border-color: var(--border2); transform: translateY(-1px); }
+.kpi-icon {
+  font-size: 22px; margin-bottom: 10px; display: block; line-height: 1;
+}
+.kpi-val {
+  font-family: var(--font-display); font-size: 38px; line-height: 1; font-weight: 400;
+}
+.kpi-val.kpi-green { color: var(--accent); }
+.kpi-val.kpi-amber { color: var(--amber); }
+.kpi-val.kpi-red   { color: var(--red); }
+.kpi-val.kpi-blue  { color: var(--blue); }
+.kpi-lbl {
+  font-size: 10px; font-weight: 700; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 1.2px; margin-top: 4px;
+}
+.kpi-trend {
+  position: absolute; top: 14px; right: 14px;
+  font-size: 11px; font-weight: 700; font-family: var(--font-mono);
+  color: var(--text3);
+}
+
+@media (max-width: 900px) { .home-kpis { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 600px) { .home-kpis { grid-template-columns: 1fr 1fr; gap: 8px; } .kpi-val { font-size: 30px; } .kpi-lbl { font-size: 9px; } }
 
 .empty-state {
   grid-column: 1/-1; text-align: center; padding: 80px 20px;
@@ -305,30 +382,13 @@ input[type="range"]:focus { box-shadow: none; border: none; }
 .pitch-svg { width: 100%; display: block; }
 .pitch-instructions { text-align: center; font-size: 12px; color: var(--text3); padding: 8px 0; }
 
-/* Mapa de calor — zonas rectangulares */
-.heat-zone {
-  cursor: pointer;
-  transition: all 0.25s ease;
+.hotspot {
+  cursor: pointer; transition: all 0.2s;
 }
-.heat-zone rect {
-  transition: all 0.25s ease;
-}
-.heat-zone:hover rect {
-  opacity: 0.85;
-  filter: brightness(1.2);
-}
-/* Labels das zonas do campo */
-.pitch-zone-label {
-  font-size: 9px;
-  font-weight: 700;
-  fill: rgba(255,255,255,0.35);
-  text-anchor: middle;
-  dominant-baseline: middle;
-  pointer-events: none;
-  font-family: 'DM Mono', monospace;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
+.hotspot circle { transition: all 0.2s; }
+.hotspot:hover circle { opacity: 0.9; transform: scale(1.2); transform-origin: center; }
+.hotspot.on circle { fill: var(--accent) !important; filter: drop-shadow(0 0 6px rgba(0,229,160,0.8)); }
+.hotspot.on text { fill: var(--bg) !important; }
 
 /* ── REPORT ── */
 .report-form { display: flex; flex-direction: column; gap: 16px; }
@@ -717,7 +777,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
 
   /* Grid de atletas */
   .grid-4 { grid-template-columns: 1fr 1fr; gap: 10px; }
-  .pc-img { height: 140px; }
+  .pc-img { height: 170px; }
   .pc-body { padding: 10px 12px; }
   .pc-name { font-size: 14px; }
 
@@ -772,24 +832,9 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
 
   /* Radar chart height */
   #radarChart { max-height: 240px !important; }
-
-  /* Mapa mobile */
-  #map-layout { grid-template-columns: 1fr !important; }
-  #scout-map { height: 320px !important; }
 }
-/* ── LEAFLET POPUP TEMA ESCURO ── */
-.sfp-popup .leaflet-popup-content-wrapper {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
-  padding: 0 !important;
-  border-radius: 10px !important;
-  overflow: hidden;
-}
-.sfp-popup .leaflet-popup-content { margin: 0 !important; }
-.sfp-popup .leaflet-popup-tip { background: #141b2d !important; }
-.leaflet-container { background: #0a0e1a !important; }
 </style>
+</head>
 <body>
 <!-- ── SPLASH LOADING (PWA) ── -->
 <div id="splash-screen" style="position:fixed;inset:0;z-index:600;background:#0a0e1a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;">
@@ -911,8 +956,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
     <button class="nav-link" id="nl-evolution" onclick="showView('evolution')">Evolução</button>
     <button class="nav-link" id="nl-analytics" onclick="showView('analytics')">Analytics</button>
     <button class="nav-link" id="nl-compare" onclick="showView('compare')">Comparar</button>
-    <button class="nav-link" id="nl-map" onclick="showView('map')">🗺️ Mapa</button>
-    <button class="nav-link" id="nl-team" onclick="showView('team')" style="display:none">👥 Equipa</button>
+    <button class="nav-link" id="nl-team" onclick="showView('team')">👥 Equipa</button>
     <button onclick="manualSync()" title="Sincronizar" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;font-family:var(--font-body);font-size:12px;color:var(--text2);transition:all 0.2s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='var(--bg3)'">
       <div id="sync-dot" style="width:8px;height:8px;border-radius:50%;background:#ffbe0b;flex-shrink:0;transition:background 0.3s;"></div>
       <span id="sync-lbl">A carregar…</span>
@@ -931,7 +975,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           O Meu Perfil
         </button>
-        <button class="scout-menu-item" onclick="showView('team');closeScoutMenu()" style="display:none">
+        <button class="scout-menu-item" onclick="showView('team');closeScoutMenu()">
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
           Ver Equipa
         </button>
@@ -1020,6 +1064,29 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
       <button class="chip" id="chip-high" onclick="toggleChip('high')">Nota ≥ 7.5</button>
       <button class="chip" id="chip-free" onclick="toggleChip('free')">Agente Livre</button>
       <button class="chip" id="chip-expiring" onclick="toggleChip('expiring')" style="color:var(--red)">📋 Contrato a Expirar</button>
+    </div>
+  </div>
+
+  <div class="home-kpis" id="home-kpis" style="display:none">
+    <div class="kpi-card kpi-green">
+      <span class="kpi-icon">⚽</span>
+      <div class="kpi-val kpi-green" id="kpi-total">0</div>
+      <div class="kpi-lbl">Total de Atletas</div>
+    </div>
+    <div class="kpi-card kpi-amber">
+      <span class="kpi-icon">🌟</span>
+      <div class="kpi-val kpi-amber" id="kpi-promessas">0</div>
+      <div class="kpi-lbl">Promessas</div>
+    </div>
+    <div class="kpi-card kpi-blue">
+      <span class="kpi-icon">📊</span>
+      <div class="kpi-val kpi-blue" id="kpi-avg">—</div>
+      <div class="kpi-lbl">Nota Média</div>
+    </div>
+    <div class="kpi-card kpi-red">
+      <span class="kpi-icon">📋</span>
+      <div class="kpi-val kpi-red" id="kpi-contratos">0</div>
+      <div class="kpi-lbl">Contratos a Expirar</div>
     </div>
   </div>
 
@@ -1188,57 +1255,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
               <option value="Ambidestro">Ambidestro</option>
             </select>
           </div>
-          <div class="field">
-            <label>Nacionalidade</label>
-            <select id="p-nation">
-              <option value="">— Seleccionar —</option>
-              <option value="Portugal">🇵🇹 Portugal</option>
-              <option value="Espanha">🇪🇸 Espanha</option>
-              <option value="França">🇫🇷 França</option>
-              <option value="Alemanha">🇩🇪 Alemanha</option>
-              <option value="Itália">🇮🇹 Itália</option>
-              <option value="Inglaterra">🏴󠁧󠁢󠁥󠁮󠁧󠁿 Inglaterra</option>
-              <option value="Holanda">🇳🇱 Holanda</option>
-              <option value="Bélgica">🇧🇪 Bélgica</option>
-              <option value="Suíça">🇨🇭 Suíça</option>
-              <option value="Áustria">🇦🇹 Áustria</option>
-              <option value="Suécia">🇸🇪 Suécia</option>
-              <option value="Noruega">🇳🇴 Noruega</option>
-              <option value="Dinamarca">🇩🇰 Dinamarca</option>
-              <option value="Escócia">🏴󠁧󠁢󠁳󠁣󠁴󠁿 Escócia</option>
-              <option value="Irlanda">🇮🇪 Irlanda</option>
-              <option value="Polónia">🇵🇱 Polónia</option>
-              <option value="República Checa">🇨🇿 República Checa</option>
-              <option value="Eslováquia">🇸🇰 Eslováquia</option>
-              <option value="Hungria">🇭🇺 Hungria</option>
-              <option value="Romênia">🇷🇴 Romênia</option>
-              <option value="Bulgária">🇧🇬 Bulgária</option>
-              <option value="Croácia">🇭🇷 Croácia</option>
-              <option value="Sérvia">🇷🇸 Sérvia</option>
-              <option value="Grécia">🇬🇷 Grécia</option>
-              <option value="Turquia">🇹🇷 Turquia</option>
-              <option value="Ucrânia">🇺🇦 Ucrânia</option>
-              <option value="Rússia">🇷🇺 Rússia</option>
-              <option value="Brasil">🇧🇷 Brasil</option>
-              <option value="Argentina">🇦🇷 Argentina</option>
-              <option value="Uruguai">🇺🇾 Uruguai</option>
-              <option value="Colômbia">🇨🇴 Colômbia</option>
-              <option value="Chile">🇨🇱 Chile</option>
-              <option value="México">🇲🇽 México</option>
-              <option value="USA">🇺🇸 USA</option>
-              <option value="Senegal">🇸🇳 Senegal</option>
-              <option value="Marrocos">🇲🇦 Marrocos</option>
-              <option value="Nigéria">🇳🇬 Nigéria</option>
-              <option value="Gana">🇬🇭 Gana</option>
-              <option value="Costa do Marfim">🇨🇮 Costa do Marfim</option>
-              <option value="Angola">🇦🇴 Angola</option>
-              <option value="Cabo Verde">🇨🇻 Cabo Verde</option>
-              <option value="Moçambique">🇲🇿 Moçambique</option>
-              <option value="Japão">🇯🇵 Japão</option>
-              <option value="Coreia do Sul">🇰🇷 Coreia do Sul</option>
-              <option value="Austrália">🇦🇺 Austrália</option>
-            </select>
-          </div>
+          <div class="field"><label>Nacionalidade</label><input type="text" id="p-nation" placeholder="Ex: Portuguesa"></div>
         </div>
         <div class="form-row" style="margin-bottom:12px">
           <div class="field">
@@ -1367,51 +1384,44 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
         <p style="font-size:12px; color:var(--text3); margin-bottom:12px;">Clique nas zonas onde o atleta atua / é mais eficaz</p>
         <div class="pitch-wrap">
           <svg id="pitch-svg" class="pitch-svg" viewBox="0 0 340 510" xmlns="http://www.w3.org/2000/svg">
+            <!-- Relva -->
             <defs>
-              <!-- Gradientes do mapa de calor -->
-              <radialGradient id="heat-low"    cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ffeb3b" stop-opacity="0.9"/><stop offset="100%" stop-color="#ff9800" stop-opacity="0.6"/></radialGradient>
-              <radialGradient id="heat-med"    cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ff5722" stop-opacity="0.95"/><stop offset="100%" stop-color="#e91e63" stop-opacity="0.7"/></radialGradient>
-              <radialGradient id="heat-high"   cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ff1744" stop-opacity="1"/><stop offset="100%" stop-color="#d50000" stop-opacity="0.85"/></radialGradient>
-              <filter id="heat-blur"><feGaussianBlur stdDeviation="3" result="blur"/></filter>
-              <!-- Padrão de relva alternada -->
-              <pattern id="grass2" x="0" y="0" width="340" height="42.5" patternUnits="userSpaceOnUse">
-                <rect width="340" height="42.5" fill="#162a14"/>
-                <rect y="21.25" width="340" height="21.25" fill="#193017"/>
+              <pattern id="grass" x="0" y="0" width="340" height="51" patternUnits="userSpaceOnUse">
+                <rect width="340" height="51" fill="#1a2e1a"/>
+                <rect width="340" height="51" fill="#1f351f" y="51"/>
               </pattern>
             </defs>
-            <!-- Relva de fundo -->
-            <rect width="340" height="510" fill="url(#grass2)" rx="6"/>
+            <rect width="340" height="510" fill="url(#grass)" rx="4"/>
             <!-- Linhas do campo -->
-            <g stroke="rgba(255,255,255,0.18)" stroke-width="1.2" fill="none">
-              <rect x="20" y="20" width="300" height="470" rx="2"/>
+            <g stroke="#4a7c59" stroke-width="1.5" fill="none" opacity="0.7">
+              <!-- Linha de meio campo -->
               <line x1="20" y1="255" x2="320" y2="255"/>
+              <!-- Círculo central -->
               <circle cx="170" cy="255" r="45"/>
-              <circle cx="170" cy="255" r="2.5" fill="rgba(255,255,255,0.3)" stroke="none"/>
+              <circle cx="170" cy="255" r="2" fill="#4a7c59"/>
+              <!-- Área de baliza (ataque - topo) -->
               <rect x="105" y="20" width="130" height="55"/>
-              <rect x="130" y="20" width="80" height="26"/>
+              <rect x="130" y="20" width="80" height="25"/>
+              <!-- Área de baliza (defesa - fundo) -->
               <rect x="105" y="435" width="130" height="55"/>
-              <rect x="130" y="464" width="80" height="26"/>
-              <circle cx="170" cy="95" r="2.5" fill="rgba(255,255,255,0.3)" stroke="none"/>
-              <path d="M 128 75 A 45 45 0 0 1 212 75"/>
-              <circle cx="170" cy="415" r="2.5" fill="rgba(255,255,255,0.3)" stroke="none"/>
-              <path d="M 128 435 A 45 45 0 0 0 212 435"/>
+              <rect x="130" y="465" width="80" height="25"/>
+              <!-- Linhas de fundo e laterais -->
+              <rect x="20" y="20" width="300" height="470"/>
+              <!-- Ponto de penalty topo -->
+              <circle cx="170" cy="95" r="2" fill="#4a7c59"/>
+              <!-- Arco penalty topo -->
+              <path d="M 125 75 A 45 45 0 0 1 215 75" fill="none"/>
+              <!-- Ponto de penalty baixo -->
+              <circle cx="170" cy="415" r="2" fill="#4a7c59"/>
+              <!-- Arco penalty baixo -->
+              <path d="M 125 435 A 45 45 0 0 0 215 435" fill="none"/>
             </g>
-            <!-- Zonas do mapa de calor (preenchidas via JS) -->
-            <g id="heat-zones-blur" opacity="0.6" filter="url(#heat-blur)"></g>
-            <g id="heat-zones-sharp"></g>
-            <!-- Labels das zonas -->
-            <g id="heat-zone-labels"></g>
-            <!-- Zona interactiva invisível por cima -->
+            <!-- Hotspots - Grid 5x6 -->
+            <!-- Row 1 (attack) -->
             <g id="hotspots"></g>
           </svg>
         </div>
-        <div class="pitch-instructions" style="display:flex;justify-content:center;align-items:center;gap:16px;padding:10px">
-          <div style="display:flex;align-items:center;gap:6px">
-            <div style="width:32px;height:8px;border-radius:4px;background:linear-gradient(90deg,rgba(255,235,59,0.8),rgba(255,87,34,0.9),rgba(255,23,68,1))"></div>
-            <span style="font-size:11px;color:var(--text3)">Intensidade de presença</span>
-          </div>
-          <span style="font-size:12px;color:var(--text2)">Zonas activas: <strong id="zones-count" style="color:var(--accent)">0</strong></span>
-        </div>
+        <div class="pitch-instructions">Zonas selecionadas: <strong id="zones-count" style="color:var(--accent)">0</strong></div>
       </div>
       <div class="card card-inner">
         <div class="section-title">Posição no Sistema</div>
@@ -1763,78 +1773,38 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
   <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;">
     <div>
       <div class="page-title">PAINEL <span>ADMIN</span></div>
-      <div class="page-sub">Dashboard de negócio · gestão de acessos · só visível para ti</div>
+      <div class="page-sub">Gestão de acessos e códigos de activação · só visível para ti</div>
     </div>
-    <div style="display:flex;gap:8px">
-      <button class="btn-ghost" onclick="loadAdminDashboard()" style="font-size:12px">↻ Actualizar</button>
-      <button class="btn-primary" onclick="openGenerateCode()">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-        Gerar Código
-      </button>
-    </div>
+    <button class="btn-primary" onclick="openGenerateCode()">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      Gerar Código
+    </button>
   </div>
 
-  <!-- KPIs negócio -->
+  <!-- Stats rápidas -->
   <div class="stats-row" style="margin-bottom:20px">
-    <div class="stat-box"><div class="stat-val green" id="admin-stat-active">0</div><div class="stat-lbl">Pagos Activos</div></div>
-    <div class="stat-box"><div class="stat-val amber" id="admin-stat-trials">0</div><div class="stat-lbl">Em Trial</div></div>
-    <div class="stat-box"><div class="stat-val red" id="admin-stat-expiring">0</div><div class="stat-lbl">A Expirar (30d)</div></div>
-    <div class="stat-box"><div class="stat-val blue" id="admin-stat-revenue">€0</div><div class="stat-lbl">Receita Est./mês</div></div>
+    <div class="stat-box"><div class="stat-val green" id="admin-stat-active">0</div><div class="stat-lbl">Activos</div></div>
+    <div class="stat-box"><div class="stat-val amber" id="admin-stat-unused">0</div><div class="stat-lbl">Por usar</div></div>
+    <div class="stat-box"><div class="stat-val red" id="admin-stat-expired">0</div><div class="stat-lbl">Expirados</div></div>
+    <div class="stat-box"><div class="stat-val blue" id="admin-stat-total">0</div><div class="stat-lbl">Total gerados</div></div>
   </div>
 
-  <!-- Tabs -->
-  <div style="display:flex;gap:4px;margin-bottom:16px;background:var(--bg3);padding:4px;border-radius:var(--radius-sm);width:fit-content">
-    <button id="admin-tab-users" onclick="adminTab('users')" style="padding:6px 16px;border-radius:6px;border:none;cursor:pointer;font-family:var(--font-body);font-size:12px;font-weight:700;background:var(--accent);color:var(--bg)">Utilizadores</button>
-    <button id="admin-tab-codes" onclick="adminTab('codes')" style="padding:6px 16px;border-radius:6px;border:none;cursor:pointer;font-family:var(--font-body);font-size:12px;font-weight:700;background:transparent;color:var(--text2)">Códigos</button>
-  </div>
-
-  <!-- TAB: Utilizadores -->
-  <div id="admin-panel-users">
-    <!-- Trials activos -->
-    <div class="card card-inner" style="margin-bottom:16px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-        <div class="section-title" style="margin:0;padding:0;color:var(--amber)">⏳ Trials Activos</div>
-        <span id="admin-trials-count" style="font-size:11px;color:var(--text3)">a carregar…</span>
+  <!-- Lista de códigos -->
+  <div class="card card-inner">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="section-title" style="margin:0;padding:0">Códigos de Acesso</div>
+      <div style="display:flex;gap:8px">
+        <select id="admin-filter" onchange="loadAdminCodes()" style="font-size:12px;padding:6px 10px;width:auto">
+          <option value="all">Todos</option>
+          <option value="unused">Por usar</option>
+          <option value="active">Activos</option>
+          <option value="expired">Expirados</option>
+        </select>
+        <button class="btn-ghost" onclick="loadAdminCodes()" style="font-size:12px;padding:6px 12px">↻ Actualizar</button>
       </div>
-      <div id="admin-trials-list"><p style="color:var(--text3);font-size:12px;text-align:center;padding:16px">A carregar…</p></div>
     </div>
-
-    <!-- A expirar em 30 dias -->
-    <div class="card card-inner" style="margin-bottom:16px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-        <div class="section-title" style="margin:0;padding:0;color:var(--red)">🔴 A Expirar em 30 Dias</div>
-        <span id="admin-expiring-count" style="font-size:11px;color:var(--text3)">a carregar…</span>
-      </div>
-      <div id="admin-expiring-list"><p style="color:var(--text3);font-size:12px;text-align:center;padding:16px">A carregar…</p></div>
-    </div>
-
-    <!-- Pagos activos -->
-    <div class="card card-inner">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-        <div class="section-title" style="margin:0;padding:0;color:var(--accent)">✅ Pagos Activos</div>
-        <span id="admin-active-count" style="font-size:11px;color:var(--text3)">a carregar…</span>
-      </div>
-      <div id="admin-active-list"><p style="color:var(--text3);font-size:12px;text-align:center;padding:16px">A carregar…</p></div>
-    </div>
-  </div>
-
-  <!-- TAB: Códigos -->
-  <div id="admin-panel-codes" style="display:none">
-    <div class="card card-inner">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <div class="section-title" style="margin:0;padding:0">Códigos de Acesso</div>
-        <div style="display:flex;gap:8px">
-          <select id="admin-filter" onchange="loadAdminCodes()" style="font-size:12px;padding:6px 10px;width:auto">
-            <option value="all">Todos</option>
-            <option value="unused">Por usar</option>
-            <option value="active">Activos</option>
-            <option value="expired">Expirados</option>
-          </select>
-        </div>
-      </div>
-      <div id="admin-codes-list">
-        <p style="color:var(--text3);text-align:center;padding:30px">A carregar...</p>
-      </div>
+    <div id="admin-codes-list">
+      <p style="color:var(--text3);text-align:center;padding:30px">A carregar...</p>
     </div>
   </div>
 </div>
@@ -1992,87 +1962,6 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
   </div>
 </div>
 
-<!-- ═══════════════ MAPA DE SCOUTING ═══════════════ -->
-<div class="view" id="view-map">
-  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px;">
-    <div>
-      <div class="page-title">MAPA DE <span>SCOUTING</span></div>
-      <div class="page-sub">Distribuição geográfica dos atletas observados</div>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <select id="map-filter-pos" onchange="renderMap()" style="font-size:12px;padding:6px 10px;width:auto">
-        <option value="">Todas as posições</option>
-        <option>GR</option><option>DC</option><option>LD</option><option>LE</option>
-        <option>MC</option><option>MD</option><option>MO</option><option>EXT</option><option>PL</option>
-      </select>
-      <select id="map-filter-tag" onchange="renderMap()" style="font-size:12px;padding:6px 10px;width:auto">
-        <option value="">Todas as tags</option>
-        <option value="promessa">Promessas</option>
-        <option value="urgente">Urgentes</option>
-        <option value="monitorar">Monitorar</option>
-        <option value="contactado">Contactados</option>
-      </select>
-    </div>
-  </div>
-
-  <!-- Stats rápidas do mapa -->
-  <div class="stats-row" style="margin-bottom:16px">
-    <div class="stat-box"><div class="stat-val green" id="map-stat-total">0</div><div class="stat-lbl">Atletas</div></div>
-    <div class="stat-box"><div class="stat-val blue" id="map-stat-paises">0</div><div class="stat-lbl">Países</div></div>
-    <div class="stat-box"><div class="stat-val amber" id="map-stat-promessas">0</div><div class="stat-lbl">Promessas</div></div>
-    <div class="stat-box"><div class="stat-val purple" id="map-stat-avg">—</div><div class="stat-lbl">Nota Média</div></div>
-  </div>
-
-  <div style="display:grid;grid-template-columns:1fr 300px;gap:16px" id="map-layout">
-    <!-- Mapa -->
-    <div class="card" style="overflow:hidden;padding:0">
-      <div id="scout-map" style="height:480px;width:100%;border-radius:var(--radius)"></div>
-    </div>
-
-    <!-- Painel lateral: top países + lista -->
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <!-- Top países -->
-      <div class="card card-inner">
-        <div class="section-title">Top Países</div>
-        <div id="map-country-list" style="display:flex;flex-direction:column;gap:8px;margin-top:8px"></div>
-      </div>
-      <!-- Atletas sem localização -->
-      <div class="card card-inner" id="map-no-location-card" style="display:none">
-        <div class="section-title" style="color:var(--amber)">⚠️ Sem País Definido</div>
-        <div id="map-no-location-list" style="margin-top:8px;font-size:12px;color:var(--text3)"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════ ONBOARDING ═══════════════ -->
-<div id="onboarding-overlay" style="display:none;position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px">
-  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:24px;width:100%;max-width:420px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,0.6)">
-    <!-- Progress bar -->
-    <div style="height:3px;background:var(--bg3)">
-      <div id="ob-progress" style="height:100%;background:var(--accent);transition:width 0.3s;width:25%"></div>
-    </div>
-    <!-- Content -->
-    <div style="padding:32px 28px">
-      <div id="ob-step-icon" style="font-size:40px;margin-bottom:16px;text-align:center">👋</div>
-      <div id="ob-step-title" style="font-family:var(--font-display);font-size:22px;letter-spacing:2px;margin-bottom:8px;text-align:center">BEM-VINDO!</div>
-      <div id="ob-step-desc" style="font-size:13px;color:var(--text2);line-height:1.7;text-align:center;margin-bottom:24px"></div>
-      <!-- Indicadores de passo -->
-      <div style="display:flex;justify-content:center;gap:8px;margin-bottom:24px">
-        <div class="ob-dot" id="ob-dot-0" style="width:8px;height:8px;border-radius:50%;background:var(--accent)"></div>
-        <div class="ob-dot" id="ob-dot-1" style="width:8px;height:8px;border-radius:50%;background:var(--bg3)"></div>
-        <div class="ob-dot" id="ob-dot-2" style="width:8px;height:8px;border-radius:50%;background:var(--bg3)"></div>
-        <div class="ob-dot" id="ob-dot-3" style="width:8px;height:8px;border-radius:50%;background:var(--bg3)"></div>
-      </div>
-      <!-- Botões -->
-      <div style="display:flex;gap:10px">
-        <button id="ob-skip" onclick="skipOnboarding()" class="btn-ghost" style="flex:1;justify-content:center">Saltar</button>
-        <button id="ob-next" onclick="nextOnboardingStep()" class="btn-primary" style="flex:2;justify-content:center">Continuar →</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 </main>
 </div>
 
@@ -2142,10 +2031,6 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
     <button class="mnav-btn" id="mnl-analytics" onclick="showView('analytics')">
       <div class="mnav-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></div>
       Stats
-    </button>
-    <button class="mnav-btn" id="mnl-map" onclick="showView('map')">
-      <div class="mnav-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></div>
-      Mapa
     </button>
     <button class="mnav-btn" id="mnl-save" onclick="savePlayer()" style="display:none;color:var(--accent)">
       <div class="mnav-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></div>
@@ -2228,23 +2113,15 @@ const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 
 // ─── DETETAR RECOVERY ANTES DE TUDO ──────────
 // Verificar URL ANTES de criar o cliente Supabase
-// O Supabase usa ?code= para dois fluxos diferentes:
-//   - Confirmação de email novo registo: ?code=X&type=signup (ou sem type)
-//   - Recuperação de password:           ?code=X&type=recovery
-// Só activamos o flow de recovery quando o type é explicitamente 'recovery'
-const _urlParams = new URLSearchParams(window.location.search);
-const _urlType   = _urlParams.get('type');
-const _hasRecoveryCode = !!_urlParams.get('code') && _urlType === 'recovery';
-const _hasRecoveryHash = window.location.hash.includes('type=recovery');
-// Confirmação de email: tem ?code= mas type != 'recovery' — tratar como login normal
-const _isEmailConfirmation = !!_urlParams.get('code') && (_urlType === 'signup' || _urlType === 'email' || (!_urlType && !_hasRecoveryHash));
+// O link de recuperação chega como: URL?code=XXXX
+// Quando há ?code= na URL, é SEMPRE um link de recovery (é o único caso onde o Supabase usa ?code=)
+const _hasRecoveryCode = !!new URLSearchParams(window.location.search).get('code');
+const _hasRecoveryHash = window.location.hash.includes('type=recovery') ||
+                         window.location.hash.includes('access_token');
 
 // Guardar em sessionStorage para sobreviver ao redirect interno do Supabase
 if (_hasRecoveryCode || _hasRecoveryHash) {
   sessionStorage.setItem('sf_recovery', '1');
-} else if (_isEmailConfirmation) {
-  // Confirmação de email — limpar qualquer flag de recovery que possa existir
-  sessionStorage.removeItem('sf_recovery');
 }
 const _isRecoveryFlow = sessionStorage.getItem('sf_recovery') === '1';
 
@@ -2316,9 +2193,7 @@ async function onUserLoggedIn(user) {
       document.getElementById('main-app').style.display = 'none';
     }
     setSyncStatus('syncing');
-    loadFromCloud()
-      .then(() => { setTimeout(() => showOnboarding(), 800); })
-      .catch(e => { console.warn('loadFromCloud:', e.message); setSyncStatus('error'); setTimeout(() => showOnboarding(), 800); });
+    loadFromCloud().catch(e => { console.warn('loadFromCloud:', e.message); setSyncStatus('error'); });
   }, 100);
 }
 
@@ -2871,7 +2746,6 @@ async function checkAccess(user) {
   // Admin tem sempre acesso
   if (user.email === ADMIN_EMAIL) {
     showAdminMenu();
-    applyPlanUI('clube'); // admin vê tudo
     return true;
   }
   try {
@@ -2890,29 +2764,27 @@ async function checkAccess(user) {
     // Verificar estado
     if (sub.status === 'active' && sub.paid_until) {
       if (new Date(sub.paid_until) > new Date()) {
-        // Pago e válido — guardar plano no currentUser
-        if (currentUser) currentUser.plan = sub.plan || 'scout';
-        // Verificar limite de dispositivos se for clube
+        // Pago e válido — verificar limite de dispositivos se for clube
         const deviceCheck = await checkDeviceLimit(user.id, sub.plan);
         if (!deviceCheck.allowed) {
           showDeviceLimitScreen(deviceCheck.devices);
           return false;
         }
+        // Registar este dispositivo
         await registerDevice(user.id);
-        applyPlanUI(sub.plan);
         return true;
       }
+      // Expirou — actualizar estado
       await sb.from('subscriptions').update({ status: 'expired' }).eq('user_id', user.id);
     }
 
     if (sub.status === 'trial') {
       const daysLeft = Math.ceil((new Date(sub.trial_end) - new Date()) / (1000 * 60 * 60 * 24));
       if (daysLeft > 0) {
-        if (currentUser) currentUser.plan = 'trial';
-        applyPlanUI('trial');
         showTrialBanner(daysLeft);
         return true;
       }
+      // Trial expirado
       await sb.from('subscriptions').update({ status: 'expired' }).eq('user_id', user.id);
     }
 
@@ -2970,20 +2842,6 @@ function showDeviceLimitScreen(devices) {
 function showAdminMenu() {
   const el = document.getElementById('admin-menu-item');
   if (el) el.style.display = 'block';
-}
-
-// Aplica visibilidade de UI consoante o plano do utilizador
-function applyPlanUI(plan) {
-  const isClube = plan === 'clube';
-  const isAdmin = currentUser?.email === ADMIN_EMAIL;
-
-  // Botão Equipa — só visível para Clube e Admin
-  const nlTeam = document.getElementById('nl-team');
-  if (nlTeam) nlTeam.style.display = (isClube || isAdmin) ? '' : 'none';
-
-  // Item "Ver Equipa" no menu do avatar
-  const menuTeamBtn = document.querySelector('.scout-menu-item[onclick*="team"]');
-  if (menuTeamBtn) menuTeamBtn.style.display = (isClube || isAdmin) ? '' : 'none';
 }
 
 function showTrialBanner(daysLeft) {
@@ -3156,171 +3014,6 @@ function copyGeneratedCode() {
   });
 }
 
-// ═══════════════════════════════════════════════
-// ADMIN DASHBOARD
-// ═══════════════════════════════════════════════
-
-function adminTab(tab) {
-  document.getElementById('admin-panel-users').style.display = tab==='users'?'block':'none';
-  document.getElementById('admin-panel-codes').style.display = tab==='codes'?'block':'none';
-  const btnU = document.getElementById('admin-tab-users');
-  const btnC = document.getElementById('admin-tab-codes');
-  if(tab==='users'){
-    btnU.style.background='var(--accent)'; btnU.style.color='var(--bg)';
-    btnC.style.background='transparent';   btnC.style.color='var(--text2)';
-  } else {
-    btnC.style.background='var(--accent)'; btnC.style.color='var(--bg)';
-    btnU.style.background='transparent';   btnU.style.color='var(--text2)';
-    loadAdminCodes();
-  }
-}
-
-async function loadAdminDashboard() {
-  // Carregar ambas as tabs em paralelo
-  await Promise.all([loadAdminUsers(), loadAdminCodes()]);
-}
-
-async function loadAdminUsers() {
-  const now = new Date();
-  const in30 = new Date(now.getTime() + 30*24*60*60*1000);
-
-  try {
-    // Buscar scouts (nomes/emails), subscriptions e access_codes em paralelo
-    const [{ data: scouts }, { data: subs }, { data: codes }] = await Promise.all([
-      sb.from('scouts').select('id, email, nome').order('created_at', { ascending: false }),
-      sb.from('subscriptions').select('*').order('created_at', { ascending: false }),
-      sb.from('access_codes').select('*').order('created_at', { ascending: false }),
-    ]);
-
-    // Mapa de scout por user_id → nome/email
-    const scoutMap = {};
-    (scouts||[]).forEach(s => { scoutMap[s.id] = s; });
-
-    // Mapa de código por user_id
-    const usedCodes = (codes||[]).filter(c => c.used_by);
-    const codeMap = {};
-    usedCodes.forEach(c => {
-      if(!codeMap[c.used_by]) codeMap[c.used_by] = [];
-      codeMap[c.used_by].push(c);
-    });
-
-    // Categorizar subscriptions
-    const trials=[], actives=[], expiring=[];
-
-    (subs||[]).forEach(s => {
-      const scout = scoutMap[s.user_id];
-      const userCodes = (codeMap[s.user_id]||[]).sort((a,b)=>new Date(b.used_at||0)-new Date(a.used_at||0));
-      const latestCode = userCodes[0];
-
-      // Nome: primeiro das notas do código, depois do perfil, depois email
-      const notesName = latestCode?.notes?.split('—')[0]?.trim() || '';
-      const displayName = notesName || scout?.nome || scout?.email || 'Utilizador';
-      const email = scout?.email || '';
-
-      const info = {
-        user_id:    s.user_id,
-        plan:       s.plan || latestCode?.plan || 'scout',
-        displayName,
-        email,
-        notes:      latestCode?.notes || '',
-        status:     s.status,
-        trial_end:  s.trial_end,
-        paid_until: s.paid_until || latestCode?.expires_at,
-        code:       latestCode?.code || null,
-      };
-
-      if(s.status === 'trial' && s.trial_end && new Date(s.trial_end) > now) {
-        trials.push(info);
-      } else if(s.status === 'active' && info.paid_until && new Date(info.paid_until) > now) {
-        if(new Date(info.paid_until) <= in30) expiring.push(info);
-        else actives.push(info);
-      }
-    });
-
-    // KPIs
-    const PLAN_PRICE = { scout: 35, clube: 129.99 };
-    const revenue = [...actives, ...expiring].reduce((acc,u) => acc + (PLAN_PRICE[u.plan]||35)/12, 0);
-
-    document.getElementById('admin-stat-active').textContent   = actives.length + expiring.length;
-    document.getElementById('admin-stat-trials').textContent   = trials.length;
-    document.getElementById('admin-stat-expiring').textContent = expiring.length;
-    document.getElementById('admin-stat-revenue').textContent  = `€${revenue.toFixed(0)}`;
-
-    renderAdminUserList('admin-trials-list',  'admin-trials-count',   trials,   'trial');
-    renderAdminUserList('admin-expiring-list','admin-expiring-count',  expiring, 'expiring');
-    renderAdminUserList('admin-active-list',  'admin-active-count',    actives,  'active');
-
-  } catch(e) {
-    console.warn('loadAdminUsers:', e.message);
-    ['admin-trials-list','admin-expiring-list','admin-active-list'].forEach(id=>{
-      const el=document.getElementById(id);
-      if(el) el.innerHTML=`<p style="color:var(--red);font-size:12px;padding:10px">Erro: ${e.message}</p>`;
-    });
-  }
-}
-
-function renderAdminUserList(listId, countId, users, type) {
-  const el = document.getElementById(listId);
-  const countEl = document.getElementById(countId);
-  if(!el) return;
-
-  if(countEl) countEl.textContent = `${users.length} utilizador${users.length!==1?'es':''}`;
-
-  if(!users.length){
-    el.innerHTML = '<p style="color:var(--text3);font-size:12px;text-align:center;padding:12px">Nenhum.</p>';
-    return;
-  }
-
-  const now = new Date();
-  const PLAN_LABELS = { scout:'Scout', clube:'Clube' };
-  const PLAN_PRICE  = { scout:'€35/ano', clube:'€129.99/ano' };
-
-  el.innerHTML = users.map(u => {
-    // Dias restantes
-    const dateStr  = type==='trial' ? u.trial_end : u.paid_until;
-    const daysLeft = dateStr ? Math.ceil((new Date(dateStr)-now)/(1000*60*60*24)) : null;
-    const daysColor = daysLeft===null?'var(--text3)':daysLeft<=7?'var(--red)':daysLeft<=14?'var(--amber)':'var(--accent)';
-    const daysText  = daysLeft===null?'sem data':daysLeft<=0?'Expirado':`${daysLeft}d restantes`;
-
-    // Nome a mostrar — vem já resolvido do loadAdminUsers
-    const displayName = u.displayName || u.email || 'Utilizador';
-    // Info extra das notas (ex: "€35 pago MB Way — 912 345 678")
-    const noteParts = (u.notes||'').split('—').map(s=>s.trim()).filter(Boolean);
-    const payInfo   = noteParts.length > 1 ? noteParts.slice(1).join(' · ') : '';
-
-    // Mensagem WhatsApp
-    const waMsg = type==='trial'
-      ? `Olá ${displayName}! 👋\n\nO teu trial do ScoutFlow Pro termina em ${daysLeft} dia${daysLeft!==1?'s':''}.\n\nRenova agora por ${PLAN_PRICE[u.plan]||'€35/ano'} e continua a gerir os teus atletas sem interrupções 🏆\n\nwww.scoutflowpro.pt`
-      : `Olá ${displayName}! 👋\n\nO teu acesso ao ScoutFlow Pro expira em ${daysLeft} dia${daysLeft!==1?'s':''}.\n\nRenova já para não perderes o acesso aos teus dados 📋\n\nwww.scoutflowpro.pt`;
-    const waLink = `https://wa.me/?text=${encodeURIComponent(waMsg)}`;
-
-    return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
-      <div style="width:38px;height:38px;border-radius:50%;background:var(--bg3);border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--accent);flex-shrink:0">
-        ${displayName.slice(0,2).toUpperCase()}
-      </div>
-      <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;flex-wrap:wrap">
-          <span style="font-size:13px;font-weight:700;color:var(--text)">${displayName}</span>
-          <span style="font-size:10px;font-weight:700;padding:1px 8px;border-radius:8px;background:var(--accent-dim);color:var(--accent)">${PLAN_LABELS[u.plan]||u.plan}</span>
-          ${type==='trial'?`<span style="font-size:10px;padding:1px 8px;border-radius:8px;background:var(--amber-dim);color:var(--amber)">Trial</span>`:''}
-        </div>
-        ${u.email && u.email!==displayName ? `<div style="font-size:11px;color:var(--text3);margin-bottom:1px">${u.email}</div>` : ''}
-        ${payInfo ? `<div style="font-size:11px;color:var(--text3);margin-bottom:1px">${payInfo}</div>` : ''}
-        <div style="font-size:11px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-          ${u.code ? `<span style="font-family:var(--font-mono);color:var(--text3);font-size:10px">${u.code}</span><span style="color:var(--text3)">·</span>` : ''}
-          <span style="color:${daysColor};font-weight:700">${daysText}</span>
-          ${dateStr ? `<span style="color:var(--text3)">· até ${new Date(dateStr).toLocaleDateString('pt-PT')}</span>` : ''}
-        </div>
-      </div>
-      <a href="${waLink}" target="_blank"
-        style="background:rgba(37,211,102,0.12);border:1px solid rgba(37,211,102,0.3);border-radius:var(--radius-sm);padding:6px 10px;color:#25D366;font-family:var(--font-body);font-size:11px;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:4px;flex-shrink:0;white-space:nowrap"
-        title="Enviar WhatsApp">
-        💬 WhatsApp
-      </a>
-    </div>`;
-  }).join('');
-}
-
 async function loadAdminCodes() {
   const list   = document.getElementById('admin-codes-list');
   const filter = document.getElementById('admin-filter')?.value || 'all';
@@ -3329,17 +3022,26 @@ async function loadAdminCodes() {
   list.innerHTML = '<p style="color:var(--text3);text-align:center;padding:20px">A carregar…</p>';
 
   try {
-    const { data, error } = await sb.from('access_codes').select('*').order('created_at', { ascending: false });
+    let query = sb.from('access_codes').select('*').order('created_at', { ascending: false });
+
+    const { data, error } = await query;
     if (error) throw error;
 
     const now = new Date();
+
+    // Calcular stats
     let active=0, unused=0, expired=0;
     data.forEach(c => {
       if (!c.used_by) unused++;
       else if (c.expires_at && new Date(c.expires_at) > now) active++;
       else expired++;
     });
+    document.getElementById('admin-stat-active').textContent  = active;
+    document.getElementById('admin-stat-unused').textContent  = unused;
+    document.getElementById('admin-stat-expired').textContent = expired;
+    document.getElementById('admin-stat-total').textContent   = data.length;
 
+    // Filtrar
     const filtered = data.filter(c => {
       if (filter === 'unused')  return !c.used_by;
       if (filter === 'active')  return c.used_by && c.expires_at && new Date(c.expires_at) > now;
@@ -3352,19 +3054,22 @@ async function loadAdminCodes() {
       return;
     }
 
-    const PLAN_LABELS = { scout: '👤 Scout', clube: '🏟 Clube' };
+    const PLAN_LABELS = { scout: '👤 Scout', clube: '🏟 Clube (5 scouts)' };
 
     list.innerHTML = filtered.map(c => {
       const isUsed    = !!c.used_by;
       const isActive  = isUsed && c.expires_at && new Date(c.expires_at) > now;
+      const isExpired = isUsed && (!c.expires_at || new Date(c.expires_at) <= now);
+
       const statusColor = !isUsed ? 'var(--amber)' : isActive ? 'var(--accent)' : 'var(--text3)';
       const statusLabel = !isUsed ? 'Por usar' : isActive ? 'Activo' : 'Expirado';
-      const expiryText  = isUsed && c.expires_at ? `até ${new Date(c.expires_at).toLocaleDateString('pt-PT')}` : '';
+      const expiryText  = isUsed && c.expires_at
+        ? `até ${new Date(c.expires_at).toLocaleDateString('pt-PT')}` : '';
 
       return `<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">
         <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap">
-            <span style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--text);letter-spacing:1px">${c.code}</span>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+            <span style="font-family:var(--font-mono);font-size:14px;font-weight:700;color:var(--text);letter-spacing:1px">${c.code}</span>
             <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;background:${statusColor}22;color:${statusColor}">${statusLabel}</span>
             <span style="font-size:10px;color:var(--text3)">${PLAN_LABELS[c.plan]||c.plan} · ${c.duration_days}d ${expiryText}</span>
           </div>
@@ -3374,10 +3079,11 @@ async function loadAdminCodes() {
         <div style="display:flex;gap:6px;flex-shrink:0">
           ${c.plan === 'clube' && c.used_by ? `
             <button onclick="showDevicesForAccount('${c.used_by}','${c.notes||'clube'}')"
-              class="btn-ghost" style="font-size:11px;padding:6px 10px;color:var(--blue);border-color:rgba(77,159,255,0.3)">
+              title="Ver dispositivos" class="btn-ghost"
+              style="font-size:11px;padding:6px 10px;color:var(--blue);border-color:rgba(77,159,255,0.3)">
               📱 Dispositivos
             </button>` : ''}
-          <button onclick="copyCode('${c.code}')"
+          <button onclick="copyCode('${c.code}')" title="Copiar código"
             style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:6px 10px;cursor:pointer;color:var(--text2);font-family:var(--font-body);font-size:11px">
             📋 Copiar
           </button>
@@ -3468,355 +3174,6 @@ async function revokeAllDevices(userId) {
     toast('Todos os dispositivos revogados');
     document.getElementById('devices-modal')?.remove();
   } catch(e) { toast('Erro: ' + e.message, 'error'); }
-}
-
-// ═══════════════════════════════════════════════
-// MAPA DE SCOUTING
-// ═══════════════════════════════════════════════
-
-// Coordenadas por país (os mais comuns no futebol europeu)
-const COUNTRY_COORDS = {
-  'Portugal':         [39.5, -8.0],
-  'Espanha':          [40.4, -3.7],
-  'França':           [46.2, 2.2],
-  'Alemanha':         [51.2, 10.4],
-  'Itália':           [41.9, 12.5],
-  'Inglaterra':       [52.4, -1.5],
-  'Brasil':           [-14.2, -51.9],
-  'Argentina':        [-38.4, -63.6],
-  'Holanda':          [52.1, 5.3],
-  'Bélgica':          [50.5, 4.5],
-  'Croácia':          [45.1, 15.2],
-  'Sérvia':           [44.0, 21.0],
-  'Senegal':          [14.5, -14.4],
-  'Marrocos':         [31.8, -7.1],
-  'Costa do Marfim':  [7.5, -5.5],
-  'Nigéria':          [9.0, 8.7],
-  'Gana':             [7.9, -1.0],
-  'Angola':           [-11.2, 17.9],
-  'Moçambique':       [-18.7, 35.5],
-  'Cabo Verde':       [16.0, -24.0],
-  'Uruguai':          [-32.5, -55.8],
-  'Colômbia':         [4.6, -74.1],
-  'Chile':            [-35.7, -71.5],
-  'México':           [23.6, -102.6],
-  'USA':              [37.1, -95.7],
-  'Suécia':           [60.1, 18.6],
-  'Noruega':          [60.5, 8.5],
-  'Dinamarca':        [56.3, 9.5],
-  'Polónia':          [51.9, 19.1],
-  'Ucrânia':          [48.4, 31.2],
-  'Turquia':          [38.9, 35.2],
-  'Grécia':           [39.1, 21.8],
-  'Suíça':            [46.8, 8.2],
-  'Áustria':          [47.5, 14.6],
-  'Escócia':          [56.5, -4.2],
-  'Irlanda':          [53.4, -8.2],
-  'República Checa':  [49.8, 15.5],
-  'Eslováquia':       [48.7, 19.7],
-  'Hungria':          [47.2, 19.5],
-  'Romênia':          [45.9, 24.9],
-  'Bulgária':         [42.7, 25.5],
-  'Rússia':           [61.5, 90.0],
-  'Japão':            [36.2, 138.3],
-  'Coreia do Sul':    [35.9, 127.8],
-  'Austrália':        [-25.3, 133.8],
-};
-
-let _leafletMap = null;
-let _mapMarkers = [];
-
-function normalizeCountry(str) {
-  if (!str) return null;
-  const s = str.trim();
-  // Tentar match directo
-  if (COUNTRY_COORDS[s]) return s;
-  // Tentar case-insensitive
-  const lower = s.toLowerCase();
-  const found = Object.keys(COUNTRY_COORDS).find(k => k.toLowerCase() === lower);
-  if (found) return found;
-  // Aliases comuns
-  const aliases = {
-    'brasil': 'Brasil', 'brazil': 'Brasil',
-    'spain': 'Espanha', 'españa': 'Espanha',
-    'france': 'França',
-    'germany': 'Alemanha', 'deutschland': 'Alemanha',
-    'italy': 'Itália', 'italia': 'Itália',
-    'england': 'Inglaterra', 'uk': 'Inglaterra',
-    'netherlands': 'Holanda', 'holland': 'Holanda',
-    'belgium': 'Bélgica',
-    'portugal': 'Portugal',
-    'argentina': 'Argentina',
-    'morocco': 'Marrocos',
-    'nigeria': 'Nigéria',
-    'ghana': 'Gana',
-    'senegal': 'Senegal',
-    'colombia': 'Colômbia',
-    'sweden': 'Suécia', 'suecia': 'Suécia',
-    'norway': 'Noruega',
-    'denmark': 'Dinamarca',
-    'poland': 'Polónia',
-    'turkey': 'Turquia', 'türkiye': 'Turquia',
-    'croatia': 'Croácia', 'hrvatska': 'Croácia',
-    'serbia': 'Sérvia',
-    'usa': 'USA', 'united states': 'USA', 'estados unidos': 'USA',
-    'japan': 'Japão',
-    'south korea': 'Coreia do Sul', 'corea del sur': 'Coreia do Sul',
-    'australia': 'Austrália',
-    'russia': 'Rússia', 'rusia': 'Rússia',
-    'switzerland': 'Suíça', 'suiza': 'Suíça',
-    'austria': 'Áustria',
-    'greece': 'Grécia', 'grecia': 'Grécia',
-    'ukraine': 'Ucrânia',
-    'czech republic': 'República Checa', 'czechia': 'República Checa',
-    'hungary': 'Hungria', 'hungria': 'Hungria',
-    'romania': 'Romênia', 'rumania': 'Romênia',
-    'bulgaria': 'Bulgária',
-    'scotland': 'Escócia',
-    'ireland': 'Irlanda',
-    'cabo verde': 'Cabo Verde', 'cape verde': 'Cabo Verde',
-    'angola': 'Angola',
-    'mozambique': 'Moçambique', 'mozambico': 'Moçambique',
-    'ivory coast': 'Costa do Marfim', "cote d'ivoire": 'Costa do Marfim',
-  };
-  return aliases[lower] || null;
-}
-
-function initMap() {
-  if (_leafletMap) return; // já inicializado
-  if (typeof L === 'undefined') { toast('Mapa não disponível — verifica a ligação', 'error'); return; }
-
-  _leafletMap = L.map('scout-map', {
-    center: [20, 10],
-    zoom: 2,
-    zoomControl: true,
-    attributionControl: false,
-  });
-
-  // Tile escuro que combina com o tema da app
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    maxZoom: 18,
-  }).addTo(_leafletMap);
-
-  // Aguardar um tick para o mapa renderizar correctamente
-  setTimeout(() => _leafletMap.invalidateSize(), 100);
-}
-
-function renderMap() {
-  if (!_leafletMap) initMap();
-  if (!_leafletMap) return;
-
-  const posFilter = document.getElementById('map-filter-pos')?.value || '';
-  const tagFilter = document.getElementById('map-filter-tag')?.value || '';
-
-  // Filtrar atletas
-  let filtered = [...players].filter(p => p.name);
-  if (posFilter) filtered = filtered.filter(p => p.position === posFilter || p.position2 === posFilter);
-  if (tagFilter) filtered = filtered.filter(p => p.tag === tagFilter);
-
-  // Remover marcadores anteriores
-  _mapMarkers.forEach(m => m.remove());
-  _mapMarkers = [];
-
-  // Agrupar por país normalizado
-  const countryGroups = {};
-  const noLocation = [];
-
-  filtered.forEach(p => {
-    const country = normalizeCountry(p.nationality);
-    if (country) {
-      if (!countryGroups[country]) countryGroups[country] = [];
-      countryGroups[country].push(p);
-    } else {
-      noLocation.push(p);
-    }
-  });
-
-  const TAG_COLORS = {
-    promessa:'#ffbe0b', urgente:'#ff4d6d', monitorar:'#4d9fff',
-    contactado:'#00e5a0', descartado:'#8896b0'
-  };
-
-  // Criar marcadores por país
-  Object.entries(countryGroups).forEach(([country, athleteList]) => {
-    const coords = COUNTRY_COORDS[country];
-    if (!coords) return;
-
-    const count = athleteList.length;
-    const avgR = round1(athleteList.reduce((s, p) => s + calcRating(p.metrics||{}), 0) / count);
-    const rColor = avgR >= 7.5 ? '#00e5a0' : avgR >= 5 ? '#ffbe0b' : '#8896b0';
-    const size = Math.min(20 + count * 8, 56);
-
-    // Ícone personalizado
-    const icon = L.divIcon({
-      html: `<div style="
-        width:${size}px;height:${size}px;border-radius:50%;
-        background:${rColor};border:3px solid rgba(255,255,255,0.9);
-        display:flex;align-items:center;justify-content:center;
-        font-weight:900;font-size:${count>9?11:13}px;color:#0a0e1a;
-        box-shadow:0 4px 16px rgba(0,0,0,0.5);
-        cursor:pointer;transition:transform 0.15s;
-        font-family:-apple-system,sans-serif;
-      ">${count}</div>`,
-      className: '',
-      iconSize: [size, size],
-      iconAnchor: [size/2, size/2],
-    });
-
-    // Popup com lista de atletas
-    const athleteHTML = athleteList.slice(0,8).map(p => {
-      const r = calcRating(p.metrics||{});
-      const rc = r>=7.5?'#00e5a0':r>=5?'#ffbe0b':'#8896b0';
-      const tagC = TAG_COLORS[p.tag] || '#8896b0';
-      return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.08)">
-        <span style="font-size:11px;font-weight:700;color:${rc};min-width:24px">${r||'—'}</span>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:12px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div>
-          <div style="font-size:10px;color:#8896b0">${p.position||'—'} · ${p.club||'Ag. Livre'}</div>
-        </div>
-        ${p.tag?`<span style="font-size:9px;font-weight:700;color:${tagC};background:${tagC}22;padding:1px 6px;border-radius:6px;white-space:nowrap">${p.tag}</span>`:''}
-      </div>`;
-    }).join('');
-
-    const moreText = athleteList.length > 8 ? `<div style="font-size:10px;color:#8896b0;text-align:center;margin-top:6px">+${athleteList.length-8} mais</div>` : '';
-
-    const popup = L.popup({
-      className: 'sfp-popup',
-      maxWidth: 260,
-      minWidth: 220,
-    }).setContent(`
-      <div style="background:#141b2d;border-radius:10px;overflow:hidden">
-        <div style="background:${rColor};padding:8px 12px;display:flex;align-items:center;justify-content:space-between">
-          <div style="font-weight:900;font-size:13px;color:#0a0e1a">${country.toUpperCase()}</div>
-          <div style="font-size:11px;font-weight:700;color:#0a0e1a">${count} atleta${count!==1?'s':''} · Média ${avgR}</div>
-        </div>
-        <div style="padding:8px 12px">${athleteHTML}${moreText}</div>
-      </div>
-    `);
-
-    const marker = L.marker(coords, { icon }).addTo(_leafletMap).bindPopup(popup);
-    _mapMarkers.push(marker);
-  });
-
-  // Stats
-  const allRatings = filtered.filter(p=>calcRating(p.metrics||{})>0).map(p=>calcRating(p.metrics||{}));
-  const avgAll = allRatings.length ? round1(allRatings.reduce((a,b)=>a+b,0)/allRatings.length) : null;
-
-  document.getElementById('map-stat-total').textContent     = filtered.length;
-  document.getElementById('map-stat-paises').textContent    = Object.keys(countryGroups).length;
-  document.getElementById('map-stat-promessas').textContent = filtered.filter(p=>p.tag==='promessa').length;
-  document.getElementById('map-stat-avg').textContent       = avgAll || '—';
-
-  // Top países
-  const sortedCountries = Object.entries(countryGroups)
-    .sort((a,b) => b[1].length - a[1].length)
-    .slice(0, 7);
-  const maxCount = sortedCountries[0]?.[1]?.length || 1;
-
-  document.getElementById('map-country-list').innerHTML = sortedCountries.map(([country, list]) => {
-    const pct = Math.round((list.length / maxCount) * 100);
-    return `<div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-        <span style="font-size:12px;font-weight:600;color:var(--text)">${country}</span>
-        <span style="font-size:12px;font-weight:700;color:var(--accent)">${list.length}</span>
-      </div>
-      <div style="height:4px;background:var(--bg3);border-radius:2px">
-        <div style="height:100%;width:${pct}%;background:var(--accent);border-radius:2px;transition:width 0.4s"></div>
-      </div>
-    </div>`;
-  }).join('');
-
-  // Sem localização
-  const noLocCard = document.getElementById('map-no-location-card');
-  if (noLocation.length) {
-    noLocCard.style.display = 'block';
-    document.getElementById('map-no-location-list').innerHTML =
-      noLocation.slice(0,10).map(p=>`<div style="padding:3px 0">${p.name} <span style="color:var(--text3)">(${p.position||'—'})</span></div>`).join('') +
-      (noLocation.length>10 ? `<div style="margin-top:4px">+${noLocation.length-10} mais sem país definido</div>` : '');
-  } else {
-    noLocCard.style.display = 'none';
-  }
-
-  // Ajustar zoom para os marcadores existentes
-  if (_mapMarkers.length > 0) {
-    const group = L.featureGroup(_mapMarkers);
-    _leafletMap.fitBounds(group.getBounds().pad(0.2), { maxZoom: 6 });
-  }
-}
-
-// ═══════════════════════════════════════════════
-// ONBOARDING
-// ═══════════════════════════════════════════════
-
-const ONBOARDING_KEY = 'sfp_onboarded_v1';
-let _obStep = 0;
-
-const OB_STEPS = [
-  {
-    icon: '👋',
-    title: 'BEM-VINDO AO SCOUTFLOW PRO!',
-    desc: `Tens <strong>14 dias gratuitos</strong> para explorar todas as funcionalidades. Deixa-nos mostrar o essencial em 4 passos rápidos.`,
-  },
-  {
-    icon: '⚽',
-    title: 'ADICIONA OS TEUS ATLETAS',
-    desc: `Clica em <strong>"+ Novo Atleta"</strong> para registar jogadores. Adiciona foto, posição, métricas e relatórios de jogo. O PDF é gerado automaticamente.`,
-  },
-  {
-    icon: '⚡',
-    title: 'SHADOW TEAM',
-    desc: `Constrói o teu <strong>onze ideal</strong> com os atletas da tua base de dados. Escolhe a formação e coloca cada jogador na posição ideal.`,
-  },
-  {
-    icon: '🗺️',
-    title: 'MAPA DE SCOUTING',
-    desc: `Visualiza os teus atletas <strong>no mapa mundial</strong>. Basta definir a nacionalidade de cada atleta e o mapa actualiza automaticamente.`,
-  },
-];
-
-function showOnboarding() {
-  if (localStorage.getItem(ONBOARDING_KEY)) return; // já viu
-  _obStep = 0;
-  updateOnboardingStep();
-  document.getElementById('onboarding-overlay').style.display = 'flex';
-}
-
-function updateOnboardingStep() {
-  const step = OB_STEPS[_obStep];
-  document.getElementById('ob-step-icon').textContent = step.icon;
-  document.getElementById('ob-step-title').textContent = step.title;
-  document.getElementById('ob-step-desc').innerHTML = step.desc;
-  document.getElementById('ob-progress').style.width = `${((_obStep+1)/OB_STEPS.length)*100}%`;
-
-  // Dots
-  OB_STEPS.forEach((_, i) => {
-    const dot = document.getElementById(`ob-dot-${i}`);
-    if (dot) dot.style.background = i === _obStep ? 'var(--accent)' : 'var(--bg3)';
-  });
-
-  // Último passo
-  const btn = document.getElementById('ob-next');
-  if (_obStep === OB_STEPS.length - 1) {
-    btn.textContent = '🚀 Começar!';
-    document.getElementById('ob-skip').style.display = 'none';
-  } else {
-    btn.textContent = 'Continuar →';
-    document.getElementById('ob-skip').style.display = 'flex';
-  }
-}
-
-function nextOnboardingStep() {
-  if (_obStep < OB_STEPS.length - 1) {
-    _obStep++;
-    updateOnboardingStep();
-  } else {
-    skipOnboarding();
-  }
-}
-
-function skipOnboarding() {
-  localStorage.setItem(ONBOARDING_KEY, '1');
-  document.getElementById('onboarding-overlay').style.display = 'none';
 }
 
 async function loadTeam() {
@@ -4047,9 +3404,8 @@ function showView(name){
   if(name==='evolution') initEvolution();
   if(name==='team')      loadTeam();
   if(name==='profile')   loadProfile();
-  if(name==='admin')     loadAdminDashboard();
+  if(name==='admin')     loadAdminCodes();
   if(name==='shadow')    loadShadowTeam();
-  if(name==='map')       { initMap(); renderMap(); }
 }
 
 function goHome(){ showView('home'); window.scrollTo(0,0); }
@@ -4078,36 +3434,92 @@ function getFiltered(){
   return list;
 }
 
+function renderHomeKPIs() {
+  const kpiEl = document.getElementById('home-kpis');
+  if (!kpiEl) return;
+  if (!players.length) { kpiEl.style.display = 'none'; return; }
+  kpiEl.style.display = 'grid';
+
+  const total = players.length;
+  const promessas = players.filter(p => p.tag === 'promessa').length;
+  const ratings = players.map(p => calcRating(p.metrics||{})).filter(r => r > 0);
+  const avg = ratings.length ? round1(ratings.reduce((a,b) => a+b,0) / ratings.length) : null;
+  const contratos = players.filter(p => contractStatus(p.contractEnd) !== null).length;
+
+  document.getElementById('kpi-total').textContent = total;
+  document.getElementById('kpi-promessas').textContent = promessas;
+  document.getElementById('kpi-avg').textContent = avg || '—';
+  document.getElementById('kpi-contratos').textContent = contratos;
+}
+
 function renderGrid(){
   const grid = document.getElementById('player-grid');
   const list = getFiltered();
   document.getElementById('total-count').textContent = players.length;
+  renderHomeKPIs();
+
   if(!list.length){
     grid.innerHTML = `<div class="empty-state"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg><h3>Nenhum atleta encontrado</h3><p>Ajuste os filtros ou adicione um novo atleta</p></div>`;
     return;
   }
+
   const TAG_LABELS = {promessa:'🌟 Promessa',urgente:'🔥 Urgente',monitorar:'👁 Monitorar',contactado:'✅ Contactado',descartado:'❌ Descartado'};
+  const TAG_COLORS = {promessa:'var(--amber)',urgente:'var(--red)',monitorar:'var(--blue)',contactado:'var(--accent)',descartado:'var(--text3)'};
+
   grid.innerHTML = list.map(p=>{
     const r = calcRating(p.metrics||{});
     const rCls = r>=7.5?'':(r>=5?'med':'low');
     const contract = contractStatus(p.contractEnd);
+
+    // Top 3 métricas por valor
+    const topMetrics = Object.entries(p.metrics||{})
+      .filter(([,v]) => typeof v === 'number' && !isNaN(v))
+      .sort((a,b) => b[1]-a[1])
+      .slice(0,3);
+
+    const metricsHTML = topMetrics.length ? `
+      <div class="pc-metrics">
+        ${topMetrics.map(([k,v]) => {
+          const pct = Math.round((v/10)*100);
+          const barColor = v>=7.5 ? 'var(--accent)' : v>=5 ? 'var(--blue)' : 'var(--red)';
+          return `<div class="pc-metric-row">
+            <div class="pc-metric-label">${k}</div>
+            <div class="pc-metric-bar-wrap">
+              <div class="pc-metric-bar-fill" style="width:${pct}%;background:${barColor}"></div>
+            </div>
+            <div class="pc-metric-val" style="color:${barColor}">${v}</div>
+          </div>`;
+        }).join('')}
+      </div>` : '';
+
+    // Avatar placeholder quando sem foto — iniciais coloridas
+    const avatarHTML = p.photo
+      ? `<img src="${p.photo}" alt="${p.name}">`
+      : `<div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+           <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--surface2),var(--bg3));border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:28px;color:var(--text2);letter-spacing:1px">${(p.name||'?').slice(0,2).toUpperCase()}</div>
+           <svg fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24" style="width:28px;height:28px;color:var(--text3);opacity:0.4"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+         </div>`;
+
     return `<div class="player-card" onclick="editPlayer('${p.id}')">
       <div class="pc-img">
-        ${p.photo?`<img src="${p.photo}" alt="${p.name}">`:`<svg fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`}
-        ${p.position?`<div class="pc-pos">${p.position}</div>`:''}
+        ${avatarHTML}
+        <div class="pc-img-gradient"></div>
+        ${p.position?`<div class="pc-pos">${p.position}${p.position2?` · ${p.position2}`:''}</div>`:''}
         ${r>0?`<div class="pc-rating ${rCls}">${r}</div>`:''}
         ${contract?`<div class="${contract.cls}">📋 ${contract.label}</div>`:''}
       </div>
       <div class="pc-body">
         <div class="pc-club">${p.club||'Agente Livre'}</div>
-        <div class="pc-name">${p.name}</div>
+        <div class="pc-name" title="${p.name}">${p.name}</div>
         <div class="pc-meta">
+          ${p.nationality?`<span>🌍 ${p.nationality}</span>`:''}
           ${p.age?`<span>${p.age}a</span>`:''}
           ${p.height?`<span>${p.height}cm</span>`:''}
-          ${p.foot?`<span>🦶 ${p.foot}</span>`:''}
+          ${p.foot?`<span>🦶 ${p.foot[0]}</span>`:''}
         </div>
         ${p.tag?`<div class="pc-tag tag-${p.tag}">${TAG_LABELS[p.tag]}</div>`:''}
-        ${p.scout_nome?`<div class="pc-scout">👤 ${p.scout_nome}</div>`:''}
+        ${metricsHTML}
+        ${p.scout_nome?`<div class="pc-scout" style="margin-top:8px">👤 ${p.scout_nome}</div>`:''}
       </div>
     </div>`;
   }).join('');
@@ -4174,10 +3586,7 @@ function editPlayer(id){
   const set = (id,val)=>{ const el=document.getElementById(id); if(el) el.value=val||''; };
   set('p-name',p.name); set('p-club',p.club); set('p-age',p.age); set('p-height',p.height);
   set('p-weight',p.weight); set('p-pos',p.position); set('p-pos2',p.position2);
-  set('p-foot',p.foot);
-  // Normalizar nacionalidade para o select
-  const normNat = normalizeCountry(p.nationality) || p.nationality || '';
-  set('p-nation', normNat);
+  set('p-foot',p.foot); set('p-nation',p.nationality);
   set('p-tag',p.tag); set('p-neg',p.negotiation);
   set('p-contract',p.contractEnd); set('p-clause',p.releaseClause); set('p-market',p.marketValue);
   set('p-games',p.games); set('p-mins',p.minutes); set('p-goals',p.goals);
@@ -4389,134 +3798,26 @@ function renderRadar(){
 }
 
 // ─── PITCH ───
-// Configuração do campo com zonas rectangulares (6 linhas x 5 colunas)
-// Cada zona ocupa uma fatia do campo
-const FIELD_W = 300, FIELD_H = 470, FIELD_X = 20, FIELD_Y = 20;
-const HEAT_ROWS = 6, HEAT_COLS = 5;
-const ZONE_W = FIELD_W / HEAT_COLS;
-const ZONE_H = FIELD_H / HEAT_ROWS;
-
-// Labels de zona (attack topo → defesa baixo)
-const ZONE_ROW_LABELS = ['ATQ','ATQ','MCA','MED','MCD','DEF'];
-
-function getZoneRect(row, col) {
-  return {
-    x: FIELD_X + col * ZONE_W,
-    y: FIELD_Y + row * ZONE_H,
-    w: ZONE_W,
-    h: ZONE_H,
-  };
-}
-
-function calcHeatIntensity(id) {
-  // Calcular intensidade baseada nas zonas adjacentes activas
-  const [,r,c] = id.match(/z(\d+)_(\d+)/);
-  const row = parseInt(r), col = parseInt(c);
-  let count = 0;
-  // Verificar vizinhos numa área 3x3
-  for(let dr=-1; dr<=1; dr++) {
-    for(let dc=-1; dc<=1; dc++) {
-      const nr = row+dr, nc = col+dc;
-      if(nr>=0 && nr<HEAT_ROWS && nc>=0 && nc<HEAT_COLS) {
-        if(tempZones.includes(`z${nr}_${nc}`)) count++;
-      }
-    }
-  }
-  return count; // max 9
-}
-
 function renderPitch(){
-  const blurLayer  = document.getElementById('heat-zones-blur');
-  const sharpLayer = document.getElementById('heat-zones-sharp');
-  const labelLayer = document.getElementById('heat-zone-labels');
-  const hitLayer   = document.getElementById('hotspots');
-  if(!hitLayer) return;
-
-  // Redesenhar todas as camadas
-  blurLayer.innerHTML  = '';
-  sharpLayer.innerHTML = '';
-  labelLayer.innerHTML = '';
-  hitLayer.innerHTML   = '';
-
-  PITCH_ZONES.forEach(z => {
-    const [,row,col] = z.id.match(/z(\d+)_(\d+)/);
-    const r = parseInt(row), c = parseInt(col);
-    const { x, y, w, h } = getZoneRect(r, c);
-    const on = tempZones.includes(z.id);
-    const intensity = on ? calcHeatIntensity(z.id) : 0;
-
-    // Gradiente consoante intensidade
-    let heatGrad = 'none';
-    let heatOpacity = 0;
-    if(on) {
-      if(intensity <= 2)      { heatGrad = 'url(#heat-low)';  heatOpacity = 0.75; }
-      else if(intensity <= 5) { heatGrad = 'url(#heat-med)';  heatOpacity = 0.88; }
-      else                    { heatGrad = 'url(#heat-high)'; heatOpacity = 1; }
-    }
-
-    // Camada blur (apenas zonas activas)
-    if(on) {
-      const blurRect = document.createElementNS('http://www.w3.org/2000/svg','rect');
-      blurRect.setAttribute('x', x+2); blurRect.setAttribute('y', y+2);
-      blurRect.setAttribute('width', w-4); blurRect.setAttribute('height', h-4);
-      blurRect.setAttribute('fill', heatGrad);
-      blurRect.setAttribute('opacity', heatOpacity);
-      blurRect.setAttribute('rx', '6');
-      blurLayer.appendChild(blurRect);
-    }
-
-    // Camada sharp (todas as zonas — fundo + activas)
-    const sharpRect = document.createElementNS('http://www.w3.org/2000/svg','rect');
-    sharpRect.setAttribute('x', x+1); sharpRect.setAttribute('y', y+1);
-    sharpRect.setAttribute('width', w-2); sharpRect.setAttribute('height', h-2);
-    sharpRect.setAttribute('fill', on ? heatGrad : 'rgba(255,255,255,0.02)');
-    sharpRect.setAttribute('opacity', on ? heatOpacity*0.8 : '1');
-    sharpRect.setAttribute('stroke', on ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)');
-    sharpRect.setAttribute('stroke-width', '0.5');
-    sharpRect.setAttribute('rx', '4');
-    sharpLayer.appendChild(sharpRect);
-
-    // Label da zona (só visível quando não activa)
-    if(!on) {
-      const label = document.createElementNS('http://www.w3.org/2000/svg','text');
-      label.setAttribute('x', x + w/2);
-      label.setAttribute('y', y + h/2);
-      label.setAttribute('class', 'pitch-zone-label');
-      label.textContent = ZONE_ROW_LABELS[r] || '';
-      labelLayer.appendChild(label);
-    }
-
-    // Zona invisível clicável por cima
-    const hitRect = document.createElementNS('http://www.w3.org/2000/svg','rect');
-    hitRect.setAttribute('x', x); hitRect.setAttribute('y', y);
-    hitRect.setAttribute('width', w); hitRect.setAttribute('height', h);
-    hitRect.setAttribute('fill', 'transparent');
-    hitRect.setAttribute('class', 'heat-zone');
-    hitRect.setAttribute('data-id', z.id);
-    hitRect.style.cursor = 'pointer';
-    hitRect.addEventListener('click', () => toggleZone(z.id));
-    hitRect.addEventListener('mouseover', () => {
-      if(!tempZones.includes(z.id)) {
-        hitRect.setAttribute('fill', 'rgba(255,255,255,0.06)');
-      }
-    });
-    hitRect.addEventListener('mouseout', () => {
-      hitRect.setAttribute('fill', 'transparent');
-    });
-    hitLayer.appendChild(hitRect);
-  });
-
+  const svg=document.getElementById('hotspots'); if(!svg) return;
+  svg.innerHTML=PITCH_ZONES.map(z=>{
+    const on=tempZones.includes(z.id);
+    return `<g class="hotspot${on?' on':''}" data-id="${z.id}" onclick="toggleZone('${z.id}',this)">
+      <circle cx="${z.x}" cy="${z.y}" r="18" fill="${on?'var(--accent)':'rgba(255,255,255,0.07)'}" stroke="${on?'var(--accent)':'rgba(255,255,255,0.2)'}" stroke-width="1"/>
+    </g>`;
+  }).join('');
   updateZoneCount();
 }
 
-function toggleZone(id){
-  if(tempZones.includes(id)){
-    tempZones = tempZones.filter(z => z !== id);
-  } else {
-    tempZones.push(id);
-  }
-  // Re-renderizar mapa de calor completo (para recalcular intensidades)
-  renderPitch();
+function toggleZone(id, el){
+  if(tempZones.includes(id)){ tempZones=tempZones.filter(z=>z!==id); el.classList.remove('on'); }
+  else { tempZones.push(id); el.classList.add('on'); }
+  // update fill
+  const circle=el.querySelector('circle');
+  const on=tempZones.includes(id);
+  circle.setAttribute('fill', on?'var(--accent)':'rgba(255,255,255,0.07)');
+  circle.setAttribute('stroke', on?'var(--accent)':'rgba(255,255,255,0.2)');
+  updateZoneCount();
 }
 
 function updateZoneCount(){ const c=document.getElementById('zones-count'); if(c) c.textContent=tempZones.length; }
