@@ -1123,9 +1123,12 @@ hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
           <div class="field"><label>Clube Atual</label><input type="text" id="p-club" placeholder="Clube / Agente Livre"></div>
         </div>
         <div class="form-row-3" style="margin-bottom:12px">
-          <div class="field"><label>Idade</label><input type="number" id="p-age" placeholder="Ex: 19"></div>
+          <div class="field"><label>Data de Nascimento</label><input type="date" id="p-birthdate"></div>
           <div class="field"><label>Altura (cm)</label><input type="number" id="p-height" placeholder="Ex: 180"></div>
           <div class="field"><label>Peso (kg)</label><input type="number" id="p-weight" placeholder="Ex: 75"></div>
+        </div>
+        <div class="form-row-3" style="margin-bottom:12px">
+          <div class="field"><label>Idade</label><input type="number" id="p-age" placeholder="Calculada automaticamente"></div>
         </div>
         <div class="form-row" style="margin-bottom:12px">
           <div class="field">
@@ -4067,7 +4070,7 @@ function newPlayer(){
 }
 
 function clearForm(){
-  ['p-name','p-club','p-age','p-height','p-weight','p-pos','p-pos2','p-foot','p-nation',
+  ['p-name','p-club','p-age','p-birthdate','p-height','p-weight','p-pos','p-pos2','p-foot','p-nation',
    'p-tag','p-neg','p-contract','p-clause','p-market','p-games','p-mins','p-goals',
    'p-assists','p-yellow','p-red','p-style','p-system','p-strengths','p-weak',
    'p-injuries','p-agent','p-contact','p-notes','p-tactical-notes','p-gender'].forEach(id=>{
@@ -4091,7 +4094,7 @@ function editPlayer(id){
   tempReports = [...(p.reports||[])];
   customMetrics = [...(p.customMetrics||[])];
   const set = (id,val)=>{ const el=document.getElementById(id); if(el) el.value=val||''; };
-  set('p-name',p.name); set('p-club',p.club); set('p-age',p.age); set('p-height',p.height);
+  set('p-name',p.name); set('p-club',p.club); set('p-age',p.age); set('p-birthdate',p.birthdate); set('p-height',p.height);
   set('p-weight',p.weight); set('p-pos',p.position); set('p-pos2',p.position2);
   set('p-foot',p.foot); set('p-nation',p.nationality);
   set('p-tag',p.tag); set('p-neg',p.negotiation);
@@ -4130,7 +4133,8 @@ function savePlayer(){
     name, photo:tempPhoto, videos:tempVideos, priority:tempPriority,
     zones:tempZones, reports:tempReports, customMetrics,
     club:document.getElementById('p-club').value,
-    age:parseInt(document.getElementById('p-age').value)||null,
+    birthdate:document.getElementById('p-birthdate').value||null,
+    age:(()=>{ const bd=document.getElementById('p-birthdate').value; if(bd) return Math.floor((Date.now()-new Date(bd))/(365.25*24*60*60*1000)); return parseInt(document.getElementById('p-age').value)||null; })(),
     height:parseInt(document.getElementById('p-height').value)||null,
     weight:parseInt(document.getElementById('p-weight').value)||null,
     position:pos, position2:document.getElementById('p-pos2').value,
